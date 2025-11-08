@@ -1,6 +1,6 @@
 # Examples Guide
 
-This project includes six interactive examples demonstrating different aspects of the tui-piechart widget. All examples follow a consistent 4-chart layout in a 2x2 grid for easy comparison.
+This project includes seven interactive examples demonstrating different aspects of the tui-piechart widget. Most examples follow a consistent 4-chart layout in a 2x2 grid for easy comparison.
 
 ## Example Structure
 
@@ -136,6 +136,32 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 
 ---
 
+## 7. High Resolution Demo
+
+**File:** `examples/high_resolution.rs`
+
+**Run:** `cargo run --example high_resolution`
+
+**Features:**
+- Interactive toggle between standard and high resolution modes
+- **Animated values** that change smoothly over time
+- 4 different pie charts (2x2 grid)
+- Press Space/Enter/H to toggle resolution
+- Demonstrates:
+  - Programming languages distribution (animated)
+  - Market share visualization (animated)
+  - Time allocation pie chart (animated)
+  - Budget distribution (animated)
+- Uses Unicode braille patterns (U+2800-U+28FF) for 8x resolution
+- Runs at ~60 FPS for smooth animations
+
+**Description:** 
+High resolution mode uses braille characters which provide 8 dots per character cell (2×4 grid), giving 8x the resolution for smoother circles and better edge definition. The example includes smooth animations that continuously change the pie chart values using sine waves, making the quality difference between standard and braille rendering immediately apparent. The animations showcase how braille patterns create noticeably smoother, more fluid transitions.
+
+**VHS Tape:** Available - demonstrates toggling between standard and high resolution modes
+
+---
+
 ## Key Differences
 
 ### Predefined vs Custom
@@ -180,6 +206,7 @@ All examples support consistent navigation:
 | Triangles & hexagons | `symbols_triangles_hexagons` |
 | Shades & bars | `symbols_shades_bars` |
 | Maximum customization | `custom_symbols` |
+| High resolution rendering | `high_resolution` |
 
 ---
 
@@ -208,6 +235,7 @@ All examples now have VHS tapes for generating demo GIFs!
 cargo run --example piechart                     # Main features
 cargo run --example symbols_circles_squares      # Circles & squares
 cargo run --example custom_symbols               # Custom possibilities
+cargo run --example high_resolution              # High-res mode (toggle with Space)
 
 # Explore specific symbol categories
 cargo run --example symbols_stars_hearts         # Stars and hearts
@@ -219,10 +247,11 @@ cargo run --example symbols_shades_bars          # Shades & bars
 
 ## Summary
 
-- **6 total examples**
-- **5 examples** use 2x2 grid (4 charts)
+- **7 total examples**
+- **6 examples** use 2x2 grid (4 charts)
 - **1 example** uses 4x3 grid (12 charts)
 - **16 predefined symbol combinations** across 4 examples
 - **12 custom symbol examples** in 1 example
+- **1 high resolution demo** with interactive toggle
 - **Consistent navigation** across all examples
 - **Progressive learning** from basic to advanced

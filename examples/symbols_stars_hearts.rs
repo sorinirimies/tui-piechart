@@ -16,15 +16,11 @@ use ratatui::{
 };
 use tui_piechart::{symbols, PieChart, PieSlice};
 
+#[derive(Default)]
 struct App {
     selected: usize,
 }
 
-impl Default for App {
-    fn default() -> Self {
-        Self { selected: 0 }
-    }
-}
 
 fn main() -> Result<()> {
     color_eyre::install()?;

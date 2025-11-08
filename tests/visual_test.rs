@@ -203,6 +203,67 @@ fn test_star_symbols() {
     print_buffer(terminal.backend().buffer());
 }
 
+#[test]
+fn test_high_resolution_mode() {
+    println!("\n=== High Resolution Mode Test ===");
+    let backend = TestBackend::new(60, 25);
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    terminal
+        .draw(|frame| {
+            use ratatui::layout::{Constraint, Layout};
+
+            let cols = Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
+                .split(frame.area());
+
+            // Standard resolution (left)
+            let slices1 = vec![
+                PieSlice::new("A", 50.0, Color::Red),
+                PieSlice::new("B", 50.0, Color::Blue),
+            ];
+            let chart1 = PieChart::new(slices1).show_legend(true);
+            frame.render_widget(chart1, cols[0]);
+
+            // High resolution (right)
+            let slices2 = vec![
+                PieSlice::new("A", 50.0, Color::Red),
+                PieSlice::new("B", 50.0, Color::Blue),
+            ];
+            let chart2 = PieChart::new(slices2)
+                .show_legend(true)
+                .high_resolution(true);
+            frame.render_widget(chart2, cols[1]);
+        })
+        .unwrap();
+
+    println!("Standard (left) vs High-Res (right):");
+    print_buffer(terminal.backend().buffer());
+
+    // Verify high-res uses braille characters
+    let buffer = terminal.backend().buffer();
+    let mut found_braille = false;
+    for y in 0..buffer.area().height {
+        for x in 30..buffer.area().width {
+            // Check right side for braille characters (U+2800-U+28FF)
+            if let Some(cell) = buffer.cell((x, y)) {
+                let ch = cell.symbol().chars().next().unwrap_or(' ');
+                if ('\u{2800}'..='\u{28FF}').contains(&ch) {
+                    found_braille = true;
+                    break;
+                }
+            }
+        }
+        if found_braille {
+            break;
+        }
+    }
+
+    assert!(
+        found_braille,
+        "High resolution mode should use braille characters"
+    );
+}
+
 fn test_size(width: u16, height: u16) {
     let backend = TestBackend::new(width, height);
     let mut terminal = Terminal::new(backend).unwrap();

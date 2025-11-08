@@ -19,6 +19,7 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 - 📊 Legend support
 - 📦 Optional block wrapper
 - ✨ Custom symbols for pie chart and legend
+- 🔍 High resolution mode using braille patterns (8x resolution)
 - ⚡ Zero-cost abstractions
 
 ## Installation
@@ -64,6 +65,16 @@ use ratatui::widgets::Block;
 
 let piechart = PieChart::new(slices)
     .block(Block::bordered().title("Statistics"));
+
+// With high resolution mode (braille patterns for 8x resolution)
+let piechart = PieChart::new(slices)
+    .high_resolution(true);
+
+// Or use the Resolution enum
+use tui_piechart::Resolution;
+
+let standard = PieChart::new(slices).resolution(Resolution::Standard);
+let braille = PieChart::new(slices).resolution(Resolution::Braille);
 ```
 
 ## Examples
@@ -82,6 +93,9 @@ cargo run --example symbols_shades_bars          # Asterism, Horizontal Bar, Sha
 
 # Custom (non-predefined) symbols showcase (12 charts)
 cargo run --example custom_symbols
+
+# High resolution mode demo (animated, toggle with Space)
+cargo run --example high_resolution
 ```
 
 ### Interactive Mode (Default)
@@ -366,6 +380,71 @@ This example showcases truly custom Unicode characters NOT in the predefined lis
 
 5. **Testing**: Always test your custom symbols in the actual terminal where your application will run.
 
+### High Resolution Mode
+
+Enable high resolution rendering using Unicode braille patterns for **dramatically smoother** pie charts.
+
+**Live animated demo:** The `high_resolution` example includes smooth animations that showcase the quality difference between standard and braille rendering in real-time.
+
+```rust
+let piechart = PieChart::new(slices)
+    .high_resolution(true);
+
+// Or use the Resolution enum
+use tui_piechart::Resolution;
+
+let standard = PieChart::new(slices).resolution(Resolution::Standard);
+let braille = PieChart::new(slices).resolution(Resolution::Braille);
+```
+
+**Visual Comparison:**
+
+Standard mode (1 dot per cell):
+```
+        ●●●●●●●●●
+     ●●●●●●●●●●●●●●●
+   ●●●●●●●●●●●●●●●●●●●
+  ●●●●●●●●●●●●●●●●●●●●●
+```
+
+Braille mode (8 dots per cell):
+```
+      ⣀⣀⣀⣀⣀⣄⣀⣀⣀⣀⡀
+   ⢀⣠⣴⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣤⣀
+ ⣠⣶⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣦⡀
+⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷
+```
+
+**How it works:**
+- Uses Unicode braille characters (U+2800-U+28FF)
+- Each character cell contains **2×4 dots** (8 dots total)
+- Provides **8x the resolution** compared to standard mode
+- Results in **noticeably smoother circles** and crisp edges
+
+**Example usage:**
+```rust
+// Standard resolution (blocky)
+let standard = PieChart::new(slices);
+
+// High resolution (smooth) - just add one method!
+let high_res = PieChart::new(slices).high_resolution(true);
+```
+
+**Interactive animated demo:**
+```bash
+cargo run --example high_resolution
+# Press Space/Enter/H to toggle between modes
+# Values animate smoothly to showcase rendering quality
+```
+
+**Best for:**
+- When visual quality matters most
+- Presentations and demos where smoothness impresses
+- Large terminal displays (>80 columns)
+- Terminals with excellent Unicode support
+
+**Note:** The difference is immediately visible - high-res creates smooth circles instead of blocky shapes!
+
 ## Generating Demo GIFs
 
 If you have [VHS](https://github.com/charmbracelet/vhs) installed, you can generate demo GIFs for all examples:
@@ -382,6 +461,8 @@ vhs examples/symbols_shades_bars.tape
 
 # Custom symbols demo
 vhs examples/custom_symbols.tape
+
+# Note: high_resolution example is interactive and best experienced live
 ```
 
 ## Development

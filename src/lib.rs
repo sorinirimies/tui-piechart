@@ -80,6 +80,42 @@ use ratatui::widgets::{Block, Widget};
 
 pub mod symbols;
 
+/// Rendering resolution mode for pie charts.
+///
+/// Different resolution modes provide varying levels of detail by using
+/// different Unicode block drawing characters with different dot densities.
+///
+/// # Examples
+///
+/// ```
+/// use tui_piechart::{PieChart, PieSlice, Resolution};
+/// use ratatui::style::Color;
+///
+/// let slices = vec![PieSlice::new("Rust", 45.0, Color::Red)];
+///
+/// // Standard resolution (1 dot per character)
+/// let standard = PieChart::new(slices.clone())
+///     .resolution(Resolution::Standard);
+///
+/// // High resolution with braille patterns (8 dots per character)
+/// let braille = PieChart::new(slices)
+///     .resolution(Resolution::Braille);
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum Resolution {
+    /// Standard resolution using full characters (1 dot per cell).
+    ///
+    /// Uses regular Unicode characters like `●`. This is the default mode.
+    #[default]
+    Standard,
+
+    /// Braille resolution using 2×4 dot patterns (8 dots per cell).
+    ///
+    /// Uses Unicode braille patterns (U+2800-U+28FF) providing 8x resolution.
+    /// This provides the highest resolution available for terminal rendering.
+    Braille,
+}
+
 /// A slice of the pie chart representing a portion of data.
 ///
 /// Each slice has a label, a value, and a color.
@@ -175,6 +211,8 @@ pub struct PieChart<'a> {
     pie_char: char,
     /// The marker to use for legend items
     legend_marker: &'a str,
+    /// Resolution mode for rendering
+    resolution: Resolution,
 }
 
 impl Default for PieChart<'_> {
@@ -197,6 +235,7 @@ impl Default for PieChart<'_> {
             show_percentages: true,
             pie_char: symbols::PIE_CHAR,
             legend_marker: symbols::LEGEND_MARKER,
+            resolution: Resolution::default(),
         }
     }
 }
@@ -372,6 +411,48 @@ impl<'a> PieChart<'a> {
         self
     }
 
+    /// Sets the rendering resolution mode.
+    ///
+    /// Different resolution modes provide varying levels of detail:
+    /// - `Standard`: Regular characters (1 dot per cell)
+    /// - `Braille`: 2×4 patterns (8 dots per cell, 8x resolution)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::{PieChart, Resolution};
+    ///
+    /// let standard = PieChart::default().resolution(Resolution::Standard);
+    /// let braille = PieChart::default().resolution(Resolution::Braille);
+    /// ```
+    #[must_use]
+    pub const fn resolution(mut self, resolution: Resolution) -> Self {
+        self.resolution = resolution;
+        self
+    }
+
+    /// Sets whether to use high resolution rendering with braille patterns.
+    ///
+    /// This is a convenience method that sets the resolution to `Braille` when enabled,
+    /// or `Standard` when disabled. For more control, use [`resolution`](Self::resolution).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::PieChart;
+    ///
+    /// let piechart = PieChart::default().high_resolution(true);
+    /// ```
+    #[must_use]
+    pub const fn high_resolution(mut self, enabled: bool) -> Self {
+        self.resolution = if enabled {
+            Resolution::Braille
+        } else {
+            Resolution::Standard
+        };
+        self
+    }
+
     /// Calculates the total value of all slices.
     fn total_value(&self) -> f64 {
         self.slices.iter().map(|s| s.value).sum()
@@ -432,6 +513,16 @@ impl PieChart<'_> {
             return;
         }
 
+        match self.resolution {
+            Resolution::Standard => {
+                // Continue with standard rendering below
+            }
+            Resolution::Braille => {
+                self.render_piechart_braille(area, buf);
+                return;
+            }
+        }
+
         // If we need to show legend, reserve space on the right
         let (pie_area, legend_x) = if self.show_legend && area.width > 35 {
             let legend_width = 20;
@@ -480,7 +571,7 @@ impl PieChart<'_> {
         }
     }
 
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, clippy::similar_names)]
     fn render_slice(
         &self,
         area: Rect,
@@ -501,8 +592,8 @@ impl PieChart<'_> {
         let end_angle = ((start_percent + percent) / 100.0) * 2.0 * PI - PI / 2.0;
 
         // Scan the entire area around the center
-        let scan_width = (radius + 1) as i32;
-        let scan_height = ((radius / 2) + 1) as i32; // Account for aspect ratio
+        let scan_width = i32::from(radius + 1);
+        let scan_height = i32::from((radius / 2) + 1); // Account for aspect ratio
 
         for dy in -scan_height..=scan_height {
             for dx in -scan_width..=scan_width {
@@ -521,16 +612,16 @@ impl PieChart<'_> {
 
                 // Adjust for aspect ratio: multiply y distance by 2
                 #[allow(clippy::cast_precision_loss)]
-                let adjusted_dx = dx as f64;
+                let adjusted_dx = f64::from(dx);
                 #[allow(clippy::cast_precision_loss)]
-                let adjusted_dy = (dy * 2) as f64;
+                let adjusted_dy = f64::from(dy * 2);
 
                 // Calculate distance from center
                 let distance = (adjusted_dx * adjusted_dx + adjusted_dy * adjusted_dy).sqrt();
 
                 // Check if point is within radius
                 #[allow(clippy::cast_precision_loss)]
-                if distance <= radius as f64 {
+                if distance <= f64::from(radius) {
                     // Calculate angle from center (0 = right, PI/2 = up, PI = left, 3PI/2 = down)
                     let angle = adjusted_dy.atan2(adjusted_dx);
 
@@ -607,9 +698,144 @@ impl PieChart<'_> {
             line.render(legend_area, buf);
         }
     }
+
+    #[allow(clippy::similar_names)]
+    fn render_piechart_braille(&self, area: Rect, buf: &mut Buffer) {
+        // If we need to show legend, reserve space on the right
+        let (pie_area, legend_x) = if self.show_legend && area.width > 35 {
+            let legend_width = 20;
+            let pie_width = area.width.saturating_sub(legend_width);
+            (
+                Rect {
+                    x: area.x,
+                    y: area.y,
+                    width: pie_width,
+                    height: area.height,
+                },
+                area.x + pie_width + 1,
+            )
+        } else {
+            (area, 0)
+        };
+
+        // Calculate the center and radius of the pie chart
+        let center_x_chars = pie_area.width / 2;
+        let center_y_chars = pie_area.height / 2;
+
+        // Each character cell has 2x4 braille dots
+        let center_x_dots = center_x_chars * 2;
+        let center_y_dots = center_y_chars * 4;
+
+        // Calculate radius in dots
+        // Braille dots are equally spaced in physical screen space because:
+        // - Character cells are ~2:1 (height:width)
+        // - But braille has 2 horizontal dots and 4 vertical dots per character
+        // - So: horizontal spacing = W/2, vertical spacing = 2W/4 = W/2 (equal!)
+        let radius = (center_x_dots).min(center_y_dots).saturating_sub(2);
+
+        // Create a 2D array to store which slice each braille dot belongs to
+        let width_dots = pie_area.width * 2;
+        let height_dots = pie_area.height * 4;
+
+        let mut dot_slices: Vec<Vec<Option<usize>>> =
+            vec![vec![None; width_dots as usize]; height_dots as usize];
+
+        // Calculate slice assignments for each dot
+        let mut cumulative_percent = 0.0;
+        for (slice_idx, slice) in self.slices.iter().enumerate() {
+            let percent = self.percentage(slice);
+            let start_angle = (cumulative_percent / 100.0) * 2.0 * PI - PI / 2.0;
+            let end_angle = ((cumulative_percent + percent) / 100.0) * 2.0 * PI - PI / 2.0;
+
+            for dy in 0..height_dots {
+                for dx in 0..width_dots {
+                    let rel_x = f64::from(dx) - f64::from(center_x_dots);
+                    let rel_y = f64::from(dy) - f64::from(center_y_dots);
+
+                    // No aspect ratio compensation needed for braille dots
+                    // They're already equally spaced in physical screen space
+                    let distance = (rel_x * rel_x + rel_y * rel_y).sqrt();
+
+                    if distance <= f64::from(radius) {
+                        let angle = rel_y.atan2(rel_x);
+                        if Self::is_angle_in_slice(angle, start_angle, end_angle) {
+                            dot_slices[dy as usize][dx as usize] = Some(slice_idx);
+                        }
+                    }
+                }
+            }
+
+            cumulative_percent += percent;
+        }
+
+        // Convert dot assignments to braille characters
+        for char_y in 0..pie_area.height {
+            for char_x in 0..pie_area.width {
+                let base_dot_x = char_x * 2;
+                let base_dot_y = char_y * 4;
+
+                // Braille pattern mapping (dots are numbered 1-8)
+                // Dot positions in a 2x4 grid:
+                // 1 4
+                // 2 5
+                // 3 6
+                // 7 8
+                let dot_positions = [
+                    (0, 0, 0x01), // dot 1
+                    (0, 1, 0x02), // dot 2
+                    (0, 2, 0x04), // dot 3
+                    (1, 0, 0x08), // dot 4
+                    (1, 1, 0x10), // dot 5
+                    (1, 2, 0x20), // dot 6
+                    (0, 3, 0x40), // dot 7
+                    (1, 3, 0x80), // dot 8
+                ];
+
+                let mut pattern = 0u32;
+                let mut slice_colors: Vec<(usize, u32)> = Vec::new();
+
+                for (dx, dy, bit) in dot_positions {
+                    let dot_x = base_dot_x + dx;
+                    let dot_y = base_dot_y + dy;
+
+                    if dot_y < height_dots && dot_x < width_dots {
+                        if let Some(slice_idx) = dot_slices[dot_y as usize][dot_x as usize] {
+                            pattern |= bit;
+                            // Track which slice and how many dots
+                            if let Some(entry) =
+                                slice_colors.iter_mut().find(|(idx, _)| *idx == slice_idx)
+                            {
+                                entry.1 += 1;
+                            } else {
+                                slice_colors.push((slice_idx, 1));
+                            }
+                        }
+                    }
+                }
+
+                if pattern > 0 {
+                    // Use the color of the slice with the most dots in this character
+                    if let Some((slice_idx, _)) = slice_colors.iter().max_by_key(|(_, count)| count)
+                    {
+                        let braille_char = char::from_u32(0x2800 + pattern).unwrap_or('⠀');
+                        let color = self.slices[*slice_idx].color;
+
+                        let cell = &mut buf[(pie_area.x + char_x, pie_area.y + char_y)];
+                        cell.set_char(braille_char).set_fg(color);
+                    }
+                }
+            }
+        }
+
+        // Draw legend if enabled
+        if self.show_legend && area.width > 35 {
+            self.render_legend(area, buf, legend_x);
+        }
+    }
 }
 
 #[cfg(test)]
+#[allow(clippy::float_cmp)]
 mod tests {
     use super::*;
 
