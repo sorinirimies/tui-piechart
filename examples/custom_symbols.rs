@@ -104,7 +104,6 @@ struct App {
     selected: usize,
 }
 
-
 fn main() -> Result<()> {
     color_eyre::install()?;
     let mut app = App::default();
