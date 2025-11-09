@@ -1,15 +1,12 @@
-//! # PieChart Widget Example
+//! # PieChart Widget Example (Animated)
 //!
-//! This example demonstrates the `tui-piechart` widget with two modes:
+//! This example demonstrates the `tui-piechart` widget with four different
+//! animated pie charts showcasing various use cases.
 //!
-//! ## Interactive Mode (Default)
-//! - Navigate with ↑/↓ or k/j to select different chart types
-//! - Press Tab to switch to API Showcase
-//! - Press q or Esc to quit
-//!
-//! ## API Showcase Mode
-//! - View all public API methods and features
-//! - Press Tab to return to Interactive mode
+//! **Controls:**
+//! - ↑/↓ or k/j - Navigate between different charts
+//! - q/Esc - Quit
+//! - All charts animate smoothly at ~60 FPS
 //!
 //! Run with: cargo run --example piechart
 
@@ -22,24 +19,21 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph},
     DefaultTerminal, Frame,
 };
+use std::time::{Duration, Instant};
 use tui_piechart::{symbols, PieChart, PieSlice};
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum ViewMode {
-    Interactive,
-    ApiShowcase,
-}
 
 struct App {
     selected: usize,
-    mode: ViewMode,
+    animation_time: f64,
+    last_tick: Instant,
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             selected: 0,
-            mode: ViewMode::Interactive,
+            animation_time: 0.0,
+            last_tick: Instant::now(),
         }
     }
 }
@@ -55,28 +49,31 @@ fn main() -> Result<()> {
 
 fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
     loop {
+        // Update animation time
+        let now = Instant::now();
+        let delta = now.duration_since(app.last_tick).as_secs_f64();
+        app.last_tick = now;
+        app.animation_time += delta;
+
         terminal.draw(|frame| render(frame, app))?;
 
-        if let Event::Key(key) = event::read()? {
-            match key.code {
-                KeyCode::Char('q') | KeyCode::Esc => break,
-                KeyCode::Tab => {
-                    app.mode = match app.mode {
-                        ViewMode::Interactive => ViewMode::ApiShowcase,
-                        ViewMode::ApiShowcase => ViewMode::Interactive,
-                    };
-                }
-                KeyCode::Up | KeyCode::Char('k') => {
-                    if app.mode == ViewMode::Interactive && app.selected > 0 {
-                        app.selected -= 1;
+        // Non-blocking event polling with 16ms timeout (~60 FPS)
+        if event::poll(Duration::from_millis(16))? {
+            if let Event::Key(key) = event::read()? {
+                match key.code {
+                    KeyCode::Char('q') | KeyCode::Esc => break,
+                    KeyCode::Up | KeyCode::Char('k') => {
+                        if app.selected > 0 {
+                            app.selected -= 1;
+                        }
                     }
-                }
-                KeyCode::Down | KeyCode::Char('j') => {
-                    if app.mode == ViewMode::Interactive && app.selected < 3 {
-                        app.selected += 1;
+                    KeyCode::Down | KeyCode::Char('j') => {
+                        if app.selected < 3 {
+                            app.selected += 1;
+                        }
                     }
+                    _ => {}
                 }
-                _ => {}
             }
         }
     }
@@ -84,13 +81,6 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
 }
 
 fn render(frame: &mut Frame, app: &App) {
-    match app.mode {
-        ViewMode::Interactive => render_interactive(frame, app),
-        ViewMode::ApiShowcase => render_api_showcase(frame, app),
-    }
-}
-
-fn render_interactive(frame: &mut Frame, app: &App) {
     let main_layout = Layout::vertical([
         Constraint::Length(3), // Header
         Constraint::Min(0),    // Content
@@ -99,7 +89,7 @@ fn render_interactive(frame: &mut Frame, app: &App) {
     .split(frame.area());
 
     // Header
-    render_header(frame, main_layout[0], app);
+    render_header(frame, main_layout[0]);
 
     // Content area - 2x2 grid of pie charts
     let rows = Layout::vertical([Constraint::Percentage(50), Constraint::Percentage(50)])
@@ -111,39 +101,19 @@ fn render_interactive(frame: &mut Frame, app: &App) {
     let bottom_row =
         Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]).split(rows[1]);
 
-    // Render 4 different pie chart examples
-    render_programming_languages(frame, top_row[0], app.selected == 0);
-    render_market_share(frame, top_row[1], app.selected == 1);
-    render_time_allocation(frame, bottom_row[0], app.selected == 2);
-    render_budget_distribution(frame, bottom_row[1], app.selected == 3);
+    // Render 4 different pie chart examples with animation
+    render_programming_languages(frame, top_row[0], app.selected == 0, app.animation_time);
+    render_market_share(frame, top_row[1], app.selected == 1, app.animation_time);
+    render_time_allocation(frame, bottom_row[0], app.selected == 2, app.animation_time);
+    render_budget_distribution(frame, bottom_row[1], app.selected == 3, app.animation_time);
 
     // Footer
-    render_footer(frame, main_layout[2], app);
+    render_footer(frame, main_layout[2]);
 }
 
-fn render_api_showcase(frame: &mut Frame, app: &App) {
-    let layout = Layout::vertical([
-        Constraint::Length(3),  // Header
-        Constraint::Length(15), // Basic pie chart showcase
-        Constraint::Length(15), // Styled pie chart showcase
-        Constraint::Min(0),     // Custom symbols showcase
-        Constraint::Length(3),  // Footer
-    ])
-    .split(frame.area());
-
-    render_header(frame, layout[0], app);
-    render_showcase_basic(frame, layout[1]);
-    render_showcase_styled(frame, layout[2]);
-    render_showcase_custom(frame, layout[3]);
-    render_footer(frame, layout[4], app);
-}
-
-fn render_header(frame: &mut Frame, area: Rect, app: &App) {
+fn render_header(frame: &mut Frame, area: Rect) {
     let block = Block::bordered()
-        .title(match app.mode {
-            ViewMode::Interactive => " tui-piechart Demo - Interactive Mode ",
-            ViewMode::ApiShowcase => " tui-piechart Demo - API Showcase ",
-        })
+        .title(" tui-piechart Demo - Animated ")
         .title_alignment(Alignment::Center)
         .border_style(Style::default().fg(Color::Cyan))
         .padding(Padding::horizontal(1));
@@ -155,37 +125,32 @@ fn render_header(frame: &mut Frame, area: Rect, app: &App) {
     frame.render_widget(text.block(block), area);
 }
 
-fn render_footer(frame: &mut Frame, area: Rect, app: &App) {
+fn render_footer(frame: &mut Frame, area: Rect) {
     let block = Block::bordered()
         .border_style(Style::default().fg(Color::DarkGray))
         .padding(Padding::horizontal(1));
 
-    let text = match app.mode {
-        ViewMode::Interactive => Line::from(vec![
-            Span::styled("↑/↓", Style::default().fg(Color::Cyan).bold()),
-            Span::raw(" Navigate  "),
-            Span::styled("Tab", Style::default().fg(Color::Cyan).bold()),
-            Span::raw(" API Showcase  "),
-            Span::styled("q", Style::default().fg(Color::Cyan).bold()),
-            Span::raw(" Quit"),
-        ]),
-        ViewMode::ApiShowcase => Line::from(vec![
-            Span::styled("Tab", Style::default().fg(Color::Cyan).bold()),
-            Span::raw(" Back to Interactive  "),
-            Span::styled("q", Style::default().fg(Color::Cyan).bold()),
-            Span::raw(" Quit"),
-        ]),
-    };
+    let text = Line::from(vec![
+        Span::styled("↑/↓", Style::default().fg(Color::Cyan).bold()),
+        Span::raw(" Navigate  "),
+        Span::styled("q", Style::default().fg(Color::Cyan).bold()),
+        Span::raw(" Quit"),
+    ]);
 
     let paragraph = Paragraph::new(text).alignment(Alignment::Center);
     frame.render_widget(paragraph.block(block), area);
 }
 
-fn render_programming_languages(frame: &mut Frame, area: Rect, is_selected: bool) {
+fn render_programming_languages(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+    // Animate values with sine waves at different frequencies
+    let rust_val = 35.0 + 15.0 * (time * 0.5).sin();
+    let go_val = 25.0 + 10.0 * (time * 0.7 + 1.0).sin();
+    let python_val = 100.0 - rust_val - go_val;
+
     let slices = vec![
-        PieSlice::new("Rust", 45.0, Color::Red),
-        PieSlice::new("Go", 30.0, Color::Blue),
-        PieSlice::new("Python", 25.0, Color::Green),
+        PieSlice::new("Rust", rust_val, Color::Red),
+        PieSlice::new("Go", go_val, Color::Blue),
+        PieSlice::new("Python", python_val, Color::Green),
     ];
 
     let block = Block::bordered()
@@ -208,11 +173,16 @@ fn render_programming_languages(frame: &mut Frame, area: Rect, is_selected: bool
     frame.render_widget(piechart, area);
 }
 
-fn render_market_share(frame: &mut Frame, area: Rect, is_selected: bool) {
+fn render_market_share(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+    // Animate with different phase offsets
+    let prod_a = 30.0 + 15.0 * (time * 0.6 + 2.0).sin();
+    let prod_b = 30.0 + 15.0 * (time * 0.8 + 4.0).sin();
+    let prod_c = 100.0 - prod_a - prod_b;
+
     let slices = vec![
-        PieSlice::new("Product A", 40.0, Color::Magenta),
-        PieSlice::new("Product B", 35.0, Color::Yellow),
-        PieSlice::new("Product C", 25.0, Color::Cyan),
+        PieSlice::new("Product A", prod_a, Color::Magenta),
+        PieSlice::new("Product B", prod_b, Color::Yellow),
+        PieSlice::new("Product C", prod_c, Color::Cyan),
     ];
 
     let block = Block::bordered()
@@ -236,11 +206,16 @@ fn render_market_share(frame: &mut Frame, area: Rect, is_selected: bool) {
     frame.render_widget(piechart, area);
 }
 
-fn render_time_allocation(frame: &mut Frame, area: Rect, is_selected: bool) {
+fn render_time_allocation(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+    // Slower animation for time allocation
+    let work = 45.0 + 15.0 * (time * 0.4).sin();
+    let sleep = 25.0 + 10.0 * (time * 0.5 + 3.0).sin();
+    let leisure = 100.0 - work - sleep;
+
     let slices = vec![
-        PieSlice::new("Work", 50.0, Color::LightBlue),
-        PieSlice::new("Sleep", 30.0, Color::LightMagenta),
-        PieSlice::new("Leisure", 20.0, Color::LightGreen),
+        PieSlice::new("Work", work, Color::LightBlue),
+        PieSlice::new("Sleep", sleep, Color::LightMagenta),
+        PieSlice::new("Leisure", leisure, Color::LightGreen),
     ];
 
     let block = Block::bordered()
@@ -264,12 +239,18 @@ fn render_time_allocation(frame: &mut Frame, area: Rect, is_selected: bool) {
     frame.render_widget(piechart, area);
 }
 
-fn render_budget_distribution(frame: &mut Frame, area: Rect, is_selected: bool) {
+fn render_budget_distribution(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+    // Four values with different animation speeds
+    let housing = 30.0 + 10.0 * (time * 0.55 + 1.5).sin();
+    let food = 20.0 + 8.0 * (time * 0.65 + 2.5).sin();
+    let transport = 18.0 + 7.0 * (time * 0.45 + 3.5).sin();
+    let other = 100.0 - housing - food - transport;
+
     let slices = vec![
-        PieSlice::new("Housing", 35.0, Color::LightRed),
-        PieSlice::new("Food", 25.0, Color::LightYellow),
-        PieSlice::new("Transport", 20.0, Color::LightCyan),
-        PieSlice::new("Other", 20.0, Color::Gray),
+        PieSlice::new("Housing", housing, Color::LightRed),
+        PieSlice::new("Food", food, Color::LightYellow),
+        PieSlice::new("Transport", transport, Color::LightCyan),
+        PieSlice::new("Other", other, Color::Gray),
     ];
 
     let block = Block::bordered()
@@ -291,141 +272,4 @@ fn render_budget_distribution(frame: &mut Frame, area: Rect, is_selected: bool) 
         .pie_char(symbols::PIE_CHAR_DIAMOND);
 
     frame.render_widget(piechart, area);
-}
-
-// API Showcase rendering functions
-
-fn render_showcase_basic(frame: &mut Frame, area: Rect) {
-    let block = Block::bordered()
-        .title(" Basic Usage: new(), default(), slices() ")
-        .border_style(Style::default().fg(Color::Yellow));
-
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
-
-    let layout = Layout::horizontal([
-        Constraint::Percentage(33),
-        Constraint::Percentage(34),
-        Constraint::Percentage(33),
-    ])
-    .split(inner);
-
-    // Basic pie chart
-    let slices1 = vec![
-        PieSlice::new("A", 60.0, Color::Red),
-        PieSlice::new("B", 40.0, Color::Blue),
-    ];
-    let pie1 = PieChart::new(slices1);
-    frame.render_widget(pie1, layout[0]);
-
-    // Using default
-    let slices2 = vec![
-        PieSlice::new("X", 50.0, Color::Green),
-        PieSlice::new("Y", 50.0, Color::Yellow),
-    ];
-    let pie2 = PieChart::default().slices(slices2);
-    frame.render_widget(pie2, layout[1]);
-
-    // With block
-    let slices3 = vec![
-        PieSlice::new("One", 70.0, Color::Magenta),
-        PieSlice::new("Two", 30.0, Color::Cyan),
-    ];
-    let pie3 = PieChart::new(slices3).block(Block::bordered().title("Chart"));
-    frame.render_widget(pie3, layout[2]);
-}
-
-fn render_showcase_styled(frame: &mut Frame, area: Rect) {
-    let block = Block::bordered()
-        .title(" Styling: show_legend(), show_percentages(), pie_char() ")
-        .border_style(Style::default().fg(Color::Yellow));
-
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
-
-    let layout = Layout::horizontal([
-        Constraint::Percentage(33),
-        Constraint::Percentage(34),
-        Constraint::Percentage(33),
-    ])
-    .split(inner);
-
-    // Without legend
-    let slices1 = vec![
-        PieSlice::new("A", 60.0, Color::Red),
-        PieSlice::new("B", 40.0, Color::Blue),
-    ];
-    let pie1 = PieChart::new(slices1).show_legend(false);
-    frame.render_widget(pie1, layout[0]);
-
-    // Without percentages
-    let slices2 = vec![
-        PieSlice::new("X", 50.0, Color::Green),
-        PieSlice::new("Y", 50.0, Color::Yellow),
-    ];
-    let pie2 = PieChart::new(slices2).show_percentages(false);
-    frame.render_widget(pie2, layout[1]);
-
-    // Custom character
-    let slices3 = vec![
-        PieSlice::new("1", 70.0, Color::Magenta),
-        PieSlice::new("2", 30.0, Color::Cyan),
-    ];
-    let pie3 = PieChart::new(slices3).pie_char('█');
-    frame.render_widget(pie3, layout[2]);
-}
-
-fn render_showcase_custom(frame: &mut Frame, area: Rect) {
-    let block = Block::bordered()
-        .title(" Custom Symbols: PIE_CHAR_*, multiple slices ")
-        .border_style(Style::default().fg(Color::Yellow));
-
-    let inner = block.inner(area);
-    frame.render_widget(block, area);
-
-    let layout = Layout::horizontal([
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-    ])
-    .split(inner);
-
-    // Circle symbol
-    let slices1 = vec![
-        PieSlice::new("A", 40.0, Color::Red),
-        PieSlice::new("B", 30.0, Color::Blue),
-        PieSlice::new("C", 30.0, Color::Green),
-    ];
-    let pie1 = PieChart::new(slices1).pie_char(symbols::PIE_CHAR_CIRCLE);
-    frame.render_widget(pie1, layout[0]);
-
-    // Square symbol
-    let slices2 = vec![
-        PieSlice::new("X", 25.0, Color::Yellow),
-        PieSlice::new("Y", 25.0, Color::Magenta),
-        PieSlice::new("Z", 50.0, Color::Cyan),
-    ];
-    let pie2 = PieChart::new(slices2).pie_char(symbols::PIE_CHAR_SQUARE);
-    frame.render_widget(pie2, layout[1]);
-
-    // Diamond symbol
-    let slices3 = vec![
-        PieSlice::new("1", 33.0, Color::LightRed),
-        PieSlice::new("2", 33.0, Color::LightBlue),
-        PieSlice::new("3", 34.0, Color::LightGreen),
-    ];
-    let pie3 = PieChart::new(slices3).pie_char(symbols::PIE_CHAR_DIAMOND);
-    frame.render_widget(pie3, layout[2]);
-
-    // Block symbol with many slices
-    let slices4 = vec![
-        PieSlice::new("A", 20.0, Color::Red),
-        PieSlice::new("B", 20.0, Color::Blue),
-        PieSlice::new("C", 20.0, Color::Green),
-        PieSlice::new("D", 20.0, Color::Yellow),
-        PieSlice::new("E", 20.0, Color::Magenta),
-    ];
-    let pie4 = PieChart::new(slices4).pie_char(symbols::PIE_CHAR_BLOCK);
-    frame.render_widget(pie4, layout[3]);
 }
