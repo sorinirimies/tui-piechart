@@ -175,8 +175,48 @@ info:
 view-changelog:
     @cat CHANGELOG.md
 
-# Run the VHS tape to generate demo GIF
-vhs:
-    @echo "Running VHS tape to generate demo..."
+# Run the VHS tape to generate demo GIF for piechart
+vhs-piechart:
+    @echo "Running VHS tape to generate piechart demo..."
     vhs examples/piechart.tape
     @echo "✅ Demo generated at examples/piechart.gif"
+
+# Run the VHS tape to generate demo GIF for custom_symbols
+vhs-custom-symbols:
+    @echo "Running VHS tape to generate custom_symbols demo..."
+    vhs examples/custom_symbols.tape
+    @echo "✅ Demo generated at examples/custom_symbols.gif"
+
+# Run the VHS tape to generate demo GIF for high_resolution
+vhs-high-resolution:
+    @echo "Running VHS tape to generate high_resolution demo..."
+    vhs examples/high_resolution.tape
+    @echo "✅ Demo generated at examples/high_resolution.gif"
+
+# Run the VHS tape to generate demo GIF for symbols_circles_squares
+vhs-symbols-circles-squares:
+    @echo "Running VHS tape to generate symbols_circles_squares demo..."
+    vhs examples/symbols_circles_squares.tape
+    @echo "✅ Demo generated at examples/symbols_circles_squares.gif"
+
+# Run the VHS tape to generate demo GIF for symbols_stars_hearts
+vhs-symbols-stars-hearts:
+    @echo "Running VHS tape to generate symbols_stars_hearts demo..."
+    vhs examples/symbols_stars_hearts.tape
+    @echo "✅ Demo generated at examples/symbols_stars_hearts.gif"
+
+# Run the VHS tape to generate demo GIF for symbols_triangles_hexagons
+vhs-symbols-triangles-hexagons:
+    @echo "Running VHS tape to generate symbols_triangles_hexagons demo..."
+    vhs examples/symbols_triangles_hexagons.tape
+    @echo "✅ Demo generated at examples/symbols_triangles_hexagons.gif"
+
+# Run the VHS tape to generate demo GIF for symbols_shades_bars
+vhs-symbols-shades-bars:
+    @echo "Running VHS tape to generate symbols_shades_bars demo..."
+    vhs examples/symbols_shades_bars.tape
+    @echo "✅ Demo generated at examples/symbols_shades_bars.gif"
+
+# Run all VHS tapes to generate all demo GIFs
+vhs-all: vhs-piechart vhs-custom-symbols vhs-high-resolution vhs-symbols-circles-squares vhs-symbols-stars-hearts vhs-symbols-triangles-hexagons vhs-symbols-shades-bars
+    @echo "✅ All demo GIFs generated!"
