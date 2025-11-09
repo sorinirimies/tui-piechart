@@ -2,12 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.6 - 2025-11-09
+### 📦 Other Changes
+- Expand categories in Cargo.toml
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.5...v0.1.6
 ## 0.1.5 - 2025-11-09
 ### 📦 Other Changes
 - Move VHS examples to vhs/ and update output paths
 - Merge remote-tracking branch 'origin/main'
 ### 🔄 Updated
 - Update README.md
+### 🔧 Chores
+- chore: bump version to 0.1.5
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.4...v0.1.5
 ## 0.1.4 - 2025-11-09
 ### ➕ Added
