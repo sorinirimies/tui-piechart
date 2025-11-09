@@ -3,7 +3,7 @@
 # Install VHS: https://github.com/charmbracelet/vhs
 # Run: vhs examples/custom_symbols.tape
 
-Output "examples/custom_symbols.gif"
+Output "examples/vhs/target/custom_symbols.gif"
 Set Theme "Aardvark Blue"
 Set Width 1600
 Set Height 1000

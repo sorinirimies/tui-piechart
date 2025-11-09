@@ -3,7 +3,7 @@
 # Install VHS: https://github.com/charmbracelet/vhs
 # Run: vhs examples/symbols_circles_squares.tape
 
-Output "examples/symbols_circles_squares.gif"
+Output "examples/vhs/target/symbols_circles_squares.gif"
 Set Theme "Aardvark Blue"
 Set Width 1600
 Set Height 1000

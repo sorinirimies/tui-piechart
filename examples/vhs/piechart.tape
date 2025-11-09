@@ -3,7 +3,7 @@
 # Install VHS: https://github.com/charmbracelet/vhs
 # Run: vhs examples/piechart.tape
 
-Output "examples/piechart.gif"
+Output "examples/vhs/target/piechart.gif"
 Set Theme "Aardvark Blue"
 Set Width 1400
 Set Height 1000

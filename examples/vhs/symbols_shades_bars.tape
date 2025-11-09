@@ -1,9 +1,9 @@
-# VHS Recording Script for tui-piechart Stars & Hearts Symbols Demo
-# This script demonstrates star and heart predefined symbols
+# VHS Recording Script for tui-piechart Shades & Bars Symbols Demo
+# This script demonstrates shading patterns and bar predefined symbols
 # Install VHS: https://github.com/charmbracelet/vhs
-# Run: vhs examples/symbols_stars_hearts.tape
+# Run: vhs examples/symbols_shades_bars.tape
 
-Output "examples/symbols_stars_hearts.gif"
+Output "examples/vhs/target/symbols_shades_bars.gif"
 Set Theme "Aardvark Blue"
 Set Width 1600
 Set Height 1000
@@ -11,25 +11,25 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "cargo run --example symbols_stars_hearts"
+Type "cargo run --example symbols_shades_bars"
 Enter
 Sleep 2s
 Show
 Sleep 1.5s
 
-# Show diamond symbols (top-left)
+# Show asterism symbols (top-left)
 Sleep 1s
 
-# Navigate to Star (top-right)
+# Navigate to Horizontal Bar (top-right)
 Right
 Sleep 1.5s
 
-# Navigate to White Star (bottom-left)
+# Navigate to Shade (bottom-left)
 Down
 Left
 Sleep 1.5s
 
-# Navigate to Heart (bottom-right)
+# Navigate to Light (bottom-right)
 Right
 Sleep 1.5s
 

@@ -3,7 +3,7 @@
 # Install VHS: https://github.com/charmbracelet/vhs
 # Run: vhs examples/high_resolution.tape
 
-Output "examples/high_resolution.gif"
+Output "examples/vhs/target/high_resolution.gif"
 Set Theme "Aardvark Blue"
 Set Width 1600
 Set Height 1000
