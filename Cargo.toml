@@ -9,7 +9,7 @@ description = "A customizable pie chart widget for Ratatui TUI applications"
 repository = "https://github.com/sorinirimies/tui-piechart"
 homepage = "https://github.com/sorinirimies/tui-piechart"
 keywords = ["tui", "terminal", "ratatui", "piechart", "widget"]
-categories = ["command-line-interface"]
+categories = ["command-line-interface", "visualization", "rendering", "gui", "graphics"]
 readme = "README.md"
 
 [dependencies]
