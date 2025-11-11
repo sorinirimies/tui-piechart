@@ -12,7 +12,7 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 ![piechart](https://github.com/user-attachments/assets/249c42dd-6f35-43e2-948b-8fcc1b2c0c57)
 
 ## Preview High Resolution
-![high_resolution](https://github.com/user-attachments/assets/23d85f47-2629-4b4c-8887-4dceab25b2fd)
+![tui-piechart](https://github.com/user-attachments/assets/1e142d27-67c6-4452-8562-4273776851e9)
 
 
 ## Features
