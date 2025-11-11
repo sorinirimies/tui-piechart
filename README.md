@@ -8,10 +8,7 @@
 
 A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui) TUI applications.
 
-## Preview Basic
-![piechart](https://github.com/user-attachments/assets/249c42dd-6f35-43e2-948b-8fcc1b2c0c57)
-
-## Preview High Resolution
+## Preview Standard and High Resolution
 ![tui-piechart](https://github.com/user-attachments/assets/1e142d27-67c6-4452-8562-4273776851e9)
 
 
