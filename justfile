@@ -138,20 +138,80 @@ commit message:
     git add .
     git commit -m "{{message}}"
 
-# Git: push to origin
+# Git: push to GitHub (origin)
 push:
     git push origin main
 
-# Git: push tags
-push-tags:
-    git push --tags
+# Git: push to Gitea
+push-gitea:
+    git push gitea main
 
-# Full release workflow: bump version and push
+# Git: push to both GitHub and Gitea
+push-all:
+    git push origin main
+    git push gitea main
+    @echo "✅ Pushed to both GitHub and Gitea!"
+
+# Git: push tags to GitHub
+push-tags:
+    git push origin --tags
+
+# Git: push tags to both remotes
+push-tags-all:
+    git push origin --tags
+    git push gitea --tags
+    @echo "✅ Tags pushed to both GitHub and Gitea!"
+
+# Full release workflow: bump version and push to GitHub
 release version: (bump version)
-    @echo "Pushing to remote..."
+    @echo "Pushing to GitHub..."
     git push origin main
     git push origin v{{version}}
-    @echo "✅ Release v{{version}} complete!"
+    @echo "✅ Release v{{version}} complete on GitHub!"
+
+# Full release workflow: bump version and push to Gitea
+release-gitea version: (bump version)
+    @echo "Pushing to Gitea..."
+    git push gitea main
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on Gitea!"
+
+# Full release workflow: bump version and push to both GitHub and Gitea
+release-all version: (bump version)
+    @echo "Pushing to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin v{{version}}
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on both remotes!"
+
+# Push release to both GitHub and Gitea (without bumping)
+push-release-all:
+    @echo "Pushing release to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin --tags
+    git push gitea --tags
+    @echo "✅ Release pushed to both remotes!"
+
+# Sync Gitea with GitHub (force)
+sync-gitea:
+    @echo "Syncing Gitea with GitHub..."
+    git push gitea main --force
+    git push gitea --tags --force
+    @echo "✅ Gitea synced!"
+
+# Show configured remotes
+remotes:
+    @echo "Configured git remotes:"
+    @git remote -v
+
+# Setup Gitea remote (provide your Gitea URL)
+setup-gitea url:
+    @echo "Adding Gitea remote..."
+    git remote add gitea {{url}}
+    @echo "✅ Gitea remote added!"
+    @echo "Test with: git push gitea main"
 
 # Show current version
 version:
