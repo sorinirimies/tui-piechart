@@ -13,6 +13,8 @@ All notable changes to this project will be documented in this file.
 ### 🔄 Updated
 - Update README.md
 - Update README.md
+### 🔧 Chores
+- chore: bump version to 0.1.7
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.6...v0.1.7
 ## 0.1.6 - 2025-11-09
 ### 📦 Other Changes
