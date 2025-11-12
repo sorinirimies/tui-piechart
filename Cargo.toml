@@ -1,6 +1,6 @@
 [package]
 name = "tui-piechart"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Sorin Albu-Irimies <sorinirimies@gmail.com>"]
 edition = "2021"
 rust-version = "1.74.0"

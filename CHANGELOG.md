@@ -2,9 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.1.7 - 2025-11-12
+### ➕ Added
+- Add Gitea support and multi-remote release tasks
+- Add Gitea dual-hosting setup guides and workflows
+### 🐛 Bug Fixes
+- fix justfile
+### 📦 Other Changes
+- Remove Windows from CI and release workflows
+### 🔄 Updated
+- Update README.md
+- Update README.md
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.6...v0.1.7
 ## 0.1.6 - 2025-11-09
 ### 📦 Other Changes
 - Expand categories in Cargo.toml
+### 🔧 Chores
+- chore: bump version to 0.1.6
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.5...v0.1.6
 ## 0.1.5 - 2025-11-09
 ### 📦 Other Changes
