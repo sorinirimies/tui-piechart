@@ -1,0 +1,164 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo fmt --all -- --check
+
+      - name: Run clippy
+        run: cargo clippy -- -D warnings -A deprecated
+
+      - name: Run tests
+        run: cargo test --all-features
+
+  build:
+    name: Build and release
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cliff
+        run: cargo install git-cliff
+
+      - name: Update version and generate changelog
+        run: |
+          # Extract version from tag (remove 'v' prefix)
+          VERSION=${GITHUB_REF_NAME#v}
+          echo "Updating version to: $VERSION"
+
+          # Update Cargo.toml version
+          sed -i "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+
+          # Update full changelog with git-cliff
+          git-cliff --config cliff.toml --latest --output CHANGELOG.md
+
+          # Generate release notes with git-cliff
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+          # Generate release changelog using git-cliff
+          if [ -n "$LAST_TAG" ]; then
+            # Generate changelog between tags
+            git-cliff --config cliff.toml ${LAST_TAG}..${{ github.ref_name }} --strip header > CLIFF_CHANGES.md
+          else
+            # Generate changelog for first release
+            git-cliff --config cliff.toml --tag ${{ github.ref_name }} --strip header > CLIFF_CHANGES.md
+          fi
+
+          # Create the release note template
+          echo "# tui-piechart ${VERSION}" > RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "## 🚀 What's New" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+
+          if [ -n "$LAST_TAG" ]; then
+            echo "### 📝 Changes since ${LAST_TAG}:" >> RELEASE_CHANGELOG.md
+            echo "" >> RELEASE_CHANGELOG.md
+          else
+            echo "### 🎉 Initial Release" >> RELEASE_CHANGELOG.md
+            echo "" >> RELEASE_CHANGELOG.md
+          fi
+
+          # Add the git-cliff generated changes to the release notes
+          cat CLIFF_CHANGES.md >> RELEASE_CHANGELOG.md
+
+          # Add installation and quick start info
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "## 📦 Installation" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "Add this to your \`Cargo.toml\`:" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "\`\`\`toml" >> RELEASE_CHANGELOG.md
+          echo "[dependencies]" >> RELEASE_CHANGELOG.md
+          echo "tui-piechart = \"${VERSION}\"" >> RELEASE_CHANGELOG.md
+          echo "\`\`\`" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "Or install with cargo:" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "\`\`\`bash" >> RELEASE_CHANGELOG.md
+          echo "cargo add tui-piechart" >> RELEASE_CHANGELOG.md
+          echo "\`\`\`" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "## 🚀 Quick Start" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "\`\`\`rust" >> RELEASE_CHANGELOG.md
+          echo "use ratatui::style::Color;" >> RELEASE_CHANGELOG.md
+          echo "use tui_piechart::{PieChart, PieSlice};" >> RELEASE_CHANGELOG.md
+          echo "" >> RELEASE_CHANGELOG.md
+          echo "let slices = vec![" >> RELEASE_CHANGELOG.md
+          echo "    PieSlice::new(\"Rust\", 45.0, Color::Red)," >> RELEASE_CHANGELOG.md
+          echo "    PieSlice::new(\"Go\", 30.0, Color::Blue)," >> RELEASE_CHANGELOG.md
+          echo "];" >> RELEASE_CHANGELOG.md
+          echo "let piechart = PieChart::new(slices);" >> RELEASE_CHANGELOG.md
+          echo "\`\`\`" >> RELEASE_CHANGELOG.md
+
+          # Show the generated release notes
+          echo "Generated release notes:"
+          cat RELEASE_CHANGELOG.md
+
+      - name: Build release
+        run: cargo build --release --all-features
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          body_path: RELEASE_CHANGELOG.md
+          files: |
+            LICENSE
+            README.md
+            CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish to crates.io
+        if: env.CRATES_IO_TOKEN != ''
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          echo "Publishing to crates.io..."
+          cargo publish --token $CRATES_IO_TOKEN --allow-dirty
+
+      - name: Skip crates.io publish
+        if: env.CRATES_IO_TOKEN == ''
+        env:
+          CRATES_IO_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
+        run: |
+          echo "⚠️  CRATES_IO_TOKEN not set. Skipping crates.io publication."
+          echo "To publish to crates.io, add CRATES_IO_TOKEN to your GitHub secrets."
