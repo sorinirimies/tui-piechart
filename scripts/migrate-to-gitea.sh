@@ -244,6 +244,10 @@ if [ -f "$PROJECT_DIR/justfile" ]; then
 # Gitea Dual-Hosting Commands
 # ============================================================================
 
+# Git: push to GitHub (origin)
+push:
+    git push origin main
+
 # Git: push to Gitea
 push-gitea:
     git push gitea main
@@ -254,13 +258,40 @@ push-all:
     git push gitea main
     @echo "✅ Pushed to both GitHub and Gitea!"
 
+# Git: push tags to GitHub
+push-tags:
+    git push origin --tags
+
 # Git: push tags to both remotes
 push-tags-all:
     git push origin --tags
     git push gitea --tags
     @echo "✅ Tags pushed to both GitHub and Gitea!"
 
-# Push release to both GitHub and Gitea
+# Full release workflow: bump version and push to GitHub
+release version: (bump version)
+    @echo "Pushing to GitHub..."
+    git push origin main
+    git push origin v{{version}}
+    @echo "✅ Release v{{version}} complete on GitHub!"
+
+# Full release workflow: bump version and push to Gitea
+release-gitea version: (bump version)
+    @echo "Pushing to Gitea..."
+    git push gitea main
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on Gitea!"
+
+# Full release workflow: bump version and push to both GitHub and Gitea
+release-all version: (bump version)
+    @echo "Pushing to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin v{{version}}
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on both remotes!"
+
+# Push release to both GitHub and Gitea (without bumping)
 push-release-all:
     @echo "Pushing release to both GitHub and Gitea..."
     git push origin main
@@ -293,40 +324,204 @@ JUSTFILE_APPEND
         info "Run 'just --list' to see new commands"
     fi
 else
-    warning "No justfile found, creating basic one..."
+    warning "No justfile found, creating comprehensive one..."
 
     cat > "$PROJECT_DIR/justfile" << 'JUSTFILE_CREATE'
-# Justfile for project automation
+# $PROJECT_NAME - Project automation with dual GitHub/Gitea hosting
+# Install just: cargo install just
+# Install git-cliff: cargo install git-cliff
 # Usage: just <task>
 
 # Default task - show available commands
 default:
     @just --list
 
-# Push to GitHub only
+# Install required tools (just, git-cliff)
+install-tools:
+    @echo "Installing required tools..."
+    @command -v just >/dev/null 2>&1 || cargo install just
+    @command -v git-cliff >/dev/null 2>&1 || cargo install git-cliff
+    @echo "✅ All tools installed!"
+
+# Build the project
+build:
+    cargo build
+
+# Build release version
+build-release:
+    cargo build --release
+
+# Run the example (customize as needed)
+run:
+    cargo run --example main
+
+# Run tests
+test:
+    cargo test
+
+# Run tests with coverage
+test-coverage:
+    cargo tarpaulin --out Html --output-dir coverage
+
+# Check code without building
+check:
+    cargo check
+
+# Format code
+fmt:
+    cargo fmt
+
+# Check if code is formatted
+fmt-check:
+    cargo fmt --check
+
+# Run clippy linter
+clippy:
+    cargo clippy -- -D warnings
+
+# Run all checks (fmt, clippy, test)
+check-all: fmt-check clippy test
+    @echo "✅ All checks passed!"
+
+# Clean build artifacts
+clean:
+    cargo clean
+
+# Check if git-cliff is installed
+check-git-cliff:
+    @command -v git-cliff >/dev/null 2>&1 || { echo "❌ git-cliff not found. Install with: cargo install git-cliff"; exit 1; }
+
+# Generate full changelog from all tags
+changelog: check-git-cliff
+    @echo "Generating full changelog..."
+    git-cliff -o CHANGELOG.md
+    @echo "✅ Changelog generated!"
+
+# Generate changelog for unreleased commits only
+changelog-unreleased: check-git-cliff
+    @echo "Generating unreleased changelog..."
+    git-cliff --unreleased --prepend CHANGELOG.md
+    @echo "✅ Unreleased changelog generated!"
+
+# Generate changelog for specific version tag
+changelog-version version: check-git-cliff
+    @echo "Generating changelog for version {{version}}..."
+    git-cliff --tag v{{version}} -o CHANGELOG.md
+    @echo "✅ Changelog generated for version {{version}}!"
+
+# Preview changelog without writing to file
+changelog-preview: check-git-cliff
+    @git-cliff
+
+# Preview unreleased changes
+changelog-preview-unreleased: check-git-cliff
+    @git-cliff --unreleased
+
+# Generate changelog for latest tag only
+changelog-latest: check-git-cliff
+    @echo "Generating changelog for latest tag..."
+    git-cliff --latest -o CHANGELOG.md
+    @echo "✅ Latest changelog generated!"
+
+# Update changelog with all commits (force regenerate)
+changelog-update: check-git-cliff
+    @echo "Regenerating complete changelog from all tags..."
+    git-cliff --output CHANGELOG.md
+    @echo "✅ Changelog updated from all git history!"
+
+# Bump version (usage: just bump 0.2.0)
+bump version: check-git-cliff
+    @echo "Bumping version to {{version}}..."
+    @./scripts/bump_version.sh {{version}}
+
+# Quick release: format, check, test, and build
+release-check: fmt clippy test build-release
+    @echo "✅ Ready for release!"
+
+# Publish to crates.io (dry run)
+publish-dry:
+    cargo publish --dry-run
+
+# Publish to crates.io
+publish:
+    cargo publish
+
+# Update dependencies
+update:
+    cargo update
+
+# Show outdated dependencies
+outdated:
+    cargo outdated
+
+# Generate documentation
+doc:
+    cargo doc --no-deps --open
+
+# Watch and auto-run on file changes (requires cargo-watch)
+watch:
+    cargo watch -x run
+
+# Git: commit current changes
+commit message:
+    git add .
+    git commit -m "{{message}}"
+
+# Git: push to GitHub (origin)
 push:
     git push origin main
 
-# Push to Gitea only
+# Git: push to Gitea
 push-gitea:
     git push gitea main
 
-# Push to both GitHub and Gitea
+# Git: push to both GitHub and Gitea
 push-all:
     git push origin main
     git push gitea main
     @echo "✅ Pushed to both GitHub and Gitea!"
 
-# Push tags to both remotes
+# Git: push tags to GitHub
+push-tags:
+    git push origin --tags
+
+# Git: push tags to both remotes
 push-tags-all:
     git push origin --tags
     git push gitea --tags
     @echo "✅ Tags pushed to both GitHub and Gitea!"
 
-# Show configured remotes
-remotes:
-    @echo "Configured git remotes:"
-    @git remote -v
+# Full release workflow: bump version and push to GitHub
+release version: (bump version)
+    @echo "Pushing to GitHub..."
+    git push origin main
+    git push origin v{{version}}
+    @echo "✅ Release v{{version}} complete on GitHub!"
+
+# Full release workflow: bump version and push to Gitea
+release-gitea version: (bump version)
+    @echo "Pushing to Gitea..."
+    git push gitea main
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on Gitea!"
+
+# Full release workflow: bump version and push to both GitHub and Gitea
+release-all version: (bump version)
+    @echo "Pushing to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin v{{version}}
+    git push gitea v{{version}}
+    @echo "✅ Release v{{version}} complete on both remotes!"
+
+# Push release to both GitHub and Gitea (without bumping)
+push-release-all:
+    @echo "Pushing release to both GitHub and Gitea..."
+    git push origin main
+    git push gitea main
+    git push origin --tags
+    git push gitea --tags
+    @echo "✅ Release pushed to both remotes!"
 
 # Sync Gitea with GitHub (force)
 sync-gitea:
@@ -334,9 +529,181 @@ sync-gitea:
     git push gitea main --force
     git push gitea --tags --force
     @echo "✅ Gitea synced!"
+
+# Show configured remotes
+remotes:
+    @echo "Configured git remotes:"
+    @git remote -v
+
+# Setup Gitea remote (provide your Gitea URL)
+setup-gitea url:
+    @echo "Adding Gitea remote..."
+    git remote add gitea {{url}}
+    @echo "✅ Gitea remote added!"
+    @echo "Test with: git push gitea main"
+
+# Show current version
+version:
+    @grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
+
+# Show git-cliff info
+cliff-info:
+    @echo "Git-cliff configuration:"
+    @echo "  Config file: cliff.toml"
+    @echo "  Installed: $(command -v git-cliff >/dev/null 2>&1 && echo '✅ Yes' || echo '❌ No (run: just install-tools)')"
+    @command -v git-cliff >/dev/null 2>&1 && git-cliff --version || true
+
+# Show project info
+info:
+    @echo "Project: $PROJECT_NAME"
+    @echo "Version: $(just version)"
+    @echo "License: MIT"
+
+# View changelog
+view-changelog:
+    @cat CHANGELOG.md
 JUSTFILE_CREATE
 
-    success "Created justfile with Gitea commands"
+    # Replace $PROJECT_NAME with actual project name
+    sed -i "s/\$PROJECT_NAME/$PROJECT_NAME/g" "$PROJECT_DIR/justfile"
+
+    success "Created comprehensive justfile with all commands"
+    info "Customize the 'run' command and other project-specific settings"
+fi
+
+# Create bump_version.sh script if it doesn't exist
+heading "Checking Version Bump Script"
+
+if [ ! -d "$PROJECT_DIR/scripts" ]; then
+    mkdir -p "$PROJECT_DIR/scripts"
+    success "Created scripts directory"
+fi
+
+if [ -f "$PROJECT_DIR/scripts/bump_version.sh" ]; then
+    success "bump_version.sh already exists"
+else
+    info "Creating bump_version.sh script..."
+
+    cat > "$PROJECT_DIR/scripts/bump_version.sh" << 'BUMP_SCRIPT'
+#!/bin/bash
+# Automated version bump script
+# Usage: ./scripts/bump_version.sh <new_version>
+# Example: ./scripts/bump_version.sh 0.2.5
+
+set -e
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Check if version argument is provided
+if [ -z "$1" ]; then
+    echo -e "${RED}Error: Version number required${NC}"
+    echo "Usage: $0 <version>"
+    echo "Example: $0 0.2.5"
+    exit 1
+fi
+
+NEW_VERSION=$1
+
+# Validate version format (semantic versioning)
+if ! [[ $NEW_VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    echo -e "${RED}Error: Invalid version format${NC}"
+    echo "Version must be in format: X.Y.Z (e.g., 0.2.5)"
+    exit 1
+fi
+
+echo -e "${YELLOW}Bumping version to ${NEW_VERSION}...${NC}"
+
+# Get current version from Cargo.toml
+CURRENT_VERSION=$(grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+echo -e "Current version: ${CURRENT_VERSION}"
+echo -e "New version: ${NEW_VERSION}"
+
+# Ask for confirmation
+read -p "Continue? (y/n) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+    echo -e "${YELLOW}Aborted${NC}"
+    exit 0
+fi
+
+# Update Cargo.toml
+echo -e "${GREEN}Updating Cargo.toml...${NC}"
+sed -i "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
+
+# Update README.md version badge if it exists
+if [ -f README.md ]; then
+    echo -e "${GREEN}Updating README.md...${NC}"
+    if grep -q "version-[0-9]*\.[0-9]*\.[0-9]*-blue" README.md 2>/dev/null; then
+        sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*-blue/version-${NEW_VERSION}-blue/" README.md
+    fi
+fi
+
+# Update Cargo.lock
+echo -e "${GREEN}Updating Cargo.lock...${NC}"
+PROJECT_NAME=$(grep '^name = ' Cargo.toml | head -1 | sed 's/name = "\(.*\)"/\1/')
+cargo update -p "$PROJECT_NAME" || cargo build
+
+# Check formatting
+echo -e "${GREEN}Running cargo fmt...${NC}"
+cargo fmt
+
+# Check for issues
+echo -e "${GREEN}Running cargo clippy...${NC}"
+if ! cargo clippy -- -D warnings; then
+    echo -e "${RED}Clippy found issues. Please fix them before continuing.${NC}"
+    exit 1
+fi
+
+# Run tests
+echo -e "${GREEN}Running tests...${NC}"
+if ! cargo test --locked --all-features --all-targets; then
+    echo -e "${RED}Tests failed. Please fix them before continuing.${NC}"
+    exit 1
+fi
+
+# Generate changelog
+echo -e "${GREEN}Generating CHANGELOG.md...${NC}"
+if command -v git-cliff &> /dev/null; then
+    git-cliff --tag "v${NEW_VERSION}" -o CHANGELOG.md
+    echo -e "${GREEN}Changelog updated${NC}"
+else
+    echo -e "${YELLOW}Warning: git-cliff not found. Skipping changelog generation.${NC}"
+    echo -e "${YELLOW}Install it with: cargo install git-cliff${NC}"
+fi
+
+# Git operations
+echo -e "${GREEN}Staging changes...${NC}"
+git add Cargo.toml Cargo.lock CHANGELOG.md
+if [ -f README.md ]; then
+    git add README.md
+fi
+
+echo -e "${GREEN}Creating commit...${NC}"
+git commit -m "chore: bump version to ${NEW_VERSION}
+
+- Update version in Cargo.toml and README.md
+- Update Cargo.lock
+- Generate updated CHANGELOG.md"
+
+echo -e "${GREEN}Creating tag...${NC}"
+git tag -a "v${NEW_VERSION}" -m "Release v${NEW_VERSION}"
+
+echo -e "${YELLOW}Changes committed and tagged locally.${NC}"
+echo -e "${YELLOW}To push to remote, use justfile commands:${NC}"
+echo -e "  just release ${NEW_VERSION}         # Push to GitHub"
+echo -e "  just release-gitea ${NEW_VERSION}   # Push to Gitea"
+echo -e "  just release-all ${NEW_VERSION}     # Push to both"
+echo ""
+echo -e "${GREEN}Version bump complete! 🚀${NC}"
+BUMP_SCRIPT
+
+    chmod +x "$PROJECT_DIR/scripts/bump_version.sh"
+    success "Created bump_version.sh script"
+    info "Script location: scripts/bump_version.sh"
 fi
 
 # Test Gitea connection
@@ -417,10 +784,17 @@ fi
 echo ""
 
 info "Quick commands:"
+echo "  just push             # Push to GitHub only"
 echo "  just push-gitea       # Push to Gitea only"
 echo "  just push-all         # Push to both GitHub and Gitea"
+echo "  just push-tags-all    # Push tags to both remotes"
 echo "  just sync-gitea       # Sync Gitea with GitHub"
 echo "  just remotes          # Show all remotes"
+echo ""
+info "Release commands:"
+echo "  just release 0.2.5         # Release to GitHub only"
+echo "  just release-gitea 0.2.5   # Release to Gitea only"
+echo "  just release-all 0.2.5     # Release to both remotes"
 echo ""
 
 info "Documentation:"
