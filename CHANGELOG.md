@@ -2,11 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.1.8 - 2025-11-13
+## 0.1.9 - 2025-11-13
 ### ➕ Added
 - Add comprehensive justfile and version bump script for automation
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.8...v0.1.8
-## 0.1.8 - 2025-11-13
+### 🔧 Chores
+- chore: bump version to 0.1.8
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.8...v0.1.9
+## 0.1.8 - 2025-11-12
 ### 🔧 Chores
 - chore: bump version to 0.1.8
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.7...v0.1.8
