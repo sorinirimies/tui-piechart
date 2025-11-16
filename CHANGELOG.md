@@ -2,11 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.0 - 2025-11-16
+### ➕ Added
+- Add publish readiness check script and Gitea pull commands
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.0
 ## 0.1.9 - 2025-11-13
 ### ➕ Added
 - Add comprehensive justfile and version bump script for automation
 ### 🔧 Chores
 - chore: bump version to 0.1.8
+- chore: bump version to 0.1.9
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.8...v0.1.9
 ## 0.1.8 - 2025-11-12
 ### 🔧 Chores
