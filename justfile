@@ -101,7 +101,7 @@ changelog-update: check-git-cliff
     @echo "✅ Changelog updated from all git history!"
 
 # Bump version (usage: just bump 0.2.0)
-bump version: check-git-cliff
+bump version: check-all check-git-cliff
     @echo "Bumping version to {{version}}..."
     @./scripts/bump_version.sh {{version}}
 

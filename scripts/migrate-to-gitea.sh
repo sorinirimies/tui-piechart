@@ -248,15 +248,29 @@ if [ -f "$PROJECT_DIR/justfile" ]; then
 push:
     git push origin main
 
+# Git: pull from GitHub (origin)
+pull:
+    git pull origin main
+
 # Git: push to Gitea
 push-gitea:
     git push gitea main
+
+# Git: pull from Gitea
+pull-gitea:
+    git pull gitea main
 
 # Git: push to both GitHub and Gitea
 push-all:
     git push origin main
     git push gitea main
     @echo "✅ Pushed to both GitHub and Gitea!"
+
+# Git: pull from Gitea (fetch and merge)
+pull-from-gitea:
+    @echo "Pulling from Gitea..."
+    git pull gitea main
+    @echo "✅ Pulled from Gitea!"
 
 # Git: push tags to GitHub
 push-tags:
@@ -471,15 +485,29 @@ commit message:
 push:
     git push origin main
 
+# Git: pull from GitHub (origin)
+pull:
+    git pull origin main
+
 # Git: push to Gitea
 push-gitea:
     git push gitea main
+
+# Git: pull from Gitea
+pull-gitea:
+    git pull gitea main
 
 # Git: push to both GitHub and Gitea
 push-all:
     git push origin main
     git push gitea main
     @echo "✅ Pushed to both GitHub and Gitea!"
+
+# Git: pull from Gitea (fetch and merge)
+pull-from-gitea:
+    @echo "Pulling from Gitea..."
+    git pull gitea main
+    @echo "✅ Pulled from Gitea!"
 
 # Git: push tags to GitHub
 push-tags:
