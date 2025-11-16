@@ -138,6 +138,9 @@ commit message:
     git add .
     git commit -m "{{message}}"
 
+pull-gitea:
+    git pull gitea main
+
 # Git: push to GitHub (origin)
 push:
     git push origin main
