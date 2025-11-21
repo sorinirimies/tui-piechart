@@ -18,7 +18,7 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 - 🎨 Customizable colors for each slice
 - 🔤 Labels and percentages
 - 📊 Legend support
-- 📦 Optional block wrapper
+- 📦 Optional block wrapper with multiple border styles
 - ✨ Custom symbols for pie chart and legend
 - 🔍 High resolution mode using braille patterns (8x resolution)
 - ⚡ Zero-cost abstractions
@@ -78,6 +78,37 @@ let standard = PieChart::new(slices).resolution(Resolution::Standard);
 let braille = PieChart::new(slices).resolution(Resolution::Braille);
 ```
 
+## Modules
+
+The library is organized into focused modules:
+
+- **`legend`** - Legend positioning and layout configuration
+  - `LegendPosition` - Position legend on any side (Right, Left, Top, Bottom)
+  - `LegendLayout` - Vertical or Horizontal layout modes
+  
+- **`title`** - Title positioning, alignment, and font styling for block wrappers
+  - `TitleAlignment` - Horizontal alignment (Start, Center, End)
+  - `TitlePosition` - Vertical position (Top, Bottom)
+  - `TitleStyle` - Unicode font styles (Bold, Italic, Script, Sans-Serif, Monospace, etc.)
+  - `BlockExt` - Extension trait for ergonomic title customization
+
+- **`border_style`** - Predefined border styles for block wrappers
+  - 11 border style variants (Standard, Rounded, Dashed, Thick, etc.)
+  
+- **`symbols`** - Predefined Unicode symbols for pie charts and legends
+  - Circle, square, star, heart, triangle, and many more
+
+All commonly used types are re-exported from the crate root for convenience:
+
+```rust
+use tui_piechart::{PieChart, PieSlice, LegendPosition, LegendLayout};
+
+// Or import from specific modules:
+use tui_piechart::legend::{LegendPosition, LegendLayout};
+use tui_piechart::title::{TitleAlignment, TitlePosition, BlockExt};
+use tui_piechart::border_style::BorderStyle;
+```
+
 ## Examples
 
 Run the included examples:
@@ -92,12 +123,58 @@ cargo run --example symbols_stars_hearts         # Diamond, Star, White Star, He
 cargo run --example symbols_triangles_hexagons   # Triangle, Hexagon, Bullseye, Square Box
 cargo run --example symbols_shades_bars          # Asterism, Horizontal Bar, Shade, Light
 
+# Layout and positioning examples:
+cargo run --example legend_positioning           # 4 positions × 2 layouts
+cargo run --example title_positioning            # 2 positions × 3 alignments
+cargo run --example title_styles_example         # 10 Unicode font styles
+
+# Border styles showcase (11 charts in 4-row grid)
+cargo run --example border_styles
+
 # Custom (non-predefined) symbols showcase (12 charts)
 cargo run --example custom_symbols
 
 # High resolution mode demo (animated, toggle with Space)
 cargo run --example high_resolution
+
+# Or use just commands:
+just run-legend-positioning
+just run-title-positioning
+just run-title-styles-example
+just run-border-styles
+just run-custom-symbols
+just run-high-resolution
 ```
+
+### Visual Previews
+
+**Main Interactive Demo:**
+
+![Main Demo](examples/vhs/target/piechart.gif)
+
+**Predefined Symbols:**
+
+| Circles & Squares | Stars & Hearts |
+|-------------------|----------------|
+| ![Circles & Squares](examples/vhs/target/symbols_circles_squares.gif) | ![Stars & Hearts](examples/vhs/target/symbols_stars_hearts.gif) |
+
+| Triangles & Hexagons | Shades & Bars |
+|----------------------|---------------|
+| ![Triangles & Hexagons](examples/vhs/target/symbols_triangles_hexagons.gif) | ![Shades & Bars](examples/vhs/target/symbols_shades_bars.gif) |
+
+**Border Styles:**
+
+![Border Styles](examples/vhs/target/border_styles.gif)
+
+**Custom Symbols:**
+
+![Custom Symbols](examples/vhs/target/custom_symbols.gif)
+
+**High Resolution Mode:**
+
+![High Resolution](examples/vhs/target/high_resolution.gif)
+
+*All demos generated with [VHS](https://github.com/charmbracelet/vhs). See [EXAMPLES.md](EXAMPLES.md) for detailed documentation.*
 
 ### Interactive Mode (Default)
 
@@ -143,6 +220,118 @@ let piechart = PieChart::new(slices)
     .show_legend(true)       // Show/hide legend
     .show_percentages(true); // Show/hide percentages in legend
 ```
+
+### Border Styles
+
+Customize the appearance of the block wrapper using predefined border styles:
+
+```rust
+use tui_piechart::border_style::BorderStyle;
+// Or use backwards-compatible path: use tui_piechart::symbols::BorderStyle;
+
+// Standard single-line borders (default)
+let piechart = PieChart::new(slices)
+    .block(BorderStyle::Standard.block().title("My Chart"));
+
+// Rounded corners
+let piechart = PieChart::new(slices)
+    .block(BorderStyle::Rounded.block().title("My Chart"));
+
+// Dashed borders (dashed lines throughout)
+let piechart = PieChart::new(slices)
+    .block(BorderStyle::Dashed.block().title("My Chart"));
+
+// Corner gaps only (minimalist look)
+let piechart = PieChart::new(slices)
+    .block(BorderStyle::CornerGapped.block().title("My Chart"));
+
+// Thick borders
+let piechart = PieChart::new(slices)
+    .block(BorderStyle::Thick.block().title("My Chart"));
+
+// Double-line borders
+let piechart = PieChart::new(slices)
+    .block(BorderStyle::DoubleLineStandard.block().title("My Chart"));
+```
+
+**Available Border Styles (11 total):**
+
+*Single-line variants:*
+- `BorderStyle::Standard` - Standard single-line borders (default)
+- `BorderStyle::Rounded` - Rounded corners with single-line borders
+- `BorderStyle::Dashed` - Dashed lines throughout (┄┄┄)
+- `BorderStyle::RoundedDashed` - Rounded corners with dashed lines
+- `BorderStyle::CornerGapped` - Continuous lines with gaps only at corners
+- `BorderStyle::RoundedCornerGapped` - Rounded with gaps only at corners
+
+*Double-line variants:*
+- `BorderStyle::DoubleLineStandard` - Double-line borders (═══)
+- `BorderStyle::DoubleLineRounded` - Double-line edges with rounded corners (mixed style)*
+
+*Thick-line variants:*
+- `BorderStyle::Thick` - Thick/heavy line borders (━━━)
+- `BorderStyle::ThickRounded` - Thick edges with rounded corners (mixed style)*
+- `BorderStyle::ThickDashed` - Thick dashed lines (┅┅┅)
+
+See the [border_styles example](examples/border_styles.rs) for a visual demonstration of all styles.
+
+**Note:** *DoubleLineRounded and ThickRounded use mixed styles (single-line rounded corners with double/thick-line edges) because Unicode doesn't have true rounded double-line or thick-line box-drawing characters.
+
+### Title Alignment
+
+Customize the alignment and position of block titles:
+
+```rust
+use tui_piechart::border_style::{BorderStyle, BlockExt, TitleAlignment, TitlePosition};
+
+// Horizontal alignment
+let block = BorderStyle::Rounded.block()
+    .title("My Chart")
+    .title_alignment_horizontal(TitleAlignment::Center); // Left, Center, Right
+
+// Vertical position
+let block = BorderStyle::Rounded.block()
+    .title("Top Title")
+    .title_vertical_position(TitlePosition::Top)
+    .title_bottom("Bottom Title")
+    .title_alignment(Alignment::Center);
+```
+
+**Available Options:**
+- **Horizontal:** `TitleAlignment::Left`, `TitleAlignment::Center`, `TitleAlignment::Right`
+- **Vertical:** `TitlePosition::Top`, `TitlePosition::Bottom`
+
+### Legend Positioning
+
+Control where the legend appears and how it's laid out:
+
+```rust
+use tui_piechart::{PieChart, LegendPosition, LegendLayout};
+
+// Position the legend
+let chart = PieChart::new(slices)
+    .legend_position(LegendPosition::Right)  // Right, Left, Top, Bottom
+    .legend_layout(LegendLayout::Vertical);  // Vertical or Horizontal
+
+// Example: horizontal legend at the bottom
+let chart = PieChart::new(slices)
+    .legend_position(LegendPosition::Bottom)
+    .legend_layout(LegendLayout::Horizontal);
+```
+
+**Legend Positions:**
+- `LegendPosition::Right` - Legend on the right side (default)
+- `LegendPosition::Left` - Legend on the left side
+- `LegendPosition::Top` - Legend at the top
+- `LegendPosition::Bottom` - Legend at the bottom
+
+**Legend Layouts:**
+- `LegendLayout::Vertical` - Items stacked vertically (default)
+- `LegendLayout::Horizontal` - Items in a single row
+
+The legend automatically calculates the required space based on content to prevent text cutoff.
+
+See the [legend_positioning example](examples/legend_positioning.rs) for an interactive demonstration.
 
 ### Custom Symbols
 
@@ -356,6 +545,29 @@ Each example showcases 4 predefined symbol combinations:
 - **symbols_shades_bars**: Asterism, Horizontal Bar, Shade, Light
 - Navigate with arrow keys or hjkl
 
+**Border Styles Example:**
+
+```bash
+cargo run --example border_styles
+```
+
+![Border Styles Demo](examples/vhs/target/border_styles.gif)
+
+This example showcases all 11 available border styles for PieChart blocks:
+- **Standard** - Default single-line borders
+- **Rounded** - Single-line with rounded corners
+- **Dashed** - Dashed lines throughout (┄┄┄)
+- **Rounded Dashed** - Rounded corners with dashed lines
+- **Corner Gapped** - Continuous lines with gaps only at corners
+- **Rounded Corner Gapped** - Rounded with gaps only at corners
+- **Double Line** - Double-line borders (═══)
+- **Double Rounded** - Mixed style: rounded corners with double-line edges*
+- **Thick** - Heavy/thick line borders (━━━)
+- **Thick Rounded** - Mixed style: rounded corners with thick-line edges*
+- **Thick Dashed** - Thick dashed lines (┅┅┅)
+- Navigate with ↑/↓ to compare border styles
+- 4-row grid layout for easy comparison
+
 **Custom Symbols Example:**
 
 ```bash
@@ -452,18 +664,25 @@ If you have [VHS](https://github.com/charmbracelet/vhs) installed, you can gener
 
 ```bash
 # Main interactive demo
-vhs examples/piechart.tape
+vhs examples/vhs/piechart.tape
 
 # Predefined symbols examples
-vhs examples/symbols_circles_squares.tape
-vhs examples/symbols_stars_hearts.tape
-vhs examples/symbols_triangles_hexagons.tape
-vhs examples/symbols_shades_bars.tape
+vhs examples/vhs/symbols_circles_squares.tape
+vhs examples/vhs/symbols_stars_hearts.tape
+vhs examples/vhs/symbols_triangles_hexagons.tape
+vhs examples/vhs/symbols_shades_bars.tape
+
+# Border styles demo
+vhs examples/vhs/border_styles.tape
 
 # Custom symbols demo
-vhs examples/custom_symbols.tape
+vhs examples/vhs/custom_symbols.tape
 
-# Note: high_resolution example is interactive and best experienced live
+# High resolution demo
+vhs examples/vhs/high_resolution.tape
+
+# Or generate all at once using just
+just vhs-all
 ```
 
 ## Development

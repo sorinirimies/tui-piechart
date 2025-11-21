@@ -1,6 +1,6 @@
 # Examples Guide
 
-This project includes seven interactive examples demonstrating different aspects of the tui-piechart widget. Most examples follow a consistent 4-chart layout in a 2x2 grid for easy comparison.
+This project includes eleven interactive examples demonstrating different aspects of the tui-piechart widget. Most examples follow a consistent layout in a grid for easy comparison.
 
 ## Example Structure
 
@@ -22,9 +22,11 @@ Each example displays **4 pie charts** in a **2x2 grid layout**, allowing you to
   - Time allocation pie chart
   - Budget distribution
 
-**VHS Tape:** `examples/piechart.tape`
+**VHS Tape:** `examples/vhs/piechart.tape`
 
-**Generate GIF:** `vhs examples/piechart.tape`
+**Generate GIF:** `vhs examples/vhs/piechart.tape`
+
+![Main Interactive Demo](examples/vhs/target/piechart.gif)
 
 ---
 
@@ -46,9 +48,11 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 
 **Description:** Circle and square symbol combinations suitable for most use cases.
 
-**VHS Tape:** `examples/symbols_circles_squares.tape`
+**VHS Tape:** `examples/vhs/symbols_circles_squares.tape`
 
-**Generate GIF:** `vhs examples/symbols_circles_squares.tape`
+**Generate GIF:** `vhs examples/vhs/symbols_circles_squares.tape`
+
+![Circles & Squares Demo](examples/vhs/target/symbols_circles_squares.gif)
 
 ### 3. Stars & Hearts
 
@@ -64,9 +68,11 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 
 **Description:** Star and heart symbols perfect for adding personality to your charts.
 
-**VHS Tape:** `examples/symbols_stars_hearts.tape`
+**VHS Tape:** `examples/vhs/symbols_stars_hearts.tape`
 
-**Generate GIF:** `vhs examples/symbols_stars_hearts.tape`
+**Generate GIF:** `vhs examples/vhs/symbols_stars_hearts.tape`
+
+![Stars & Hearts Demo](examples/vhs/target/symbols_stars_hearts.gif)
 
 ### 4. Triangles & Hexagons
 
@@ -82,9 +88,11 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 
 **Description:** Triangle and hexagon symbols for technical or scientific data.
 
-**VHS Tape:** `examples/symbols_triangles_hexagons.tape`
+**VHS Tape:** `examples/vhs/symbols_triangles_hexagons.tape`
 
-**Generate GIF:** `vhs examples/symbols_triangles_hexagons.tape`
+**Generate GIF:** `vhs examples/vhs/symbols_triangles_hexagons.tape`
+
+![Triangles & Hexagons Demo](examples/vhs/target/symbols_triangles_hexagons.gif)
 
 ### 5. Shades & Bars
 
@@ -100,13 +108,148 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 
 **Description:** Shading patterns and bar symbols for unique visualizations.
 
-**VHS Tape:** `examples/symbols_shades_bars.tape`
+**VHS Tape:** `examples/vhs/symbols_shades_bars.tape`
 
-**Generate GIF:** `vhs examples/symbols_shades_bars.tape`
+**Generate GIF:** `vhs examples/vhs/symbols_shades_bars.tape`
+
+![Shades & Bars Demo](examples/vhs/target/symbols_shades_bars.gif)
 
 ---
 
-## 6. Custom Symbols Demo
+## 6. Legend Positioning Demo
+
+**File:** `examples/legend_positioning.rs`
+
+**Run:** `cargo run --example legend_positioning`
+
+**Features:**
+This example demonstrates all legend positioning and layout options:
+- **4 Legend Positions:**
+  - Right (default)
+  - Left
+  - Top
+  - Bottom
+- **2 Legend Layouts:**
+  - Vertical (default) - Items stacked in a column
+  - Horizontal - Items in a single row
+- Interactive controls:
+  - ↑/↓ or k/j - Navigate between positions
+  - ←/→ or h/l - Toggle between Vertical and Horizontal layouts
+  - Shows all 8 combinations (4 positions × 2 layouts)
+- Smart space calculation for horizontal legends to prevent cutoff
+- Dynamic legend sizing based on content and layout
+
+**Description:** Demonstrates how to use `LegendPosition` and `LegendLayout` enums to customize where and how the legend appears relative to the pie chart. Perfect for understanding how different positions affect the overall layout and readability.
+
+**VHS Tape:** `examples/vhs/legend_positioning.tape`
+
+**Generate GIF:** `vhs examples/vhs/legend_positioning.tape`
+
+![Legend Positioning Demo](examples/vhs/output/legend_positioning.gif)
+
+---
+
+## 7. Title Positioning Demo
+
+**File:** `examples/title_positioning.rs`
+
+**Run:** `cargo run --example title_positioning`
+
+**Features:**
+This example demonstrates all title positioning and alignment options:
+- **2 Vertical Positions:**
+  - Top (default)
+  - Bottom
+- **3 Horizontal Alignments:**
+  - Start (Left in LTR)
+  - Center
+  - End (Right in LTR)
+- Interactive controls:
+  - ↑/↓ or k/j - Toggle between Top and Bottom positions
+  - ←/→ or h/l - Cycle through Start/Center/End alignments
+  - Shows all 6 combinations (2 positions × 3 alignments)
+- Uses `BlockExt` trait for ergonomic title customization
+- Applies to the block wrapper around the chart
+
+**Description:** Demonstrates how to use `TitleAlignment` and `TitlePosition` with the `BlockExt` trait to customize block title placement. Shows how titles can be positioned at the top or bottom with left, center, or right alignment.
+
+**VHS Tape:** `examples/vhs/title_positioning.tape`
+
+**Generate GIF:** `vhs examples/vhs/title_positioning.tape`
+
+![Title Positioning Demo](examples/vhs/output/title_positioning.gif)
+
+---
+
+## 8. Title Styles Demo
+
+**File:** `examples/title_styles_example.rs`
+
+**Run:** `cargo run --example title_styles_example`
+
+**Features:**
+This example demonstrates all available title font styles using Unicode character variants:
+- **10 Font Styles:**
+  - Normal (default, no transformation)
+  - Bold (Mathematical Bold Unicode)
+  - Italic (Mathematical Italic Unicode)
+  - Bold Italic (Combined bold and italic)
+  - Script (Cursive/flowing script style)
+  - Bold Script (Bold weight script)
+  - Sans Serif (Clean sans-serif)
+  - Bold Sans Serif (Bold sans-serif)
+  - Italic Sans Serif (Italic sans-serif)
+  - Monospace (Fixed-width monospace)
+- Interactive controls:
+  - ↑/↓ or k/j - Navigate between different font styles
+  - Home/End - Jump to first/last style
+  - Shows live preview of all ASCII letters, numbers, and styled titles
+- Each style converts ASCII text to Unicode character equivalents
+- Character preview shows the full alphabet in each style
+
+**Description:** Demonstrates how to use `TitleStyle` enum to apply different Unicode font styles to block titles. Each style uses specific Unicode code points (Mathematical Alphanumeric Symbols) to achieve visual typography effects in terminal interfaces without requiring special fonts. Perfect for adding visual hierarchy and emphasis to chart titles.
+
+**VHS Tape:** `examples/vhs/title_styles.tape`
+
+**Generate GIF:** `vhs examples/vhs/title_styles.tape`
+
+![Title Styles Demo](examples/vhs/output/title_styles.gif)
+
+**Note:** Font rendering depends on terminal and font support. Most modern terminals support these Unicode ranges, but appearance may vary.
+
+---
+
+## 9. Border Styles Demo
+
+**File:** `examples/border_styles.rs`
+
+**Run:** `cargo run --example border_styles`
+
+**Features:**
+This example showcases all 11 available border styles for PieChart blocks:
+- **Standard** - Default single-line borders
+- **Rounded** - Single-line with rounded corners
+- **Dashed** - Dashed lines throughout (┄┄┄)
+- **Rounded Dashed** - Rounded corners with dashed lines
+- **Corner Gapped** - Continuous lines with gaps only at corners
+- **Rounded Corner Gapped** - Rounded with gaps only at corners
+- **Double Line** - Double-line borders (═══)
+- **Double Rounded** - Mixed style: rounded corners with double-line edges*
+- **Thick** - Heavy/thick line borders (━━━)
+- **Thick Rounded** - Mixed style: rounded corners with thick-line edges*
+- **Thick Dashed** - Thick dashed lines (┅┅┅)
+- Navigate with ↑/↓ to compare border styles
+- 4-row grid layout for easy comparison
+- Interactive navigation between border styles
+- Uses `BorderStyle` enum for easy block customization
+
+**Description:** Demonstrates how to use predefined border styles to customize the appearance of the PieChart wrapper block. Each style shows the same data with different border aesthetics.
+
+**Note:** *DoubleLineRounded and ThickRounded use mixed styles (single-line rounded corners with double/thick-line edges) because Unicode doesn't have true rounded double-line or thick-line box-drawing characters.
+
+---
+
+## 10. Custom Symbols Demo
 
 **File:** `examples/custom_symbols.rs`
 
@@ -130,13 +273,15 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 - Demonstrates the full flexibility of custom Unicode characters
 - Note: Some emoji may require specific terminal font support
 
-**VHS Tape:** `examples/custom_symbols.tape`
+**VHS Tape:** `examples/vhs/custom_symbols.tape`
 
-**Generate GIF:** `vhs examples/custom_symbols.tape`
+**Generate GIF:** `vhs examples/vhs/custom_symbols.tape`
+
+![Custom Symbols Demo](examples/vhs/target/custom_symbols.gif)
 
 ---
 
-## 7. High Resolution Demo
+## 11. High Resolution Demo
 
 **File:** `examples/high_resolution.rs`
 
@@ -158,7 +303,52 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 **Description:** 
 High resolution mode uses braille characters which provide 8 dots per character cell (2×4 grid), giving 8x the resolution for smoother circles and better edge definition. The example includes smooth animations that continuously change the pie chart values using sine waves, making the quality difference between standard and braille rendering immediately apparent. The animations showcase how braille patterns create noticeably smoother, more fluid transitions.
 
-**VHS Tape:** Available - demonstrates toggling between standard and high resolution modes
+**VHS Tape:** `examples/vhs/high_resolution.tape`
+
+**Generate GIF:** `vhs examples/vhs/high_resolution.tape`
+
+![High Resolution Demo](examples/vhs/target/high_resolution.gif)
+
+**Note:** Demonstrates toggling between standard and high resolution modes with smooth animations
+
+---
+
+## Feature Categories
+
+### Border Styles
+
+**Border Styles:**
+- Customize the **wrapper block** appearance
+- Use `BorderStyle` enum with predefined styles
+- Applied via `.block(BorderStyle::Rounded.block())`
+- Affects the frame around the entire chart
+- 11 different border styles available (single-line, double-line, thick, dashed, and corner-gapped variants)
+
+### Symbols
+
+**Symbols:**
+- Customize the **pie chart content** and **legend markers**
+- Use character constants or raw Unicode
+- Applied via `.pie_char()` and `.legend_marker()`
+- Affects the chart data visualization itself
+- Unlimited customization potential
+
+### Legend & Title Positioning
+
+**Legend Positioning:**
+- Control where the legend appears relative to the chart
+- Use `LegendPosition` enum (Right, Left, Top, Bottom)
+- Choose between Vertical or Horizontal layout
+- Applied via `.legend_position()` and `.legend_layout()`
+- Affects the overall chart layout and space allocation
+
+**Title Positioning & Styling:**
+- Control block title alignment and position
+- Use `TitleAlignment` (Start, Center, End) and `TitlePosition` (Top, Bottom)
+- Apply Unicode font styles with `TitleStyle` (Bold, Italic, Script, etc.)
+- Applied via `BlockExt` trait methods and `TitleStyle::apply()`
+- Affects the wrapper block's title appearance
+- 6 positioning combinations and 10 font styles available
 
 ---
 
@@ -205,6 +395,10 @@ All examples support consistent navigation:
 | Stars & hearts | `symbols_stars_hearts` |
 | Triangles & hexagons | `symbols_triangles_hexagons` |
 | Shades & bars | `symbols_shades_bars` |
+| Legend positioning | `legend_positioning` |
+| Title positioning | `title_positioning` |
+| Title font styles | `title_styles_example` |
+| Border customization | `border_styles` |
 | Maximum customization | `custom_symbols` |
 | High resolution rendering | `high_resolution` |
 
@@ -216,12 +410,20 @@ If you have [VHS](https://github.com/charmbracelet/vhs) installed:
 
 ```bash
 # Generate all demo GIFs
-vhs examples/piechart.tape
-vhs examples/symbols_circles_squares.tape
-vhs examples/symbols_stars_hearts.tape
-vhs examples/symbols_triangles_hexagons.tape
-vhs examples/symbols_shades_bars.tape
-vhs examples/custom_symbols.tape
+vhs examples/vhs/piechart.tape
+vhs examples/vhs/symbols_circles_squares.tape
+vhs examples/vhs/symbols_stars_hearts.tape
+vhs examples/vhs/symbols_triangles_hexagons.tape
+vhs examples/vhs/symbols_shades_bars.tape
+vhs examples/vhs/legend_positioning.tape
+vhs examples/vhs/title_positioning.tape
+vhs examples/vhs/title_styles.tape
+vhs examples/vhs/border_styles.tape
+vhs examples/vhs/custom_symbols.tape
+vhs examples/vhs/high_resolution.tape
+
+# Or generate all at once
+./examples/vhs/generate_all.sh
 ```
 
 All examples now have VHS tapes for generating demo GIFs!
@@ -234,6 +436,10 @@ All examples now have VHS tapes for generating demo GIFs!
 # See everything quickly
 cargo run --example piechart                     # Main features
 cargo run --example symbols_circles_squares      # Circles & squares
+cargo run --example legend_positioning           # Legend placement
+cargo run --example title_positioning            # Title alignment
+cargo run --example title_styles_example         # Title font styles
+cargo run --example border_styles                # Border customization
 cargo run --example custom_symbols               # Custom possibilities
 cargo run --example high_resolution              # High-res mode (toggle with Space)
 
@@ -247,11 +453,18 @@ cargo run --example symbols_shades_bars          # Shades & bars
 
 ## Summary
 
-- **7 total examples**
+- **11 total examples**
 - **6 examples** use 2x2 grid (4 charts)
+- **3 positioning/styling examples** with interactive controls
+- **1 example** uses 4-row grid (11 border styles)
 - **1 example** uses 4x3 grid (12 charts)
 - **16 predefined symbol combinations** across 4 examples
+- **8 legend positioning combinations** (4 positions × 2 layouts)
+- **6 title positioning combinations** (2 positions × 3 alignments)
+- **10 title font styles** using Unicode character variants
+- **11 border style examples** in 1 example
 - **12 custom symbol examples** in 1 example
 - **1 high resolution demo** with interactive toggle
+- **All examples have VHS tapes** for generating demo GIFs
 - **Consistent navigation** across all examples
 - **Progressive learning** from basic to advanced

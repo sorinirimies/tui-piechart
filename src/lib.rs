@@ -65,6 +65,23 @@
 //!     .pie_char('█')
 //!     .legend_marker("→");
 //! ```
+//!
+//! With custom border styles:
+//!
+//! ```no_run
+//! use ratatui::style::Color;
+//! use tui_piechart::{PieChart, PieSlice, border_style::BorderStyle};
+//! // Or use backwards-compatible path: use tui_piechart::symbols::BorderStyle;
+//!
+//! let slices = vec![
+//!     PieSlice::new("Rust", 45.0, Color::Red),
+//!     PieSlice::new("Go", 30.0, Color::Blue),
+//! ];
+//!
+//! // Use predefined border styles
+//! let piechart = PieChart::new(slices)
+//!     .block(BorderStyle::Rounded.block().title("My Chart"));
+//! ```
 
 #![warn(missing_docs)]
 #![warn(clippy::pedantic)]
@@ -78,7 +95,16 @@ use ratatui::style::{Color, Style, Styled};
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Widget};
 
+pub mod border_style;
+pub mod legend;
+#[macro_use]
+pub mod macros;
 pub mod symbols;
+pub mod title;
+
+// Re-export commonly used types from submodules for convenience
+pub use legend::{LegendLayout, LegendPosition};
+pub use title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle};
 
 /// Rendering resolution mode for pie charts.
 ///
@@ -213,6 +239,10 @@ pub struct PieChart<'a> {
     legend_marker: &'a str,
     /// Resolution mode for rendering
     resolution: Resolution,
+    /// Position of the legend
+    legend_position: LegendPosition,
+    /// Layout of the legend
+    legend_layout: LegendLayout,
 }
 
 impl Default for PieChart<'_> {
@@ -236,6 +266,8 @@ impl Default for PieChart<'_> {
             pie_char: symbols::PIE_CHAR,
             legend_marker: symbols::LEGEND_MARKER,
             resolution: Resolution::default(),
+            legend_position: LegendPosition::default(),
+            legend_layout: LegendLayout::default(),
         }
     }
 }
@@ -453,7 +485,43 @@ impl<'a> PieChart<'a> {
         self
     }
 
-    /// Calculates the total value of all slices.
+    /// Sets the position of the legend relative to the pie chart.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::{PieChart, LegendPosition};
+    ///
+    /// let piechart = PieChart::default()
+    ///     .legend_position(LegendPosition::Right);
+    /// ```
+    #[must_use]
+    pub const fn legend_position(mut self, position: LegendPosition) -> Self {
+        self.legend_position = position;
+        self
+    }
+
+    /// Sets the layout mode for the legend.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::{PieChart, LegendLayout};
+    ///
+    /// // Single horizontal row
+    /// let piechart = PieChart::default()
+    ///     .legend_layout(LegendLayout::Horizontal);
+    ///
+    /// // Vertical stacking (default)
+    /// let piechart = PieChart::default()
+    ///     .legend_layout(LegendLayout::Vertical);
+    /// ```
+    #[must_use]
+    pub const fn legend_layout(mut self, layout: LegendLayout) -> Self {
+        self.legend_layout = layout;
+        self
+    }
+
     fn total_value(&self) -> f64 {
         self.slices.iter().map(|s| s.value).sum()
     }
@@ -523,22 +591,8 @@ impl PieChart<'_> {
             }
         }
 
-        // If we need to show legend, reserve space on the right
-        let (pie_area, legend_x) = if self.show_legend && area.width > 35 {
-            let legend_width = 20;
-            let pie_width = area.width.saturating_sub(legend_width);
-            (
-                Rect {
-                    x: area.x,
-                    y: area.y,
-                    width: pie_width,
-                    height: area.height,
-                },
-                area.x + pie_width + 1, // Add 1 space padding
-            )
-        } else {
-            (area, 0)
-        };
+        // Calculate layout with legend positioning
+        let (pie_area, legend_area_opt) = self.calculate_layout(area);
 
         // Calculate the center and radius of the pie chart
         // Account for terminal character aspect ratio (typically 1:2, chars are twice as tall as wide)
@@ -566,8 +620,8 @@ impl PieChart<'_> {
         }
 
         // Draw legend if enabled
-        if self.show_legend && area.width > 35 {
-            self.render_legend(area, buf, legend_x);
+        if let Some(legend_area) = legend_area_opt {
+            self.render_legend(buf, legend_area);
         }
     }
 
@@ -660,63 +714,224 @@ impl PieChart<'_> {
         }
     }
 
-    fn render_legend(&self, area: Rect, buf: &mut Buffer, legend_x: u16) {
+    fn render_legend(&self, buf: &mut Buffer, legend_area: Rect) {
         let total = self.total_value();
 
-        for (y_offset, slice) in self.slices.iter().enumerate() {
-            #[allow(clippy::cast_possible_truncation)]
-            let y_offset_u16 = y_offset as u16;
+        match self.legend_layout {
+            LegendLayout::Vertical => {
+                for (idx, slice) in self.slices.iter().enumerate() {
+                    #[allow(clippy::cast_possible_truncation)]
+                    let idx_u16 = idx as u16;
 
-            // Add spacing between legend items and start a bit lower
-            let actual_y_offset = y_offset_u16 * 2 + 1;
+                    // Add spacing between legend items
+                    let y_offset = idx_u16 * 2;
 
-            if actual_y_offset >= area.height {
-                break;
+                    if y_offset >= legend_area.height {
+                        break;
+                    }
+
+                    let legend_text = if self.show_percentages {
+                        let percent = if total > 0.0 {
+                            (slice.value / total) * 100.0
+                        } else {
+                            0.0
+                        };
+                        format!("{} {} {:.1}%", self.legend_marker, slice.label, percent)
+                    } else {
+                        format!("{} {}", self.legend_marker, slice.label)
+                    };
+
+                    let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
+                    let line = Line::from(spans);
+
+                    let item_area = Rect {
+                        x: legend_area.x,
+                        y: legend_area.y + y_offset,
+                        width: legend_area.width,
+                        height: 1,
+                    };
+
+                    line.render(item_area, buf);
+                }
             }
+            LegendLayout::Horizontal => {
+                let mut x_offset = 0u16;
+                for slice in &self.slices {
+                    if x_offset >= legend_area.width {
+                        break;
+                    }
 
-            let legend_text = if self.show_percentages {
+                    let legend_text = if self.show_percentages {
+                        let percent = if total > 0.0 {
+                            (slice.value / total) * 100.0
+                        } else {
+                            0.0
+                        };
+                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
+                    } else {
+                        format!("{} {}  ", self.legend_marker, slice.label)
+                    };
+
+                    #[allow(clippy::cast_possible_truncation)]
+                    let text_width = legend_text.len() as u16;
+
+                    let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
+                    let line = Line::from(spans);
+
+                    let item_area = Rect {
+                        x: legend_area.x + x_offset,
+                        y: legend_area.y,
+                        width: text_width.min(legend_area.width.saturating_sub(x_offset)),
+                        height: 1,
+                    };
+
+                    line.render(item_area, buf);
+                    x_offset = x_offset.saturating_add(text_width);
+                }
+            }
+        }
+    }
+
+    #[allow(clippy::too_many_lines)]
+    fn calculate_layout(&self, area: Rect) -> (Rect, Option<Rect>) {
+        if !self.show_legend || area.width < 20 || area.height < 10 {
+            return (area, None);
+        }
+
+        match self.legend_position {
+            LegendPosition::Right => {
+                let legend_width = if self.legend_layout == LegendLayout::Horizontal {
+                    self.calculate_legend_width().min(area.width / 2)
+                } else {
+                    self.calculate_legend_width().min(area.width / 3).max(20)
+                };
+                if area.width <= legend_width {
+                    return (area, None);
+                }
+                let pie_width = area.width.saturating_sub(legend_width + 1);
+                (
+                    Rect {
+                        x: area.x,
+                        y: area.y,
+                        width: pie_width,
+                        height: area.height,
+                    },
+                    Some(Rect {
+                        x: area.x + pie_width + 1,
+                        y: area.y + 1,
+                        width: legend_width,
+                        height: area.height.saturating_sub(2),
+                    }),
+                )
+            }
+            LegendPosition::Left => {
+                let legend_width = if self.legend_layout == LegendLayout::Horizontal {
+                    self.calculate_legend_width().min(area.width / 2)
+                } else {
+                    self.calculate_legend_width().min(area.width / 3).max(20)
+                };
+                if area.width <= legend_width {
+                    return (area, None);
+                }
+                let pie_width = area.width.saturating_sub(legend_width + 1);
+                (
+                    Rect {
+                        x: area.x + legend_width + 1,
+                        y: area.y,
+                        width: pie_width,
+                        height: area.height,
+                    },
+                    Some(Rect {
+                        x: area.x,
+                        y: area.y + 1,
+                        width: legend_width,
+                        height: area.height.saturating_sub(2),
+                    }),
+                )
+            }
+            LegendPosition::Top => {
+                let legend_height = if self.legend_layout == LegendLayout::Horizontal {
+                    3
+                } else {
+                    #[allow(clippy::cast_possible_truncation)]
+                    (self.slices.len() as u16 * 2).min(area.height / 3)
+                };
+                if area.height <= legend_height {
+                    return (area, None);
+                }
+                let pie_height = area.height.saturating_sub(legend_height + 1);
+                (
+                    Rect {
+                        x: area.x,
+                        y: area.y + legend_height + 1,
+                        width: area.width,
+                        height: pie_height,
+                    },
+                    Some(Rect {
+                        x: area.x + 1,
+                        y: area.y + 1,
+                        width: area.width.saturating_sub(2),
+                        height: legend_height.saturating_sub(1),
+                    }),
+                )
+            }
+            LegendPosition::Bottom => {
+                let legend_height = if self.legend_layout == LegendLayout::Horizontal {
+                    3
+                } else {
+                    #[allow(clippy::cast_possible_truncation)]
+                    (self.slices.len() as u16 * 2).min(area.height / 3)
+                };
+                if area.height <= legend_height {
+                    return (area, None);
+                }
+                let pie_height = area.height.saturating_sub(legend_height + 1);
+                (
+                    Rect {
+                        x: area.x,
+                        y: area.y,
+                        width: area.width,
+                        height: pie_height,
+                    },
+                    Some(Rect {
+                        x: area.x + 1,
+                        y: area.y + pie_height + 1,
+                        width: area.width.saturating_sub(2),
+                        height: legend_height.saturating_sub(1),
+                    }),
+                )
+            }
+        }
+    }
+
+    fn calculate_legend_width(&self) -> u16 {
+        let total = self.total_value();
+        let mut max_width = 0u16;
+
+        for slice in &self.slices {
+            let text = if self.show_percentages {
                 let percent = if total > 0.0 {
                     (slice.value / total) * 100.0
                 } else {
                     0.0
                 };
-                format!("{} {} {:.1}%", self.legend_marker, slice.label, percent)
+                format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
             } else {
-                format!("{} {}", self.legend_marker, slice.label)
+                format!("{} {}  ", self.legend_marker, slice.label)
             };
 
-            let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
-            let line = Line::from(spans);
-
-            let legend_area = Rect {
-                x: legend_x,
-                y: area.y + actual_y_offset,
-                width: area.width.saturating_sub(legend_x - area.x),
-                height: 1,
-            };
-
-            line.render(legend_area, buf);
+            #[allow(clippy::cast_possible_truncation)]
+            let text_width = text.len() as u16;
+            max_width = max_width.max(text_width);
         }
+
+        max_width.saturating_add(2)
     }
 
     #[allow(clippy::similar_names)]
     fn render_piechart_braille(&self, area: Rect, buf: &mut Buffer) {
-        // If we need to show legend, reserve space on the right
-        let (pie_area, legend_x) = if self.show_legend && area.width > 35 {
-            let legend_width = 20;
-            let pie_width = area.width.saturating_sub(legend_width);
-            (
-                Rect {
-                    x: area.x,
-                    y: area.y,
-                    width: pie_width,
-                    height: area.height,
-                },
-                area.x + pie_width + 1,
-            )
-        } else {
-            (area, 0)
-        };
+        // Calculate layout with legend positioning
+        let (pie_area, legend_area_opt) = self.calculate_layout(area);
 
         // Calculate the center and radius of the pie chart
         let center_x_chars = pie_area.width / 2;
@@ -828,8 +1043,8 @@ impl PieChart<'_> {
         }
 
         // Draw legend if enabled
-        if self.show_legend && area.width > 35 {
-            self.render_legend(area, buf, legend_x);
+        if let Some(legend_area) = legend_area_opt {
+            self.render_legend(buf, legend_area);
         }
     }
 }
@@ -920,32 +1135,31 @@ mod tests {
         );
     }
 
-    #[test]
-    fn piechart_render_empty_area() {
-        let piechart = PieChart::default();
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 0, 0));
-        piechart.render(buffer.area, &mut buffer);
-    }
+    // Render tests - using macros for common patterns
+    render_empty_test!(piechart_render_empty_area, PieChart::default());
 
-    #[test]
-    fn piechart_render_with_block() {
-        let slices = vec![PieSlice::new("Test", 100.0, Color::Red)];
-        let piechart = PieChart::new(slices).block(Block::bordered());
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 20, 10));
-        piechart.render(buffer.area, &mut buffer);
-    }
+    render_with_size_test!(
+        piechart_render_with_block,
+        {
+            let slices = vec![PieSlice::new("Test", 100.0, Color::Red)];
+            PieChart::new(slices).block(Block::bordered())
+        },
+        width: 20,
+        height: 10
+    );
 
-    #[test]
-    fn piechart_render_basic() {
-        let slices = vec![
-            PieSlice::new("Rust", 45.0, Color::Red),
-            PieSlice::new("Go", 30.0, Color::Blue),
-            PieSlice::new("Python", 25.0, Color::Green),
-        ];
-        let piechart = PieChart::new(slices);
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 40, 20));
-        piechart.render(buffer.area, &mut buffer);
-    }
+    render_test!(
+        piechart_render_basic,
+        {
+            let slices = vec![
+                PieSlice::new("Rust", 45.0, Color::Red),
+                PieSlice::new("Go", 30.0, Color::Blue),
+                PieSlice::new("Python", 25.0, Color::Green),
+            ];
+            PieChart::new(slices)
+        },
+        Rect::new(0, 0, 40, 20)
+    );
 
     #[test]
     fn piechart_styled_trait() {
@@ -964,10 +1178,23 @@ mod tests {
         ];
         let piechart = PieChart::new(slices);
         assert_eq!(piechart.total_value(), 100.0);
-
-        let mut buffer = Buffer::empty(Rect::new(0, 0, 50, 30));
-        piechart.render(buffer.area, &mut buffer);
     }
+
+    // Using render macro for the visual test
+    render_with_size_test!(
+        piechart_multi_slice_render,
+        {
+            let slices = vec![
+                PieSlice::new("A", 25.0, Color::Red),
+                PieSlice::new("B", 25.0, Color::Blue),
+                PieSlice::new("C", 25.0, Color::Green),
+                PieSlice::new("D", 25.0, Color::Yellow),
+            ];
+            PieChart::new(slices)
+        },
+        width: 50,
+        height: 30
+    );
 
     #[test]
     fn piechart_zero_values() {

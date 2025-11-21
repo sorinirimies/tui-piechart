@@ -22,9 +22,50 @@ build:
 build-release:
     cargo build --release
 
-# Run the example
+# Build examples in release mode
+build-examples:
+    cargo build --examples --release
+
+# Run the main piechart example
 run:
     cargo run --example piechart
+
+# Run a specific example (usage: just run-example piechart)
+run-example NAME:
+    cargo run --example {{NAME}}
+
+# Run the piechart example
+run-piechart: (run-example "piechart")
+
+# Run the custom_symbols example
+run-custom-symbols: (run-example "custom_symbols")
+
+# Run the high_resolution example
+run-high-resolution: (run-example "high_resolution")
+
+# Run the symbols_circles_squares example
+run-symbols-circles-squares: (run-example "symbols_circles_squares")
+
+# Run the symbols_stars_hearts example
+run-symbols-stars-hearts: (run-example "symbols_stars_hearts")
+
+# Run the symbols_triangles_hexagons example
+run-symbols-triangles-hexagons: (run-example "symbols_triangles_hexagons")
+
+# Run the symbols_shades_bars example
+run-symbols-shades-bars: (run-example "symbols_shades_bars")
+
+# Run the border_styles example
+run-border-styles: (run-example "border_styles")
+
+# Run the legend_positioning example
+run-legend-positioning: (run-example "legend_positioning")
+
+# Run the title_positioning example
+run-title-positioning: (run-example "title_positioning")
+
+# Run the title_styles_example example
+run-title-styles-example: (run-example "title_styles_example")
 
 # Run tests
 test:
@@ -138,52 +179,59 @@ commit message:
     git add .
     git commit -m "{{message}}"
 
+# Git: pull from Gitea
 pull-gitea:
     git pull gitea main
 
+# Git: push to a specific remote
+push-remote REMOTE BRANCH:
+    git push {{REMOTE}} {{BRANCH}}
+
 # Git: push to GitHub (origin)
-push:
-    git push origin main
+push: (push-remote "origin" "main")
 
 # Git: push to Gitea
-push-gitea:
-    git push gitea main
+push-gitea: (push-remote "gitea" "main")
 
 # Git: push to both GitHub and Gitea
 push-all:
-    git push origin main
-    git push gitea main
+    @just push-remote origin main
+    @just push-remote gitea main
     @echo "✅ Pushed to both GitHub and Gitea!"
 
+# Git: push tags to a specific remote
+push-tags-remote REMOTE:
+    git push {{REMOTE}} --tags
+
 # Git: push tags to GitHub
-push-tags:
-    git push origin --tags
+push-tags: (push-tags-remote "origin")
 
 # Git: push tags to both remotes
 push-tags-all:
-    git push origin --tags
-    git push gitea --tags
+    @just push-tags-remote origin
+    @just push-tags-remote gitea
     @echo "✅ Tags pushed to both GitHub and Gitea!"
 
+# Full release workflow: bump version and push to a remote
+release-to-remote version REMOTE:
+    @just bump {{version}}
+    @echo "Pushing to {{REMOTE}}..."
+    @just push-remote {{REMOTE}} main
+    git push {{REMOTE}} v{{version}}
+    @echo "✅ Release v{{version}} complete on {{REMOTE}}!"
+
 # Full release workflow: bump version and push to GitHub
-release version: (bump version)
-    @echo "Pushing to GitHub..."
-    git push origin main
-    git push origin v{{version}}
-    @echo "✅ Release v{{version}} complete on GitHub!"
+release version: (release-to-remote version "origin")
 
 # Full release workflow: bump version and push to Gitea
-release-gitea version: (bump version)
-    @echo "Pushing to Gitea..."
-    git push gitea main
-    git push gitea v{{version}}
-    @echo "✅ Release v{{version}} complete on Gitea!"
+release-gitea version: (release-to-remote version "gitea")
 
 # Full release workflow: bump version and push to both GitHub and Gitea
-release-all version: (bump version)
+release-all version:
+    @just bump {{version}}
     @echo "Pushing to both GitHub and Gitea..."
-    git push origin main
-    git push gitea main
+    @just push-remote origin main
+    @just push-remote gitea main
     git push origin v{{version}}
     git push gitea v{{version}}
     @echo "✅ Release v{{version}} complete on both remotes!"
@@ -191,10 +239,8 @@ release-all version: (bump version)
 # Push release to both GitHub and Gitea (without bumping)
 push-release-all:
     @echo "Pushing release to both GitHub and Gitea..."
-    git push origin main
-    git push gitea main
-    git push origin --tags
-    git push gitea --tags
+    @just push-all
+    @just push-tags-all
     @echo "✅ Release pushed to both remotes!"
 
 # Sync Gitea with GitHub (force)
@@ -238,48 +284,45 @@ info:
 view-changelog:
     @cat CHANGELOG.md
 
+# Generic VHS tape runner (usage: just vhs-tape piechart)
+vhs-tape NAME:
+    @echo "Running VHS tape to generate {{NAME}} demo..."
+    vhs examples/vhs/{{NAME}}.tape
+    @echo "✅ Demo generated at examples/vhs/output/{{NAME}}.gif"
+
 # Run the VHS tape to generate demo GIF for piechart
-vhs-piechart:
-    @echo "Running VHS tape to generate piechart demo..."
-    vhs examples/vhs/piechart.tape
-    @echo "✅ Demo generated at examples/piechart.gif"
+vhs-piechart: (vhs-tape "piechart")
 
 # Run the VHS tape to generate demo GIF for custom_symbols
-vhs-custom-symbols:
-    @echo "Running VHS tape to generate custom_symbols demo..."
-    vhs examples/vhs/custom_symbols.tape
-    @echo "✅ Demo generated at examples/custom_symbols.gif"
+vhs-custom-symbols: (vhs-tape "custom_symbols")
 
 # Run the VHS tape to generate demo GIF for high_resolution
-vhs-high-resolution:
-    @echo "Running VHS tape to generate high_resolution demo..."
-    vhs examples/vhs/high_resolution.tape
-    @echo "✅ Demo generated at examples/high_resolution.gif"
+vhs-high-resolution: (vhs-tape "high_resolution")
 
 # Run the VHS tape to generate demo GIF for symbols_circles_squares
-vhs-symbols-circles-squares:
-    @echo "Running VHS tape to generate symbols_circles_squares demo..."
-    vhs examples/vhs/symbols_circles_squares.tape
-    @echo "✅ Demo generated at examples/symbols_circles_squares.gif"
+vhs-symbols-circles-squares: (vhs-tape "symbols_circles_squares")
 
 # Run the VHS tape to generate demo GIF for symbols_stars_hearts
-vhs-symbols-stars-hearts:
-    @echo "Running VHS tape to generate symbols_stars_hearts demo..."
-    vhs examples/vhs/symbols_stars_hearts.tape
-    @echo "✅ Demo generated at examples/symbols_stars_hearts.gif"
+vhs-symbols-stars-hearts: (vhs-tape "symbols_stars_hearts")
 
 # Run the VHS tape to generate demo GIF for symbols_triangles_hexagons
-vhs-symbols-triangles-hexagons:
-    @echo "Running VHS tape to generate symbols_triangles_hexagons demo..."
-    vhs examples/vhs/symbols_triangles_hexagons.tape
-    @echo "✅ Demo generated at examples/symbols_triangles_hexagons.gif"
+vhs-symbols-triangles-hexagons: (vhs-tape "symbols_triangles_hexagons")
 
 # Run the VHS tape to generate demo GIF for symbols_shades_bars
-vhs-symbols-shades-bars:
-    @echo "Running VHS tape to generate symbols_shades_bars demo..."
-    vhs examples/vhs/symbols_shades_bars.tape
-    @echo "✅ Demo generated at examples/symbols_shades_bars.gif"
+vhs-symbols-shades-bars: (vhs-tape "symbols_shades_bars")
+
+# Run the VHS tape to generate demo GIF for border_styles
+vhs-border-styles: (vhs-tape "border_styles")
+
+# Run the VHS tape to generate demo GIF for legend_positioning
+vhs-legend-positioning: (vhs-tape "legend_positioning")
+
+# Run the VHS tape to generate demo GIF for title_positioning
+vhs-title-positioning: (vhs-tape "title_positioning")
+
+# Run the VHS tape to generate demo GIF for title_styles_example
+vhs-title-styles-example: (vhs-tape "title_styles")
 
 # Run all VHS tapes to generate all demo GIFs
-vhs-all: vhs-piechart vhs-custom-symbols vhs-high-resolution vhs-symbols-circles-squares vhs-symbols-stars-hearts vhs-symbols-triangles-hexagons vhs-symbols-shades-bars
+vhs-all: build-examples vhs-piechart vhs-custom-symbols vhs-high-resolution vhs-symbols-circles-squares vhs-symbols-stars-hearts vhs-symbols-triangles-hexagons vhs-symbols-shades-bars vhs-border-styles vhs-legend-positioning vhs-title-positioning vhs-title-styles-example
     @echo "✅ All demo GIFs generated!"

@@ -303,6 +303,142 @@ fn print_buffer(buffer: &Buffer) {
     println!("└{}┘", "─".repeat(area.width as usize));
 }
 
+#[test]
+fn test_border_styles() {
+    println!("\n=== Border Styles Test ===");
+    let backend = TestBackend::new(160, 60);
+    let mut terminal = Terminal::new(backend).unwrap();
+
+    terminal
+        .draw(|frame| {
+            use ratatui::layout::{Constraint, Layout};
+            use tui_piechart::border_style::BorderStyle;
+
+            let rows = Layout::vertical([
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+                Constraint::Percentage(25),
+            ])
+            .split(frame.area());
+
+            let row1 = Layout::horizontal([
+                Constraint::Percentage(33),
+                Constraint::Percentage(34),
+                Constraint::Percentage(33),
+            ])
+            .split(rows[0]);
+
+            let row2 = Layout::horizontal([
+                Constraint::Percentage(33),
+                Constraint::Percentage(34),
+                Constraint::Percentage(33),
+            ])
+            .split(rows[1]);
+
+            let row3 = Layout::horizontal([
+                Constraint::Percentage(33),
+                Constraint::Percentage(34),
+                Constraint::Percentage(33),
+            ])
+            .split(rows[2]);
+
+            let row4 = Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)])
+                .split(rows[3]);
+
+            let slices = vec![
+                PieSlice::new("A", 50.0, Color::Red),
+                PieSlice::new("B", 30.0, Color::Blue),
+                PieSlice::new("C", 20.0, Color::Green),
+            ];
+
+            // Standard
+            let chart1 = PieChart::new(slices.clone())
+                .block(BorderStyle::Standard.block().title(" Standard "))
+                .show_legend(true);
+            frame.render_widget(chart1, row1[0]);
+
+            // Rounded
+            let chart2 = PieChart::new(slices.clone())
+                .block(BorderStyle::Rounded.block().title(" Rounded "))
+                .show_legend(true);
+            frame.render_widget(chart2, row1[1]);
+
+            // Dashed
+            let chart3 = PieChart::new(slices.clone())
+                .block(BorderStyle::Dashed.block().title(" Dashed "))
+                .show_legend(true);
+            frame.render_widget(chart3, row1[2]);
+
+            // RoundedDashed
+            let chart4 = PieChart::new(slices.clone())
+                .block(BorderStyle::RoundedDashed.block().title(" RoundedDashed "))
+                .show_legend(true);
+            frame.render_widget(chart4, row2[0]);
+
+            // CornerGapped
+            let chart5 = PieChart::new(slices.clone())
+                .block(BorderStyle::CornerGapped.block().title(" CornerGapped "))
+                .show_legend(true);
+            frame.render_widget(chart5, row2[1]);
+
+            // RoundedCornerGapped
+            let chart6 = PieChart::new(slices.clone())
+                .block(
+                    BorderStyle::RoundedCornerGapped
+                        .block()
+                        .title(" RoundedCornerGapped "),
+                )
+                .show_legend(true);
+            frame.render_widget(chart6, row2[2]);
+
+            // DoubleLineStandard
+            let chart7 = PieChart::new(slices.clone())
+                .block(
+                    BorderStyle::DoubleLineStandard
+                        .block()
+                        .title(" DoubleLineStandard "),
+                )
+                .show_legend(true);
+            frame.render_widget(chart7, row3[0]);
+
+            // DoubleLineRounded
+            let chart8 = PieChart::new(slices.clone())
+                .block(
+                    BorderStyle::DoubleLineRounded
+                        .block()
+                        .title(" DoubleLineRounded "),
+                )
+                .show_legend(true);
+            frame.render_widget(chart8, row3[1]);
+
+            // Thick
+            let chart9 = PieChart::new(slices.clone())
+                .block(BorderStyle::Thick.block().title(" Thick "))
+                .show_legend(true);
+            frame.render_widget(chart9, row3[2]);
+
+            // ThickRounded
+            let chart10 = PieChart::new(slices.clone())
+                .block(BorderStyle::ThickRounded.block().title(" ThickRounded "))
+                .show_legend(true);
+            frame.render_widget(chart10, row4[0]);
+
+            // ThickDashed
+            let chart11 = PieChart::new(slices)
+                .block(BorderStyle::ThickDashed.block().title(" ThickDashed "))
+                .show_legend(true);
+            frame.render_widget(chart11, row4[1]);
+        })
+        .unwrap();
+
+    print_buffer(terminal.backend().buffer());
+
+    // Basic assertion - verify border characters exist
+    let buffer = terminal.backend().buffer();
+    assert!(buffer_contains_char(buffer, '─') || buffer_contains_char(buffer, '│'));
+}
+
 fn buffer_contains_char(buffer: &Buffer, c: char) -> bool {
     let area = buffer.area();
     for y in 0..area.height {
