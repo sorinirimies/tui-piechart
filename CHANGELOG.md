@@ -2,10 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.2.0 - 2025-11-16
+## 0.2.1 - 2025-11-23
 ### ➕ Added
 - Add publish readiness check script and Gitea pull commands
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.0
+- Add border styles, legend, and title modules with examples
+### 📦 Other Changes
+- Adds recipe for pulling from a Gitea repository
+- Merge remote-tracking branch 'origin/main'
+### 🔧 Chores
+- chore: bump version to 0.2.0
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.1
 ## 0.1.9 - 2025-11-13
 ### ➕ Added
 - Add comprehensive justfile and version bump script for automation
