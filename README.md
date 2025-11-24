@@ -146,7 +146,136 @@ just run-custom-symbols
 just run-high-resolution
 ```
 
-### Visual Previews
+### Detailed Examples Documentation
+
+For comprehensive documentation of all examples, see [EXAMPLES.md](EXAMPLES.md).
+
+---
+
+## Example Demos
+
+### 1. Main Interactive Demo
+
+**Run:** `cargo run --example piechart`
+
+![Main Demo](examples/vhs/output/piechart.gif)
+
+- 4 different pie chart examples
+- Interactive navigation with arrow keys
+- Tab to switch to API Showcase mode
+
+---
+
+### 2-5. Symbol Examples
+
+#### Circles & Squares
+![Circles & Squares](examples/vhs/output/symbols_circles_squares.gif)
+
+#### Stars & Hearts
+![Stars & Hearts](examples/vhs/output/symbols_stars_hearts.gif)
+
+#### Triangles & Hexagons
+![Triangles & Hexagons](examples/vhs/output/symbols_triangles_hexagons.gif)
+
+#### Shades & Bars
+![Shades & Bars](examples/vhs/output/symbols_shades_bars.gif)
+
+---
+
+### 6. Legend Positioning
+
+**Run:** `cargo run --example legend_positioning`
+
+![Legend Positioning](examples/vhs/output/legend_positioning.gif)
+
+- 4 positions: Right, Left, Top, Bottom
+- 2 layouts: Vertical, Horizontal
+- Interactive: ↑/↓ for position, ←/→ for layout
+
+---
+
+### 7. Title Positioning
+
+**Run:** `cargo run --example title_positioning`
+
+![Title Positioning](examples/vhs/output/title_positioning.gif)
+
+- 2 vertical positions: Top, Bottom
+- 3 horizontal alignments: Start, Center, End
+- Interactive: ↑/↓ for position, ←/→ for alignment
+
+---
+
+### 8. Title Font Styles
+
+**Run:** `cargo run --example title_styles_example`
+
+![Title Styles](examples/vhs/output/title_styles.gif)
+
+- 10 Unicode font styles
+- Bold, Italic, Script, Sans-Serif, Monospace, and more
+- Interactive: ↑/↓ to navigate styles
+
+---
+
+### 9. Border Styles
+
+**Run:** `cargo run --example border_styles`
+
+![Border Styles](examples/vhs/output/border_styles.gif)
+
+- 11 border style variants
+- Standard, Rounded, Dashed, Thick, Double-line, and combinations
+- Interactive: ↑/↓ to navigate styles
+
+---
+
+### 10. Custom Symbols
+
+**Run:** `cargo run --example custom_symbols`
+
+![Custom Symbols](examples/vhs/output/custom_symbols.gif)
+
+- 12 custom Unicode symbols not in predefined list
+- Demonstrates unlimited customization potential
+- Emoji support (terminal-dependent)
+
+---
+
+### 11. High Resolution Mode
+
+**Run:** `cargo run --example high_resolution`
+
+![High Resolution](examples/vhs/output/high_resolution.gif)
+
+- Braille patterns for 8x resolution
+- Animated values with smooth transitions
+- Press Space/Enter/H to toggle resolution
+- ~60 FPS animations
+
+---
+
+## Quick Examples Reference
+
+| Example | Command | Features |
+|---------|---------|----------|
+| Main Demo | `cargo run --example piechart` | 4 chart types, interactive |
+| Circles & Squares | `cargo run --example symbols_circles_squares` | Basic symbols |
+| Stars & Hearts | `cargo run --example symbols_stars_hearts` | Decorative symbols |
+| Triangles & Hexagons | `cargo run --example symbols_triangles_hexagons` | Geometric symbols |
+| Shades & Bars | `cargo run --example symbols_shades_bars` | Pattern symbols |
+| Legend Positioning | `cargo run --example legend_positioning` | 4 positions × 2 layouts |
+| Title Positioning | `cargo run --example title_positioning` | 2 positions × 3 alignments |
+| Title Styles | `cargo run --example title_styles_example` | 10 font styles |
+| Border Styles | `cargo run --example border_styles` | 11 border variants |
+| Custom Symbols | `cargo run --example custom_symbols` | 12 custom symbols |
+| High Resolution | `cargo run --example high_resolution` | Braille rendering |
+
+For detailed documentation on each example, usage patterns, and more, see [EXAMPLES.md](EXAMPLES.md).
+
+---
+
+### Visual Previews (Legacy)
 
 **Main Interactive Demo:**
 
