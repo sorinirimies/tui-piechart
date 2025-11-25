@@ -5,11 +5,28 @@
 //!
 //! # Examples
 //!
+//! ## Using the unified Title API
+//!
+//! ```
+//! use tui_piechart::title::{Title, TitleStyle};
+//! use tui_piechart::border_style::BorderStyle;
+//!
+//! // Create a positioned title using fluent API (preserves your text styling)
+//! let styled_text = TitleStyle::Bold.apply("My Chart");
+//! let block = BorderStyle::Rounded.block()
+//!     .title(
+//!         Title::new(styled_text)
+//!             .center()
+//!             .bottom()
+//!     );
+//! ```
+//!
+//! ## Using individual components (legacy)
+//!
 //! ```
 //! use tui_piechart::title::{TitleAlignment, TitlePosition, TitleStyle, BlockExt};
 //! use tui_piechart::border_style::BorderStyle;
 //!
-//! // Create a block with centered bold title at the bottom
 //! let title = TitleStyle::Bold.apply("My Chart");
 //! let block = BorderStyle::Rounded.block()
 //!     .title(title)
@@ -18,7 +35,134 @@
 //! ```
 
 use ratatui::layout::Alignment;
+use ratatui::text::Line;
 use ratatui::widgets::Block;
+
+/// A builder for positioning block titles with horizontal alignment and vertical placement.
+///
+/// This struct handles only the positioning of titles (alignment and position),
+/// preserving any text styling you've already applied. You can style your text
+/// separately using `TitleStyle` or ratatui's styling features.
+///
+/// # Examples
+///
+/// ```
+/// use tui_piechart::title::{Title, TitleStyle};
+/// use tui_piechart::border_style::BorderStyle;
+///
+/// // Simple title with defaults (center top)
+/// let simple = Title::new("Statistics");
+///
+/// // Style text first, then position it
+/// let styled_text = TitleStyle::Bold.apply("Results");
+/// let title = Title::new(styled_text)
+///     .right()
+///     .bottom();
+///
+/// // Position plain text
+/// let positioned = Title::new("Dashboard")
+///     .center()
+///     .top();
+/// ```
+///
+/// # Method Chaining
+///
+/// All builder methods return `Self`, allowing for fluent method chaining:
+///
+/// ```
+/// use tui_piechart::title::Title;
+///
+/// let title = Title::new("My Chart")
+///     .center()            // horizontal alignment
+///     .bottom();           // vertical position
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Title {
+    text: String,
+    alignment: TitleAlignment,
+    position: TitlePosition,
+}
+
+impl Title {
+    /// Creates a new title with the given text and default positioning.
+    ///
+    /// Defaults: Center alignment, Top position
+    ///
+    /// The text is preserved as-is, including any styling you've already applied.
+    #[must_use]
+    pub fn new(text: impl Into<String>) -> Self {
+        Self {
+            text: text.into(),
+            alignment: TitleAlignment::default(),
+            position: TitlePosition::default(),
+        }
+    }
+
+    /// Sets horizontal alignment to Start (left in LTR).
+    #[must_use]
+    pub fn left(mut self) -> Self {
+        self.alignment = TitleAlignment::Start;
+        self
+    }
+
+    /// Sets horizontal alignment to Center.
+    #[must_use]
+    pub fn center(mut self) -> Self {
+        self.alignment = TitleAlignment::Center;
+        self
+    }
+
+    /// Sets horizontal alignment to End (right in LTR).
+    #[must_use]
+    pub fn right(mut self) -> Self {
+        self.alignment = TitleAlignment::End;
+        self
+    }
+
+    /// Sets vertical position to Top.
+    #[must_use]
+    pub fn top(mut self) -> Self {
+        self.position = TitlePosition::Top;
+        self
+    }
+
+    /// Sets vertical position to Bottom.
+    #[must_use]
+    pub fn bottom(mut self) -> Self {
+        self.position = TitlePosition::Bottom;
+        self
+    }
+
+    /// Returns the text as a Line for rendering (preserves original styling).
+    #[must_use]
+    pub fn render(&self) -> Line<'static> {
+        Line::from(self.text.clone())
+    }
+
+    /// Gets the horizontal alignment.
+    #[must_use]
+    pub fn alignment(&self) -> TitleAlignment {
+        self.alignment
+    }
+
+    /// Gets the vertical position.
+    #[must_use]
+    pub fn position(&self) -> TitlePosition {
+        self.position
+    }
+}
+
+impl From<Title> for Line<'static> {
+    fn from(title: Title) -> Self {
+        title.render()
+    }
+}
+
+impl<T: Into<String>> From<T> for Title {
+    fn from(text: T) -> Self {
+        Title::new(text)
+    }
+}
 
 /// Horizontal alignment for block titles.
 ///
@@ -286,6 +430,19 @@ unicode_converter!(convert_to_monospace, 0x1D670, 0x1D68A, 0x1D7F6);
 ///
 /// # Examples
 ///
+/// ## Using the unified Title API (recommended)
+///
+/// ```
+/// use tui_piechart::title::{Title, TitleStyle};
+/// use ratatui::widgets::Block;
+///
+/// let styled = TitleStyle::Bold.apply("My Chart");
+/// let block = Block::bordered()
+///     .title(Title::new(styled).center().bottom());
+/// ```
+///
+/// ## Using individual positioning methods (legacy)
+///
 /// ```
 /// use tui_piechart::title::{TitleAlignment, TitlePosition, BlockExt};
 /// use ratatui::widgets::Block;
@@ -295,21 +452,23 @@ unicode_converter!(convert_to_monospace, 0x1D670, 0x1D68A, 0x1D7F6);
 ///     .title_alignment_horizontal(TitleAlignment::Center)
 ///     .title_vertical_position(TitlePosition::Bottom);
 /// ```
-///
-/// # Method Chaining
-///
-/// All methods return `Self`, allowing for fluent method chaining:
-///
-/// ```
-/// use tui_piechart::title::{TitleAlignment, TitlePosition, BlockExt};
-/// use tui_piechart::border_style::BorderStyle;
-///
-/// let block = BorderStyle::Rounded.block()
-///     .title("Statistics")
-///     .title_alignment_horizontal(TitleAlignment::End)
-///     .title_vertical_position(TitlePosition::Bottom);
-/// ```
-pub trait BlockExt<'a> {
+pub trait BlockExt<'a>: Sized {
+    /// Apply a unified Title with styling and positioning.
+    ///
+    /// This is the recommended way to add styled and positioned titles.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::title::{Title, TitleStyle, BlockExt};
+    /// use ratatui::widgets::Block;
+    ///
+    /// let styled = TitleStyle::Bold.apply("Stats");
+    /// let block = Block::bordered()
+    ///     .apply_title(Title::new(styled).center().bottom());
+    /// ```
+    #[must_use]
+    fn apply_title(self, title: Title) -> Self;
     /// Sets the horizontal alignment of the title.
     ///
     /// Controls whether the title appears at the start (left), center, or end (right)
@@ -347,6 +506,19 @@ pub trait BlockExt<'a> {
 }
 
 impl<'a> BlockExt<'a> for Block<'a> {
+    fn apply_title(self, title: Title) -> Self {
+        let styled_text = title.render();
+        let alignment = title.alignment();
+        let position = title.position();
+
+        let block = match position {
+            TitlePosition::Top => self.title(styled_text),
+            TitlePosition::Bottom => self.title_bottom(styled_text),
+        };
+
+        block.title_alignment(alignment.into())
+    }
+
     fn title_alignment_horizontal(self, alignment: TitleAlignment) -> Self {
         self.title_alignment(alignment.into())
     }
@@ -363,6 +535,39 @@ impl<'a> BlockExt<'a> for Block<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn title_new() {
+        let title = Title::new("Test");
+        assert_eq!(title.text, "Test");
+        assert_eq!(title.alignment, TitleAlignment::Center);
+        assert_eq!(title.position, TitlePosition::Top);
+    }
+
+    #[test]
+    fn title_builder_alignment() {
+        let title = Title::new("Test").left();
+        assert_eq!(title.alignment, TitleAlignment::Start);
+    }
+
+    #[test]
+    fn title_builder_position() {
+        let title = Title::new("Test").bottom();
+        assert_eq!(title.position, TitlePosition::Bottom);
+    }
+
+    #[test]
+    fn title_builder_chaining() {
+        let title = Title::new("Test").center().bottom();
+        assert_eq!(title.alignment, TitleAlignment::Center);
+        assert_eq!(title.position, TitlePosition::Bottom);
+    }
+
+    #[test]
+    fn title_from_string() {
+        let title: Title = "Test".into();
+        assert_eq!(title.text, "Test");
+    }
 
     #[test]
     fn title_alignment_default() {
@@ -410,21 +615,21 @@ mod tests {
     #[test]
     fn title_alignment_debug() {
         let align = TitleAlignment::Start;
-        let debug = format!("{:?}", align);
+        let debug = format!("{align:?}");
         assert_eq!(debug, "Start");
     }
 
     #[test]
     fn title_position_debug() {
         let pos = TitlePosition::Bottom;
-        let debug = format!("{:?}", pos);
+        let debug = format!("{pos:?}");
         assert_eq!(debug, "Bottom");
     }
 
     #[test]
     fn title_style_debug() {
         let style = TitleStyle::Bold;
-        let debug = format!("{:?}", style);
+        let debug = format!("{style:?}");
         assert_eq!(debug, "Bold");
     }
 
@@ -434,7 +639,7 @@ mod tests {
             .title("Test")
             .title_alignment_horizontal(TitleAlignment::Center);
         // If this compiles and doesn't panic, the trait is working
-        assert!(format!("{:?}", block).contains("Test"));
+        assert!(format!("{block:?}").contains("Test"));
     }
 
     #[test]
@@ -443,7 +648,7 @@ mod tests {
             .title("Test")
             .title_vertical_position(TitlePosition::Bottom);
         // If this compiles and doesn't panic, the trait is working
-        assert!(format!("{:?}", block).contains("Test"));
+        assert!(format!("{block:?}").contains("Test"));
     }
 
     #[test]
@@ -453,7 +658,7 @@ mod tests {
             .title_alignment_horizontal(TitleAlignment::End)
             .title_vertical_position(TitlePosition::Bottom);
         // If this compiles and doesn't panic, method chaining works
-        assert!(format!("{:?}", block).contains("Test"));
+        assert!(format!("{block:?}").contains("Test"));
     }
 
     #[test]

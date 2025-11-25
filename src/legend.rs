@@ -161,14 +161,14 @@ mod tests {
     #[test]
     fn legend_position_debug() {
         let pos = LegendPosition::Top;
-        let debug = format!("{:?}", pos);
+        let debug = format!("{pos:?}");
         assert_eq!(debug, "Top");
     }
 
     #[test]
     fn legend_layout_debug() {
         let layout = LegendLayout::Vertical;
-        let debug = format!("{:?}", layout);
+        let debug = format!("{layout:?}");
         assert_eq!(debug, "Vertical");
     }
 }

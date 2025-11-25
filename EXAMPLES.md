@@ -116,7 +116,50 @@ Four focused examples showcasing predefined symbols from the `symbols` module. E
 
 ---
 
-## 6. Legend Positioning Demo
+## 6. Legend Markers Showcase
+
+**File:** `examples/legend_markers.rs`
+
+An interactive showcase of all 24+ built-in legend marker symbols. Cycle through different marker styles to find the perfect fit for your charts.
+
+**Features:**
+- Browse all predefined legend markers
+- See markers in context with actual pie charts
+- Real-time switching between marker styles
+- Organized by category (shapes, arrows, symbols, etc.)
+
+**Controls:**
+- `↑/↓` or `k/j` - Navigate between marker styles
+- `q` or `Esc` - Quit
+
+**Run:**
+```bash
+cargo run --example legend_markers
+```
+
+**Available Markers:**
+- **Shapes**: Square ■, Circle ●, Diamond ◆, Triangle ▲
+- **Arrows**: Arrow ▶, Right Arrow →, Double Right »
+- **Stars**: Filled Star ★, Outlined Star ☆
+- **Hearts**: Filled Heart ♥, Outlined Heart ♡
+- **Symbols**: Plus ✚, Cross ✖, Check ✓, Bullseye ◉
+- **Minimal**: Bullet •, Dash –, Dot ·
+
+**Custom Markers:**
+You can use any Unicode character as a legend marker:
+```rust
+use tui_piechart::{PieChart, symbols};
+
+let chart = PieChart::new(slices)
+    .legend_marker("🌟")  // Emoji
+    .legend_marker("⚡")  // Lightning
+    .legend_marker("🔥")  // Fire
+    .show_legend(true);
+```
+
+---
+
+## 7. Legend Positioning Demo
 
 **File:** `examples/legend_positioning.rs`
 
@@ -149,47 +192,17 @@ This example demonstrates all legend positioning and layout options:
 
 ---
 
-## 7. Title Positioning Demo
+## 8. Title Styles & Positioning Demo
 
-**File:** `examples/title_positioning.rs`
+**File:** `examples/title_styles.rs`
 
-**Run:** `cargo run --example title_positioning`
-
-**Features:**
-This example demonstrates all title positioning and alignment options:
-- **2 Vertical Positions:**
-  - Top (default)
-  - Bottom
-- **3 Horizontal Alignments:**
-  - Start (Left in LTR)
-  - Center
-  - End (Right in LTR)
-- Interactive controls:
-  - ↑/↓ or k/j - Toggle between Top and Bottom positions
-  - ←/→ or h/l - Cycle through Start/Center/End alignments
-  - Shows all 6 combinations (2 positions × 3 alignments)
-- Uses `BlockExt` trait for ergonomic title customization
-- Applies to the block wrapper around the chart
-
-**Description:** Demonstrates how to use `TitleAlignment` and `TitlePosition` with the `BlockExt` trait to customize block title placement. Shows how titles can be positioned at the top or bottom with left, center, or right alignment.
-
-**VHS Tape:** `examples/vhs/title_positioning.tape`
-
-**Generate GIF:** `vhs examples/vhs/title_positioning.tape`
-
-![Title Positioning Demo](examples/vhs/output/title_positioning.gif)
-
----
-
-## 8. Title Styles Demo
-
-**File:** `examples/title_styles_example.rs`
-
-**Run:** `cargo run --example title_styles_example`
+**Run:** `cargo run --example title_styles`
 
 **Features:**
-This example demonstrates all available title font styles using Unicode character variants:
-- **10 Font Styles:**
+A comprehensive demo combining title font styles and positioning options with two interactive modes:
+
+**Mode 1: Font Styles**
+- **10 Unicode Font Styles:**
   - Normal (default, no transformation)
   - Bold (Mathematical Bold Unicode)
   - Italic (Mathematical Italic Unicode)
@@ -200,14 +213,21 @@ This example demonstrates all available title font styles using Unicode characte
   - Bold Sans Serif (Bold sans-serif)
   - Italic Sans Serif (Italic sans-serif)
   - Monospace (Fixed-width monospace)
-- Interactive controls:
-  - ↑/↓ or k/j - Navigate between different font styles
-  - Home/End - Jump to first/last style
-  - Shows live preview of all ASCII letters, numbers, and styled titles
-- Each style converts ASCII text to Unicode character equivalents
-- Character preview shows the full alphabet in each style
 
-**Description:** Demonstrates how to use `TitleStyle` enum to apply different Unicode font styles to block titles. Each style uses specific Unicode code points (Mathematical Alphanumeric Symbols) to achieve visual typography effects in terminal interfaces without requiring special fonts. Perfect for adding visual hierarchy and emphasis to chart titles.
+**Mode 2: Positioning**
+- **3 Horizontal Alignments:** Start (Left), Center, End (Right)
+- **2 Vertical Positions:** Top, Bottom
+- Shows all 6 combinations (2 positions × 3 alignments)
+
+**Interactive Controls:**
+- `↑/↓` or `k/j` - Navigate font styles (in Styles mode)
+- `←/→` or `h/l` - Change horizontal alignment
+- `Space` or `Tab` - Toggle vertical position (Top/Bottom)
+- `m` - Switch between Styles and Positioning modes
+- `q` or `Esc` - Quit
+
+**Description:** 
+A unified demo showing both `TitleStyle` font transformations and `TitleAlignment`/`TitlePosition` options. Font styles use Unicode Mathematical Alphanumeric Symbols to achieve visual typography without special fonts. The `BlockExt` trait provides ergonomic methods for title customization. Perfect for exploring all title customization options in one place.
 
 **VHS Tape:** `examples/vhs/title_styles.tape`
 

@@ -1,5 +1,5 @@
-# VHS Recording Script for tui-piechart Title Styles Demo
-# This script demonstrates all available title font styles
+# VHS Recording Script for tui-piechart Title Styles & Positioning Demo
+# This script demonstrates all title font styles and positioning options
 # Install VHS: https://github.com/charmbracelet/vhs
 # Run: vhs examples/vhs/title_styles.tape
 
@@ -11,78 +11,161 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "cargo run --example title_styles_example"
+Type "cargo run --example title_styles"
 Enter
 Sleep 2s
 Show
 Sleep 1s
 
-# Show the first style (Normal)
+# Start in Styles mode - show Normal
 Sleep 1.5s
 
-# Navigate to Bold
+# Navigate through different font styles
 Down
+Sleep 1.2s
+
+# Bold
+Down
+Sleep 1.2s
+
+# Italic
+Down
+Sleep 1.2s
+
+# Bold Italic
+Down
+Sleep 1.2s
+
+# Script (interesting one)
 Sleep 1.5s
 
-# Navigate to Italic
+# Bold Script
 Down
-Sleep 1.5s
+Sleep 1.2s
 
-# Navigate to BoldItalic
-Down
-Sleep 1.5s
-
-# Navigate to Script
-Down
-Sleep 1.5s
-
-# Navigate to BoldScript
-Down
-Sleep 1.5s
-
-# Navigate to SansSerif
-Down
-Sleep 1.5s
-
-# Navigate to BoldSansSerif
-Down
-Sleep 1.5s
-
-# Navigate to ItalicSansSerif
-Down
-Sleep 1.5s
-
-# Navigate to Monospace
-Down
-Sleep 1.5s
-
-# Back to top to show Normal again
-Up
-Up
-Up
-Up
-Up
-Up
-Up
-Up
-Up
-Sleep 1.5s
-
-# Quick navigation through some interesting styles
-Down
-Down
-Sleep 1s
-Down
-Down
-Sleep 1s
-Down
+# Sans Serif
 Down
 Sleep 1s
 
-# Show Script style
+# Bold Sans
+Down
+Sleep 1s
+
+# Italic Sans
+Down
+Sleep 1s
+
+# Monospace
+Sleep 1.5s
+
+# Go back to a popular style (Bold)
 Up
+Sleep 0.3s
 Up
+Sleep 0.3s
 Up
+Sleep 0.3s
+Up
+Sleep 0.3s
+Up
+Sleep 0.3s
+Up
+Sleep 0.3s
+Up
+Sleep 0.3s
+Up
+
+Sleep 1.2s
+
+# Now show alignment changes
+Left
+Sleep 1s
+
+# Start (Left)
+Right
+Sleep 1s
+
+# Center
+Right
+Sleep 1s
+
+# End (Right)
+Sleep 1.2s
+
+# Toggle position to Bottom
+Space
+Sleep 1.5s
+
+# Show alignment changes at bottom
+Left
+Sleep 1s
+Left
+Sleep 1s
+
+# Start (Left) at Bottom
+Right
+Sleep 1s
+
+# Center at Bottom
+Right
+Sleep 1s
+
+# End (Right) at Bottom
+Sleep 1.2s
+
+# Toggle back to Top
+Space
+Sleep 1.2s
+
+# Switch to Positioning mode
+Type "m"
+Sleep 1.5s
+
+# Show different alignments in Positioning mode
+Left
+Sleep 1s
+
+# Start
+Right
+Sleep 1s
+
+# Center
+Right
+Sleep 1s
+
+# End
+Sleep 1.2s
+
+# Toggle position
+Space
+Sleep 1.2s
+
+# Bottom
+Space
+Sleep 1.2s
+
+# Back to Top
+Left
+Sleep 1s
+Left
+Sleep 1s
+
+# Show Start at Top
+Sleep 1s
+
+# Switch back to Styles mode
+Type "m"
+Sleep 1.5s
+
+# Navigate to Script style for final display
+Down
+Sleep 0.5s
+Down
+Sleep 0.5s
+Down
+Sleep 0.5s
+Down
+
 Sleep 1.5s
 
 Sleep 1s

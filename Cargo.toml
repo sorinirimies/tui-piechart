@@ -26,4 +26,4 @@ path = "src/lib.rs"
 
 [[example]]
 name = "piechart"
-path = "examples/piechart.rs"
+path = "examples/piechart_basic.rs"

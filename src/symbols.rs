@@ -1,6 +1,80 @@
-//! Symbols for pie chart widget
+//! Symbols for pie chart widget and legends
 //!
-//! This module provides predefined symbols that can be used with the [`PieChart`] widget.
+//! This module provides a comprehensive collection of predefined symbols for customizing
+//! the appearance of pie charts and their legends. Choose from 30+ pie characters and
+//! 24+ legend markers to match your aesthetic preferences.
+//!
+//! # Examples
+//!
+//! ## Using Predefined Legend Markers
+//!
+//! ```
+//! use tui_piechart::{PieChart, PieSlice, symbols};
+//! use ratatui::style::Color;
+//!
+//! let slices = vec![
+//!     PieSlice::new("Rust", 45.0, Color::Red),
+//!     PieSlice::new("Go", 30.0, Color::Blue),
+//! ];
+//!
+//! // Use a star marker for legends
+//! let chart = PieChart::new(slices)
+//!     .legend_marker(symbols::LEGEND_MARKER_STAR)
+//!     .show_legend(true);
+//! ```
+//!
+//! ## Using Predefined Pie Characters
+//!
+//! ```
+//! use tui_piechart::{PieChart, PieSlice, symbols};
+//! use ratatui::style::Color;
+//!
+//! let slices = vec![PieSlice::new("Data", 100.0, Color::Cyan)];
+//!
+//! // Use a square for the pie chart
+//! let chart = PieChart::new(slices)
+//!     .pie_char(symbols::PIE_CHAR_SQUARE);
+//! ```
+//!
+//! ## Custom Symbols (Not Predefined)
+//!
+//! You can use any Unicode character:
+//!
+//! ```
+//! use tui_piechart::{PieChart, PieSlice};
+//! use ratatui::style::Color;
+//!
+//! let slices = vec![PieSlice::new("Custom", 100.0, Color::Green)];
+//!
+//! // Use emoji or any Unicode character
+//! let chart = PieChart::new(slices)
+//!     .pie_char('🔥')
+//!     .legend_marker("🌟");
+//! ```
+//!
+//! # Categories
+//!
+//! ## Legend Markers
+//!
+//! - **Shapes**: Square, Circle, Diamond, Triangle, Hexagon
+//! - **Arrows**: Arrow, Right Arrow, Double Right
+//! - **Symbols**: Star, Heart, Plus, Cross, Check
+//! - **Special**: Bullseye, Asterism, Horizontal Bar
+//!
+//! ## Pie Characters
+//!
+//! - **Basic**: Block, Circle, Square, Diamond
+//! - **Shades**: Light, Medium, Dark shades
+//! - **Shapes**: Triangle (all directions), Star, Heart
+//! - **Special**: Hexagon, Bullseye, Asterism
+//!
+//! # Interactive Example
+//!
+//! Run the legend markers showcase to see all options:
+//!
+//! ```bash
+//! cargo run --example legend_markers
+//! ```
 //!
 //! [`PieChart`]: crate::PieChart
 
@@ -102,34 +176,60 @@ pie_symbols! {
 // LEGEND MARKERS
 // ============================================================================
 
-/// Default marker for legend items
+/// Default marker for legend items - filled square
+///
+/// # Example
+///
+/// ```
+/// use tui_piechart::{PieChart, PieSlice, symbols};
+/// use ratatui::style::Color;
+///
+/// let slices = vec![PieSlice::new("Data", 100.0, Color::Red)];
+/// let chart = PieChart::new(slices)
+///     .legend_marker(symbols::LEGEND_MARKER)
+///     .show_legend(true);
+/// ```
 pub const LEGEND_MARKER: &str = "■";
 
 // Generate all alternative legend markers using the macro
+// These are organized by category for easier browsing
 legend_symbols! {
-    LEGEND_MARKER_CIRCLE: "●", "circle",
-    LEGEND_MARKER_SQUARE: "▪", "square",
-    LEGEND_MARKER_ARROW: "▶", "arrow",
-    LEGEND_MARKER_DIAMOND: "◆", "diamond",
-    LEGEND_MARKER_STAR: "★", "star",
-    LEGEND_MARKER_WHITE_STAR: "☆", "white star",
-    LEGEND_MARKER_SMALL_CIRCLE: "•", "small circle",
-    LEGEND_MARKER_WHITE_CIRCLE: "○", "white circle",
-    LEGEND_MARKER_TRIANGLE: "▲", "triangle",
-    LEGEND_MARKER_HEART: "♥", "heart",
-    LEGEND_MARKER_WHITE_HEART: "♡", "white heart",
-    LEGEND_MARKER_PLUS: "✚", "plus",
-    LEGEND_MARKER_CROSS: "✖", "cross",
-    LEGEND_MARKER_CHECK: "✓", "check",
-    LEGEND_MARKER_RIGHT_ARROW: "→", "right arrow",
-    LEGEND_MARKER_DOUBLE_RIGHT: "»", "double right",
-    LEGEND_MARKER_DASH: "–", "dash",
-    LEGEND_MARKER_DOT: "·", "dot",
-    LEGEND_MARKER_HEXAGON: "⬡", "hexagon",
-    LEGEND_MARKER_BULLSEYE: "◉", "bullseye",
-    LEGEND_MARKER_SQUARE_BOX: "▢", "square box",
-    LEGEND_MARKER_ASTERISM: "⁂", "asterism",
-    LEGEND_MARKER_HORIZONTAL_BAR: "▱", "horizontal bar",
+    // Basic Shapes
+    LEGEND_MARKER_CIRCLE: "●", "circle - classic filled circle",
+    LEGEND_MARKER_SQUARE: "▪", "square - compact filled square",
+    LEGEND_MARKER_DIAMOND: "◆", "diamond - filled diamond shape",
+    LEGEND_MARKER_TRIANGLE: "▲", "triangle - upward-pointing triangle",
+    LEGEND_MARKER_HEXAGON: "⬡", "hexagon - outlined hexagon",
+
+    // Outlined Variants
+    LEGEND_MARKER_WHITE_CIRCLE: "○", "white circle - outlined circle",
+    LEGEND_MARKER_SQUARE_BOX: "▢", "square box - outlined square",
+
+    // Arrow Styles
+    LEGEND_MARKER_ARROW: "▶", "arrow - right-pointing arrow",
+    LEGEND_MARKER_RIGHT_ARROW: "→", "right arrow - simple arrow",
+    LEGEND_MARKER_DOUBLE_RIGHT: "»", "double right - double chevron",
+
+    // Star Styles
+    LEGEND_MARKER_STAR: "★", "star - filled star",
+    LEGEND_MARKER_WHITE_STAR: "☆", "white star - outlined star",
+
+    // Heart Styles
+    LEGEND_MARKER_HEART: "♥", "heart - filled heart",
+    LEGEND_MARKER_WHITE_HEART: "♡", "white heart - outlined heart",
+
+    // Symbols & Icons
+    LEGEND_MARKER_PLUS: "✚", "plus - plus sign",
+    LEGEND_MARKER_CROSS: "✖", "cross - X-shaped cross",
+    LEGEND_MARKER_CHECK: "✓", "check - check mark",
+    LEGEND_MARKER_BULLSEYE: "◉", "bullseye - circle with center dot",
+    LEGEND_MARKER_ASTERISM: "⁂", "asterism - three asterisks",
+
+    // Minimal Markers
+    LEGEND_MARKER_SMALL_CIRCLE: "•", "small circle - bullet point",
+    LEGEND_MARKER_DASH: "–", "dash - horizontal dash",
+    LEGEND_MARKER_DOT: "·", "dot - middle dot",
+    LEGEND_MARKER_HORIZONTAL_BAR: "▱", "horizontal bar - white bar",
 }
 
 #[cfg(test)]

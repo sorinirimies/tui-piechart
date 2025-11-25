@@ -571,6 +571,32 @@ impl Widget for &PieChart<'_> {
 }
 
 impl PieChart<'_> {
+    /// Maximum ratio for vertical legend width (1/3 of available width).
+    const LEGEND_VERTICAL_MAX_RATIO: u16 = 3;
+
+    /// Minimum width for vertical legend to ensure readability.
+    const LEGEND_VERTICAL_MIN_WIDTH: u16 = 20;
+
+    /// Maximum ratio for horizontal legend width (2/5 = 40% of available width).
+    /// This keeps the pie chart proportional and prevents legend from dominating.
+    const LEGEND_HORIZONTAL_MAX_RATIO: u16 = 5;
+
+    /// Absolute maximum width for horizontal legends to prevent excessive space usage.
+    const LEGEND_HORIZONTAL_MAX_WIDTH: u16 = 60;
+
+    /// Absolute maximum height for vertical legends to prevent pie chart from being too small.
+    /// This allows 4 items with spacing (4 items * 2 lines = 8 lines, +1 for padding = 9).
+    const LEGEND_VERTICAL_MAX_HEIGHT: u16 = 9;
+
+    /// Height required for horizontal legend layout (single row with padding).
+    const LEGEND_HORIZONTAL_HEIGHT: u16 = 3;
+
+    /// Space between pie chart and legend areas.
+    const LEGEND_SPACING: u16 = 1;
+
+    /// Inner padding for legend area.
+    const LEGEND_PADDING: u16 = 1;
+
     fn render_piechart(&self, area: Rect, buf: &mut Buffer) {
         if area.is_empty() || self.slices.is_empty() {
             return;
@@ -719,12 +745,23 @@ impl PieChart<'_> {
 
         match self.legend_layout {
             LegendLayout::Vertical => {
+                // Calculate columns based on available width (max 2 for top/bottom positions)
+                let max_item_width = self.calculate_legend_width();
+                let columns = (legend_area.width / max_item_width.max(1)).clamp(1, 2);
+
                 for (idx, slice) in self.slices.iter().enumerate() {
                     #[allow(clippy::cast_possible_truncation)]
                     let idx_u16 = idx as u16;
 
-                    // Add spacing between legend items
-                    let y_offset = idx_u16 * 2;
+                    // For single column (left/right): stack vertically
+                    // For multi-column (top/bottom): grid layout
+                    let (row, col) = if columns == 1 {
+                        (idx_u16, 0)
+                    } else {
+                        (idx_u16 / columns, idx_u16 % columns)
+                    };
+
+                    let y_offset = row * 2; // 2 lines per row (item + spacing)
 
                     if y_offset >= legend_area.height {
                         break;
@@ -744,10 +781,15 @@ impl PieChart<'_> {
                     let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
                     let line = Line::from(spans);
 
+                    let x_offset = col * max_item_width;
+                    if x_offset >= legend_area.width {
+                        break;
+                    }
+
                     let item_area = Rect {
-                        x: legend_area.x,
+                        x: legend_area.x + x_offset,
                         y: legend_area.y + y_offset,
-                        width: legend_area.width,
+                        width: max_item_width.min(legend_area.width.saturating_sub(x_offset)),
                         height: 1,
                     };
 
@@ -798,109 +840,149 @@ impl PieChart<'_> {
             return (area, None);
         }
 
-        match self.legend_position {
-            LegendPosition::Right => {
-                let legend_width = if self.legend_layout == LegendLayout::Horizontal {
-                    self.calculate_legend_width().min(area.width / 2)
-                } else {
-                    self.calculate_legend_width().min(area.width / 3).max(20)
-                };
-                if area.width <= legend_width {
-                    return (area, None);
-                }
-                let pie_width = area.width.saturating_sub(legend_width + 1);
-                (
-                    Rect {
-                        x: area.x,
-                        y: area.y,
-                        width: pie_width,
-                        height: area.height,
-                    },
-                    Some(Rect {
-                        x: area.x + pie_width + 1,
-                        y: area.y + 1,
-                        width: legend_width,
-                        height: area.height.saturating_sub(2),
-                    }),
-                )
+        // Vertical layout uses Left/Right positions, Horizontal layout uses Top/Bottom
+        match (self.legend_position, self.legend_layout) {
+            // Left/Right with Vertical layout - proper vertical stacking on sides
+            (LegendPosition::Left | LegendPosition::Right, LegendLayout::Vertical) => {
+                let legend_width = self
+                    .calculate_legend_width()
+                    .min(area.width / Self::LEGEND_VERTICAL_MAX_RATIO)
+                    .max(Self::LEGEND_VERTICAL_MIN_WIDTH);
+                let is_left = matches!(self.legend_position, LegendPosition::Left);
+                Self::layout_horizontal_split(area, legend_width, is_left)
             }
-            LegendPosition::Left => {
-                let legend_width = if self.legend_layout == LegendLayout::Horizontal {
-                    self.calculate_legend_width().min(area.width / 2)
-                } else {
-                    self.calculate_legend_width().min(area.width / 3).max(20)
-                };
-                if area.width <= legend_width {
-                    return (area, None);
-                }
-                let pie_width = area.width.saturating_sub(legend_width + 1);
-                (
-                    Rect {
-                        x: area.x + legend_width + 1,
-                        y: area.y,
-                        width: pie_width,
-                        height: area.height,
-                    },
-                    Some(Rect {
-                        x: area.x,
-                        y: area.y + 1,
-                        width: legend_width,
-                        height: area.height.saturating_sub(2),
-                    }),
-                )
+            // Top/Bottom with Horizontal layout - single row at top/bottom
+            (LegendPosition::Top | LegendPosition::Bottom, LegendLayout::Horizontal) => {
+                let is_top = matches!(self.legend_position, LegendPosition::Top);
+                Self::layout_vertical_split(area, Self::LEGEND_HORIZONTAL_HEIGHT, is_top)
             }
-            LegendPosition::Top => {
-                let legend_height = if self.legend_layout == LegendLayout::Horizontal {
-                    3
-                } else {
-                    #[allow(clippy::cast_possible_truncation)]
-                    (self.slices.len() as u16 * 2).min(area.height / 3)
-                };
-                if area.height <= legend_height {
-                    return (area, None);
-                }
-                let pie_height = area.height.saturating_sub(legend_height + 1);
-                (
-                    Rect {
-                        x: area.x,
-                        y: area.y + legend_height + 1,
-                        width: area.width,
-                        height: pie_height,
-                    },
-                    Some(Rect {
-                        x: area.x + 1,
-                        y: area.y + 1,
-                        width: area.width.saturating_sub(2),
-                        height: legend_height.saturating_sub(1),
-                    }),
-                )
+            // Fallback: use horizontal layout for incompatible combinations
+            (LegendPosition::Left | LegendPosition::Right, LegendLayout::Horizontal) => {
+                // Horizontal layout on sides - allocate limited width
+                let legend_width = self
+                    .calculate_legend_horizontal_width()
+                    .min(
+                        (area.width * (Self::LEGEND_HORIZONTAL_MAX_RATIO - 1))
+                            / Self::LEGEND_HORIZONTAL_MAX_RATIO,
+                    )
+                    .min(Self::LEGEND_HORIZONTAL_MAX_WIDTH);
+                let is_left = matches!(self.legend_position, LegendPosition::Left);
+                Self::layout_horizontal_split(area, legend_width, is_left)
             }
-            LegendPosition::Bottom => {
-                let legend_height = if self.legend_layout == LegendLayout::Horizontal {
-                    3
-                } else {
-                    #[allow(clippy::cast_possible_truncation)]
-                    (self.slices.len() as u16 * 2).min(area.height / 3)
-                };
-                if area.height <= legend_height {
-                    return (area, None);
-                }
-                let pie_height = area.height.saturating_sub(legend_height + 1);
-                (
-                    Rect {
-                        x: area.x,
-                        y: area.y,
-                        width: area.width,
-                        height: pie_height,
-                    },
-                    Some(Rect {
-                        x: area.x + 1,
-                        y: area.y + pie_height + 1,
-                        width: area.width.saturating_sub(2),
-                        height: legend_height.saturating_sub(1),
-                    }),
-                )
+            (LegendPosition::Top | LegendPosition::Bottom, LegendLayout::Vertical) => {
+                // Vertical layout at top/bottom - use 2-column grid with minimal height
+                let legend_height = self.calculate_vertical_grid_height(area.width);
+                let is_top = matches!(self.legend_position, LegendPosition::Top);
+                Self::layout_vertical_split(area, legend_height, is_top)
             }
+        }
+    }
+
+    fn calculate_vertical_grid_height(&self, available_width: u16) -> u16 {
+        // For vertical layout at top/bottom, use 2-column grid
+        let max_item_width = self.calculate_legend_width();
+        let columns = (available_width.saturating_sub(Self::LEGEND_PADDING * 2)
+            / max_item_width.max(1))
+        .clamp(1, 2);
+
+        #[allow(clippy::cast_possible_truncation)]
+        let num_items = self.slices.len() as u16;
+
+        // Calculate rows: ceil(items / columns)
+        let rows = num_items.div_ceil(columns);
+        // Each row needs 2 lines (item + spacing), plus account for padding that will be subtracted
+        (rows * 2 + Self::LEGEND_PADDING).clamp(4, Self::LEGEND_VERTICAL_MAX_HEIGHT)
+    }
+
+    fn layout_horizontal_split(
+        area: Rect,
+        legend_width: u16,
+        legend_on_left: bool,
+    ) -> (Rect, Option<Rect>) {
+        if area.width <= legend_width {
+            return (area, None);
+        }
+
+        let pie_width = area
+            .width
+            .saturating_sub(legend_width + Self::LEGEND_SPACING);
+
+        if legend_on_left {
+            (
+                Rect {
+                    x: area.x + legend_width + Self::LEGEND_SPACING,
+                    y: area.y,
+                    width: pie_width,
+                    height: area.height,
+                },
+                Some(Rect {
+                    x: area.x,
+                    y: area.y + Self::LEGEND_PADDING,
+                    width: legend_width,
+                    height: area.height.saturating_sub(Self::LEGEND_PADDING * 2),
+                }),
+            )
+        } else {
+            (
+                Rect {
+                    x: area.x,
+                    y: area.y,
+                    width: pie_width,
+                    height: area.height,
+                },
+                Some(Rect {
+                    x: area.x + pie_width + Self::LEGEND_SPACING,
+                    y: area.y + Self::LEGEND_PADDING,
+                    width: legend_width,
+                    height: area.height.saturating_sub(Self::LEGEND_PADDING * 2),
+                }),
+            )
+        }
+    }
+
+    fn layout_vertical_split(
+        area: Rect,
+        legend_height: u16,
+        legend_on_top: bool,
+    ) -> (Rect, Option<Rect>) {
+        if area.height <= legend_height {
+            return (area, None);
+        }
+
+        let pie_height = area
+            .height
+            .saturating_sub(legend_height + Self::LEGEND_SPACING);
+
+        if legend_on_top {
+            (
+                Rect {
+                    x: area.x,
+                    y: area.y + legend_height + Self::LEGEND_SPACING,
+                    width: area.width,
+                    height: pie_height,
+                },
+                Some(Rect {
+                    x: area.x + Self::LEGEND_PADDING,
+                    y: area.y + Self::LEGEND_PADDING,
+                    width: area.width.saturating_sub(Self::LEGEND_PADDING * 2),
+                    height: legend_height.saturating_sub(Self::LEGEND_PADDING),
+                }),
+            )
+        } else {
+            (
+                Rect {
+                    x: area.x,
+                    y: area.y,
+                    width: area.width,
+                    height: pie_height,
+                },
+                Some(Rect {
+                    x: area.x + Self::LEGEND_PADDING,
+                    y: area.y + pie_height + Self::LEGEND_SPACING,
+                    width: area.width.saturating_sub(Self::LEGEND_PADDING * 2),
+                    height: legend_height.saturating_sub(Self::LEGEND_PADDING),
+                }),
+            )
         }
     }
 
@@ -926,6 +1008,30 @@ impl PieChart<'_> {
         }
 
         max_width.saturating_add(2)
+    }
+
+    fn calculate_legend_horizontal_width(&self) -> u16 {
+        let total = self.total_value();
+        let mut total_width = 0u16;
+
+        for slice in &self.slices {
+            let text = if self.show_percentages {
+                let percent = if total > 0.0 {
+                    (slice.value / total) * 100.0
+                } else {
+                    0.0
+                };
+                format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
+            } else {
+                format!("{} {}  ", self.legend_marker, slice.label)
+            };
+
+            #[allow(clippy::cast_possible_truncation)]
+            let text_width = text.len() as u16;
+            total_width = total_width.saturating_add(text_width);
+        }
+
+        total_width.saturating_add(2)
     }
 
     #[allow(clippy::similar_names)]

@@ -54,7 +54,7 @@ TAPES=(
     "piechart"
     "border_styles"
     "legend_positioning"
-    "title_positioning"
+    "legend_markers"
     "title_styles"
     "high_resolution"
     "custom_symbols"
