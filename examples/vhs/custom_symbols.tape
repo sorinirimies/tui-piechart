@@ -17,54 +17,38 @@ Sleep 2s
 Show
 Sleep 1.5s
 
-# Show hexagons
+# Navigate through custom symbols
 Sleep 1s
 
-# Navigate through custom symbols
+# Large Circle & Ring
 Down
 Sleep 1.5s
 
-# Medium circles
+# Pentagon & Ring
 Down
 Sleep 1.5s
 
-# Emoji (fire & star)
-Down
-Sleep 1.5s
-
-# Asterisms
-Down
-Sleep 1.5s
-
-# Large circle & ring
-Down
-Sleep 1.5s
-
-# Square boxes
-Down
-Sleep 1.5s
-
-# Pentagon & ring
-Down
-Sleep 1.5s
-
-# Art emoji
-Down
-Sleep 1.5s
-
-# Electric (lightning & star)
-Down
-Sleep 1.5s
-
-# Bullseye & circle plus
-Down
-Sleep 1.5s
-
-# Horizontal bars
+# Circle Operators
 Down
 Sleep 1.5s
 
 # Symbols (yin yang & peace)
+Down
+Sleep 1.5s
+
+# Science (atom & radioactive)
+Down
+Sleep 1.5s
+
+# Music (notes)
+Down
+Sleep 1.5s
+
+# Nature (shamrock & flower)
+Down
+Sleep 1.5s
+
+# Tools (gear & hammer)
 Sleep 1.5s
 
 # Go back to top
@@ -78,15 +62,12 @@ Down
 Sleep 0.8s
 Down
 Sleep 0.8s
-Down
-Sleep 0.8s
 
-# Jump to end to show emoji
+# Jump to end
 Type "End"
 Sleep 1.5s
 
 # Back to middle
-Up
 Up
 Up
 Up

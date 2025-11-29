@@ -236,7 +236,7 @@ For comprehensive documentation of all examples, see [EXAMPLES.md](EXAMPLES.md).
 
 ![Custom Symbols](examples/vhs/output/custom_symbols.gif)
 
-- 12 custom Unicode symbols not in predefined list
+- 8 custom Unicode symbols not in predefined list
 - Demonstrates unlimited customization potential
 - Emoji support (terminal-dependent)
 
@@ -279,29 +279,29 @@ For detailed documentation on each example, usage patterns, and more, see [EXAMP
 
 **Main Interactive Demo:**
 
-![Main Demo](examples/vhs/target/piechart.gif)
+![Main Demo](examples/vhs/output/piechart.gif)
 
 **Predefined Symbols:**
 
 | Circles & Squares | Stars & Hearts |
 |-------------------|----------------|
-| ![Circles & Squares](examples/vhs/target/symbols_circles_squares.gif) | ![Stars & Hearts](examples/vhs/target/symbols_stars_hearts.gif) |
+| ![Circles & Squares](examples/vhs/output/symbols_circles_squares.gif) | ![Stars & Hearts](examples/vhs/output/symbols_stars_hearts.gif) |
 
 | Triangles & Hexagons | Shades & Bars |
 |----------------------|---------------|
-| ![Triangles & Hexagons](examples/vhs/target/symbols_triangles_hexagons.gif) | ![Shades & Bars](examples/vhs/target/symbols_shades_bars.gif) |
+| ![Triangles & Hexagons](examples/vhs/output/symbols_triangles_hexagons.gif) | ![Shades & Bars](examples/vhs/output/symbols_shades_bars.gif) |
 
 **Border Styles:**
 
-![Border Styles](examples/vhs/target/border_styles.gif)
+![Border Styles](examples/vhs/output/border_styles.gif)
 
 **Custom Symbols:**
 
-![Custom Symbols](examples/vhs/target/custom_symbols.gif)
+![Custom Symbols](examples/vhs/output/custom_symbols.gif)
 
 **High Resolution Mode:**
 
-![High Resolution](examples/vhs/target/high_resolution.gif)
+![High Resolution](examples/vhs/output/high_resolution.gif)
 
 *All demos generated with [VHS](https://github.com/charmbracelet/vhs). See [EXAMPLES.md](EXAMPLES.md) for detailed documentation.*
 
@@ -680,7 +680,7 @@ Each example showcases 4 predefined symbol combinations:
 cargo run --example border_styles
 ```
 
-![Border Styles Demo](examples/vhs/target/border_styles.gif)
+![Border Styles Demo](examples/vhs/output/border_styles.gif)
 
 This example showcases all 11 available border styles for PieChart blocks:
 - **Standard** - Default single-line borders

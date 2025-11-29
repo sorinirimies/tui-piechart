@@ -30,7 +30,7 @@ This directory contains 11 VHS tape files, one for each example:
 3. **legend_positioning.tape** - 4 legend positions × 2 layouts
 4. **title_positioning.tape** - 2 vertical positions × 3 alignments
 5. **title_styles.tape** - 10 Unicode font styles for titles
-6. **custom_symbols.tape** - 12 custom Unicode symbol combinations
+6. **custom_symbols.tape** - 8 custom Unicode symbol combinations
 7. **high_resolution.tape** - Standard vs braille high-resolution rendering
 8. **symbols_circles_squares.tape** - Circle and square symbol styles
 9. **symbols_stars_hearts.tape** - Star and heart symbol styles

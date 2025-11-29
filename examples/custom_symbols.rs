@@ -26,18 +26,6 @@ struct SymbolSet {
 
 const CUSTOM_SYMBOLS: &[SymbolSet] = &[
     SymbolSet {
-        pie_char: '⚫',
-        legend_marker: "⚪",
-        name: "Medium Circles",
-        description: "Medium black & white circles",
-    },
-    SymbolSet {
-        pie_char: '🔥',
-        legend_marker: "🌟",
-        name: "Emoji",
-        description: "Fire & star emoji (requires font support)",
-    },
-    SymbolSet {
         pie_char: '⬤',
         legend_marker: "○",
         name: "Large Circle & Ring",
@@ -48,18 +36,6 @@ const CUSTOM_SYMBOLS: &[SymbolSet] = &[
         legend_marker: "◯",
         name: "Pentagon & Ring",
         description: "Pentagon & large circle",
-    },
-    SymbolSet {
-        pie_char: '🎯',
-        legend_marker: "🎨",
-        name: "Art Emoji",
-        description: "Target & palette emoji",
-    },
-    SymbolSet {
-        pie_char: '⚡',
-        legend_marker: "⭐",
-        name: "Electric",
-        description: "Lightning bolt & white star",
     },
     SymbolSet {
         pie_char: '⊕',
@@ -207,13 +183,9 @@ fn render_content(frame: &mut Frame, area: Rect, app: &App) {
 
     render_symbol_info(frame, layout[0], app);
 
-    // 4x3 grid for 12 charts
-    let rows = Layout::vertical([
-        Constraint::Percentage(33),
-        Constraint::Percentage(34),
-        Constraint::Percentage(33),
-    ])
-    .split(layout[1]);
+    // 4x2 grid for 8 charts
+    let rows =
+        Layout::vertical([Constraint::Percentage(50), Constraint::Percentage(50)]).split(layout[1]);
 
     let cols1 = Layout::horizontal([
         Constraint::Percentage(25),
@@ -231,17 +203,8 @@ fn render_content(frame: &mut Frame, area: Rect, app: &App) {
     ])
     .split(rows[1]);
 
-    let cols3 = Layout::horizontal([
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-    ])
-    .split(rows[2]);
-
     let areas = [
-        cols1[0], cols1[1], cols1[2], cols1[3], cols2[0], cols2[1], cols2[2], cols2[3], cols3[0],
-        cols3[1], cols3[2], cols3[3],
+        cols1[0], cols1[1], cols1[2], cols1[3], cols2[0], cols2[1], cols2[2], cols2[3],
     ];
 
     for (i, &symbol_set) in CUSTOM_SYMBOLS.iter().enumerate() {
