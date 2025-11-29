@@ -2,16 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.2.1 - 2025-11-23
+## 0.2.2 - 2025-11-29
 ### ➕ Added
 - Add publish readiness check script and Gitea pull commands
 - Add border styles, legend, and title modules with examples
+- Add setup-just.sh script for interactive just setup
+### 📚 Documentation
+- docs: add comprehensive examples section with all demo GIFs to README
 ### 📦 Other Changes
 - Adds recipe for pulling from a Gitea repository
 - Merge remote-tracking branch 'origin/main'
+- Remove dual hosting and SSH setup documentation
+- Reduce custom symbols demo from 12 to 8 examples
 ### 🔧 Chores
 - chore: bump version to 0.2.0
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.1
+- chore: bump version to 0.2.1
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.2
 ## 0.1.9 - 2025-11-13
 ### ➕ Added
 - Add comprehensive justfile and version bump script for automation
