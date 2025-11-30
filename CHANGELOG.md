@@ -2,11 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.5 - 2025-11-30
+### 📦 Other Changes
+- Exclude CI, setup files, and example GIFs from package
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.4...v0.2.5
 ## 0.2.4 - 2025-11-30
 ### ♻️ Refactor
 - Refactor legend rendering into helper methods
 ### ➕ Added
 - Add legend alignment feature and update examples
+### 🔧 Chores
+- chore: bump version to 0.2.4
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.2...v0.2.4
 ## 0.2.2 - 2025-11-29
 ### ➕ Added
