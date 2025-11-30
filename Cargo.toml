@@ -11,6 +11,13 @@ homepage = "https://github.com/sorinirimies/tui-piechart"
 keywords = ["tui", "terminal", "ratatui", "piechart", "widget"]
 categories = ["command-line-interface", "visualization", "rendering", "gui", "graphics"]
 readme = "README.md"
+exclude = [
+    "examples/vhs/output/*.gif",
+    ".gitea/",
+    ".github/",
+    "GITEA_SETUP.md",
+    "cliff.toml",
+]
 
 [dependencies]
 ratatui = { version = "0.29", default-features = false }
