@@ -162,7 +162,8 @@ fn render_chart_triangle(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_TRIANGLE_UP)
-        .legend_marker(symbols::LEGEND_MARKER_TRIANGLE);
+        .legend_marker(symbols::LEGEND_MARKER_TRIANGLE)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -191,7 +192,8 @@ fn render_chart_hexagon(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_HEXAGON)
-        .legend_marker(symbols::LEGEND_MARKER_HEXAGON);
+        .legend_marker(symbols::LEGEND_MARKER_HEXAGON)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -220,7 +222,8 @@ fn render_chart_bullseye(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_BULLSEYE)
-        .legend_marker(symbols::LEGEND_MARKER_BULLSEYE);
+        .legend_marker(symbols::LEGEND_MARKER_BULLSEYE)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -250,7 +253,8 @@ fn render_chart_square_box(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_SQUARE_BOX)
-        .legend_marker(symbols::LEGEND_MARKER_SQUARE_BOX);
+        .legend_marker(symbols::LEGEND_MARKER_SQUARE_BOX)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }

@@ -162,7 +162,8 @@ fn render_chart_default(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR)
-        .legend_marker(symbols::LEGEND_MARKER);
+        .legend_marker(symbols::LEGEND_MARKER)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -191,7 +192,8 @@ fn render_chart_block(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_BLOCK)
-        .legend_marker(symbols::LEGEND_MARKER);
+        .legend_marker(symbols::LEGEND_MARKER)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -220,7 +222,8 @@ fn render_chart_circle(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_CIRCLE)
-        .legend_marker(symbols::LEGEND_MARKER_CIRCLE);
+        .legend_marker(symbols::LEGEND_MARKER_CIRCLE)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -250,7 +253,8 @@ fn render_chart_square(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_SQUARE)
-        .legend_marker(symbols::LEGEND_MARKER_SQUARE);
+        .legend_marker(symbols::LEGEND_MARKER_SQUARE)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }

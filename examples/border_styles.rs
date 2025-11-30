@@ -254,7 +254,8 @@ fn render_border_example(
     let piechart = PieChart::new(slices)
         .block(block)
         .show_legend(true)
-        .show_percentages(false);
+        .show_percentages(false)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }

@@ -255,14 +255,15 @@ fn render_chart(frame: &mut Frame, area: Rect, symbol_set: SymbolSet, is_selecte
         .title(format!(" {} ", symbol_set.name))
         .title_alignment(Alignment::Center)
         .border_style(border_style)
-        .padding(Padding::new(1, 1, 0, 0));
+        .padding(Padding::new(1, 1, 1, 0));
 
     let piechart = PieChart::new(slices)
         .block(block)
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbol_set.pie_char)
-        .legend_marker(symbol_set.legend_marker);
+        .legend_marker(symbol_set.legend_marker)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }

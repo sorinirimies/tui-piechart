@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.3 - 2025-01-XX
+
+### ✨ Features
+- Add `LegendAlignment` enum with Left, Center, and Right options
+- Add `.legend_alignment()` builder method to `PieChart`
+- Support for aligning legend items within their allocated space
+- Particularly useful for grid layouts and small chart areas
+
+### 🐛 Bug Fixes
+- Fix horizontal legend width calculation for Left/Right positions
+- Fix legend text overflow when using horizontal layout with side positions
+- Correct custom symbols example count from 12 to 8 throughout documentation
+
+### 🎨 Improvements
+- Apply centered legend alignment to all grid-layout examples
+- Add centered alignment to: piechart, symbols_*, border_styles, custom_symbols
+- Improve visual balance in 2x2 and 4x2 grid layouts
+- Better padding in custom_symbols example
+
+### 📚 Documentation
+- Add comprehensive legend customization section to README
+- Add `legend_alignment` example with 24 combinations demo
+- Update EXAMPLES.md with legend alignment section
+- Add VHS tape for legend_alignment demo
+- Update all symbol example counts and descriptions
+- Change main README preview to high_resolution.gif
+
+### 🔧 Build System
+- Add `run-legend-alignment` and `vhs-legend-alignment` justfile targets
+- Update `generate_all.sh` with legend_alignment tape
+- Update VHS README with new tape documentation
+
+### 📊 Statistics
+- Total combinations: 24 (4 positions × 2 layouts × 3 alignments)
+- Examples: 12 (1 new: legend_alignment)
+- VHS tapes: 12 (1 new: legend_alignment.tape)
+- Tests: 70 passing (3 new for LegendAlignment)
+
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.2...v0.2.3
+
 ## 0.2.2 - 2025-11-29
 ### ➕ Added
 - Add publish readiness check script and Gitea pull commands

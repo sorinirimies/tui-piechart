@@ -197,7 +197,7 @@ fn render_main_chart(frame: &mut Frame, area: Rect, app: &App) {
     let (style, name, description) = app.styles[app.selected];
 
     // Create styled title text
-    let title_text = format!("Sales Report 2024");
+    let title_text = "Sales Report 2024".to_string();
     let styled_title = style.apply(&title_text);
 
     // Sample data

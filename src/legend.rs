@@ -6,7 +6,7 @@
 //! # Examples
 //!
 //! ```
-//! use tui_piechart::{PieChart, PieSlice, LegendPosition, LegendLayout};
+//! use tui_piechart::{PieChart, PieSlice, LegendPosition, LegendLayout, LegendAlignment};
 //! use ratatui::style::Color;
 //!
 //! let slices = vec![
@@ -15,10 +15,11 @@
 //!     PieSlice::new("Python", 25.0, Color::Green),
 //! ];
 //!
-//! // Position legend on the left with horizontal layout
+//! // Position legend on the left with horizontal layout and center alignment
 //! let chart = PieChart::new(slices)
 //!     .legend_position(LegendPosition::Left)
-//!     .legend_layout(LegendLayout::Horizontal);
+//!     .legend_layout(LegendLayout::Horizontal)
+//!     .legend_alignment(LegendAlignment::Center);
 //! ```
 
 /// Position of the legend relative to the pie chart.
@@ -130,6 +131,54 @@ pub enum LegendLayout {
     Horizontal,
 }
 
+/// Alignment of legend items within the legend area.
+///
+/// Controls how legend items are aligned horizontally within their allocated space.
+/// This is particularly useful in grid layouts or when the legend area is wider
+/// than the legend content.
+///
+/// # Examples
+///
+/// ```
+/// use tui_piechart::{PieChart, PieSlice, LegendAlignment};
+/// use ratatui::style::Color;
+///
+/// let slices = vec![
+///     PieSlice::new("Rust", 45.0, Color::Red),
+///     PieSlice::new("Go", 30.0, Color::Blue),
+/// ];
+///
+/// // Center-align legend items
+/// let chart = PieChart::new(slices)
+///     .legend_alignment(LegendAlignment::Center);
+/// ```
+///
+/// # Layout Considerations
+///
+/// - **Left**: Legend items start from the left edge (default)
+/// - **Center**: Legend items are centered within the legend area
+/// - **Right**: Legend items align to the right edge
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum LegendAlignment {
+    /// Left alignment (default)
+    ///
+    /// Legend items start from the left edge of the legend area.
+    /// This is the default alignment.
+    #[default]
+    Left,
+
+    /// Center alignment
+    ///
+    /// Legend items are centered within the legend area.
+    /// Useful for creating balanced, symmetric layouts.
+    Center,
+
+    /// Right alignment
+    ///
+    /// Legend items align to the right edge of the legend area.
+    Right,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +219,24 @@ mod tests {
         let layout = LegendLayout::Vertical;
         let debug = format!("{:?}", layout);
         assert_eq!(debug, "Vertical");
+    }
+
+    #[test]
+    fn legend_alignment_default() {
+        assert_eq!(LegendAlignment::default(), LegendAlignment::Left);
+    }
+
+    #[test]
+    fn legend_alignment_clone() {
+        let alignment = LegendAlignment::Center;
+        let cloned = alignment;
+        assert_eq!(alignment, cloned);
+    }
+
+    #[test]
+    fn legend_alignment_debug() {
+        let alignment = LegendAlignment::Right;
+        let debug = format!("{:?}", alignment);
+        assert_eq!(debug, "Right");
     }
 }

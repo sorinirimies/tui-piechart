@@ -103,7 +103,7 @@ pub mod symbols;
 pub mod title;
 
 // Re-export commonly used types from submodules for convenience
-pub use legend::{LegendLayout, LegendPosition};
+pub use legend::{LegendAlignment, LegendLayout, LegendPosition};
 pub use title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle};
 
 /// Rendering resolution mode for pie charts.
@@ -243,6 +243,8 @@ pub struct PieChart<'a> {
     legend_position: LegendPosition,
     /// Layout of the legend
     legend_layout: LegendLayout,
+    /// Alignment of legend items
+    legend_alignment: LegendAlignment,
 }
 
 impl Default for PieChart<'_> {
@@ -268,6 +270,7 @@ impl Default for PieChart<'_> {
             resolution: Resolution::default(),
             legend_position: LegendPosition::default(),
             legend_layout: LegendLayout::default(),
+            legend_alignment: LegendAlignment::default(),
         }
     }
 }
@@ -522,6 +525,27 @@ impl<'a> PieChart<'a> {
         self
     }
 
+    /// Sets the alignment of legend items within the legend area.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::{PieChart, LegendAlignment};
+    ///
+    /// // Center-align legend items
+    /// let piechart = PieChart::default()
+    ///     .legend_alignment(LegendAlignment::Center);
+    ///
+    /// // Right-align legend items
+    /// let piechart = PieChart::default()
+    ///     .legend_alignment(LegendAlignment::Right);
+    /// ```
+    #[must_use]
+    pub const fn legend_alignment(mut self, alignment: LegendAlignment) -> Self {
+        self.legend_alignment = alignment;
+        self
+    }
+
     fn total_value(&self) -> f64 {
         self.slices.iter().map(|s| s.value).sum()
     }
@@ -741,13 +765,27 @@ impl PieChart<'_> {
                         format!("{} {}", self.legend_marker, slice.label)
                     };
 
+                    #[allow(clippy::cast_possible_truncation)]
+                    let text_width = legend_text.len() as u16;
+
+                    // Calculate x position based on alignment
+                    let x_pos = match self.legend_alignment {
+                        LegendAlignment::Left => legend_area.x,
+                        LegendAlignment::Center => {
+                            legend_area.x + (legend_area.width.saturating_sub(text_width)) / 2
+                        }
+                        LegendAlignment::Right => {
+                            legend_area.x + legend_area.width.saturating_sub(text_width)
+                        }
+                    };
+
                     let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
                     let line = Line::from(spans);
 
                     let item_area = Rect {
-                        x: legend_area.x,
+                        x: x_pos,
                         y: legend_area.y + y_offset,
-                        width: legend_area.width,
+                        width: text_width.min(legend_area.width),
                         height: 1,
                     };
 
@@ -755,8 +793,48 @@ impl PieChart<'_> {
                 }
             }
             LegendLayout::Horizontal => {
-                let mut x_offset = 0u16;
+                // First, calculate total width needed for horizontal layout
+                let mut total_width = 0u16;
+                let mut item_widths = Vec::new();
+
                 for slice in &self.slices {
+                    let legend_text = if self.show_percentages {
+                        let percent = if total > 0.0 {
+                            (slice.value / total) * 100.0
+                        } else {
+                            0.0
+                        };
+                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
+                    } else {
+                        format!("{} {}  ", self.legend_marker, slice.label)
+                    };
+
+                    #[allow(clippy::cast_possible_truncation)]
+                    let text_width = legend_text.len() as u16;
+                    item_widths.push(text_width);
+                    total_width = total_width.saturating_add(text_width);
+                }
+
+                // Calculate starting x position based on alignment
+                let start_x = match self.legend_alignment {
+                    LegendAlignment::Left => legend_area.x,
+                    LegendAlignment::Center => {
+                        legend_area.x
+                            + (legend_area
+                                .width
+                                .saturating_sub(total_width.min(legend_area.width)))
+                                / 2
+                    }
+                    LegendAlignment::Right => {
+                        legend_area.x
+                            + legend_area
+                                .width
+                                .saturating_sub(total_width.min(legend_area.width))
+                    }
+                };
+
+                let mut x_offset = 0u16;
+                for (idx, slice) in self.slices.iter().enumerate() {
                     if x_offset >= legend_area.width {
                         break;
                     }
@@ -772,14 +850,13 @@ impl PieChart<'_> {
                         format!("{} {}  ", self.legend_marker, slice.label)
                     };
 
-                    #[allow(clippy::cast_possible_truncation)]
-                    let text_width = legend_text.len() as u16;
+                    let text_width = item_widths[idx];
 
                     let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
                     let line = Line::from(spans);
 
                     let item_area = Rect {
-                        x: legend_area.x + x_offset,
+                        x: start_x + x_offset,
                         y: legend_area.y,
                         width: text_width.min(legend_area.width.saturating_sub(x_offset)),
                         height: 1,
@@ -906,26 +983,55 @@ impl PieChart<'_> {
 
     fn calculate_legend_width(&self) -> u16 {
         let total = self.total_value();
-        let mut max_width = 0u16;
 
-        for slice in &self.slices {
-            let text = if self.show_percentages {
-                let percent = if total > 0.0 {
-                    (slice.value / total) * 100.0
-                } else {
-                    0.0
-                };
-                format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
-            } else {
-                format!("{} {}  ", self.legend_marker, slice.label)
-            };
+        match self.legend_layout {
+            LegendLayout::Vertical => {
+                // For vertical layout, find the maximum width of a single item
+                let mut max_width = 0u16;
 
-            #[allow(clippy::cast_possible_truncation)]
-            let text_width = text.len() as u16;
-            max_width = max_width.max(text_width);
+                for slice in &self.slices {
+                    let text = if self.show_percentages {
+                        let percent = if total > 0.0 {
+                            (slice.value / total) * 100.0
+                        } else {
+                            0.0
+                        };
+                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
+                    } else {
+                        format!("{} {}  ", self.legend_marker, slice.label)
+                    };
+
+                    #[allow(clippy::cast_possible_truncation)]
+                    let text_width = text.len() as u16;
+                    max_width = max_width.max(text_width);
+                }
+
+                max_width.saturating_add(2)
+            }
+            LegendLayout::Horizontal => {
+                // For horizontal layout, sum the width of all items
+                let mut total_width = 0u16;
+
+                for slice in &self.slices {
+                    let text = if self.show_percentages {
+                        let percent = if total > 0.0 {
+                            (slice.value / total) * 100.0
+                        } else {
+                            0.0
+                        };
+                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
+                    } else {
+                        format!("{} {}  ", self.legend_marker, slice.label)
+                    };
+
+                    #[allow(clippy::cast_possible_truncation)]
+                    let text_width = text.len() as u16;
+                    total_width = total_width.saturating_add(text_width);
+                }
+
+                total_width.saturating_add(2)
+            }
         }
-
-        max_width.saturating_add(2)
     }
 
     #[allow(clippy::similar_names)]

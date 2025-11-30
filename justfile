@@ -61,6 +61,9 @@ run-border-styles: (run-example "border_styles")
 # Run the legend_positioning example
 run-legend-positioning: (run-example "legend_positioning")
 
+# Run the legend_alignment example
+run-legend-alignment: (run-example "legend_alignment")
+
 # Run the title_positioning example
 run-title-positioning: (run-example "title_positioning")
 
@@ -317,6 +320,9 @@ vhs-border-styles: (vhs-tape "border_styles")
 # Run the VHS tape to generate demo GIF for legend_positioning
 vhs-legend-positioning: (vhs-tape "legend_positioning")
 
+# Run the VHS tape to generate demo GIF for legend_alignment
+vhs-legend-alignment: (vhs-tape "legend_alignment")
+
 # Run the VHS tape to generate demo GIF for title_positioning
 vhs-title-positioning: (vhs-tape "title_positioning")
 
@@ -324,5 +330,5 @@ vhs-title-positioning: (vhs-tape "title_positioning")
 vhs-title-styles-example: (vhs-tape "title_styles")
 
 # Run all VHS tapes to generate all demo GIFs
-vhs-all: build-examples vhs-piechart vhs-custom-symbols vhs-high-resolution vhs-symbols-circles-squares vhs-symbols-stars-hearts vhs-symbols-triangles-hexagons vhs-symbols-shades-bars vhs-border-styles vhs-legend-positioning vhs-title-positioning vhs-title-styles-example
+vhs-all: build-examples vhs-piechart vhs-custom-symbols vhs-high-resolution vhs-symbols-circles-squares vhs-symbols-stars-hearts vhs-symbols-triangles-hexagons vhs-symbols-shades-bars vhs-border-styles vhs-legend-positioning vhs-legend-alignment vhs-title-positioning vhs-title-styles-example
     @echo "✅ All demo GIFs generated!"
