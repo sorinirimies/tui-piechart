@@ -738,134 +738,112 @@ impl PieChart<'_> {
         }
     }
 
+    fn format_legend_text(&self, slice: &PieSlice, total: f64, spacing: &str) -> String {
+        if self.show_percentages {
+            let percent = if total > 0.0 {
+                (slice.value / total) * 100.0
+            } else {
+                0.0
+            };
+            format!(
+                "{} {} {:.1}%{}",
+                self.legend_marker, slice.label, percent, spacing
+            )
+        } else {
+            format!("{} {}{}", self.legend_marker, slice.label, spacing)
+        }
+    }
+
+    fn calculate_aligned_x(&self, legend_area: Rect, content_width: u16) -> u16 {
+        match self.legend_alignment {
+            LegendAlignment::Left => legend_area.x,
+            LegendAlignment::Center => {
+                legend_area.x + (legend_area.width.saturating_sub(content_width)) / 2
+            }
+            LegendAlignment::Right => {
+                legend_area.x + legend_area.width.saturating_sub(content_width)
+            }
+        }
+    }
+
     fn render_legend(&self, buf: &mut Buffer, legend_area: Rect) {
         let total = self.total_value();
 
         match self.legend_layout {
             LegendLayout::Vertical => {
-                for (idx, slice) in self.slices.iter().enumerate() {
-                    #[allow(clippy::cast_possible_truncation)]
-                    let idx_u16 = idx as u16;
-
-                    // Add spacing between legend items
-                    let y_offset = idx_u16 * 2;
-
-                    if y_offset >= legend_area.height {
-                        break;
-                    }
-
-                    let legend_text = if self.show_percentages {
-                        let percent = if total > 0.0 {
-                            (slice.value / total) * 100.0
-                        } else {
-                            0.0
-                        };
-                        format!("{} {} {:.1}%", self.legend_marker, slice.label, percent)
-                    } else {
-                        format!("{} {}", self.legend_marker, slice.label)
-                    };
-
-                    #[allow(clippy::cast_possible_truncation)]
-                    let text_width = legend_text.len() as u16;
-
-                    // Calculate x position based on alignment
-                    let x_pos = match self.legend_alignment {
-                        LegendAlignment::Left => legend_area.x,
-                        LegendAlignment::Center => {
-                            legend_area.x + (legend_area.width.saturating_sub(text_width)) / 2
-                        }
-                        LegendAlignment::Right => {
-                            legend_area.x + legend_area.width.saturating_sub(text_width)
-                        }
-                    };
-
-                    let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
-                    let line = Line::from(spans);
-
-                    let item_area = Rect {
-                        x: x_pos,
-                        y: legend_area.y + y_offset,
-                        width: text_width.min(legend_area.width),
-                        height: 1,
-                    };
-
-                    line.render(item_area, buf);
-                }
+                self.render_vertical_legend(buf, legend_area, total);
             }
             LegendLayout::Horizontal => {
-                // First, calculate total width needed for horizontal layout
-                let mut total_width = 0u16;
-                let mut item_widths = Vec::new();
-
-                for slice in &self.slices {
-                    let legend_text = if self.show_percentages {
-                        let percent = if total > 0.0 {
-                            (slice.value / total) * 100.0
-                        } else {
-                            0.0
-                        };
-                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
-                    } else {
-                        format!("{} {}  ", self.legend_marker, slice.label)
-                    };
-
-                    #[allow(clippy::cast_possible_truncation)]
-                    let text_width = legend_text.len() as u16;
-                    item_widths.push(text_width);
-                    total_width = total_width.saturating_add(text_width);
-                }
-
-                // Calculate starting x position based on alignment
-                let start_x = match self.legend_alignment {
-                    LegendAlignment::Left => legend_area.x,
-                    LegendAlignment::Center => {
-                        legend_area.x
-                            + (legend_area
-                                .width
-                                .saturating_sub(total_width.min(legend_area.width)))
-                                / 2
-                    }
-                    LegendAlignment::Right => {
-                        legend_area.x
-                            + legend_area
-                                .width
-                                .saturating_sub(total_width.min(legend_area.width))
-                    }
-                };
-
-                let mut x_offset = 0u16;
-                for (idx, slice) in self.slices.iter().enumerate() {
-                    if x_offset >= legend_area.width {
-                        break;
-                    }
-
-                    let legend_text = if self.show_percentages {
-                        let percent = if total > 0.0 {
-                            (slice.value / total) * 100.0
-                        } else {
-                            0.0
-                        };
-                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
-                    } else {
-                        format!("{} {}  ", self.legend_marker, slice.label)
-                    };
-
-                    let text_width = item_widths[idx];
-
-                    let spans = vec![Span::styled(legend_text, Style::default().fg(slice.color))];
-                    let line = Line::from(spans);
-
-                    let item_area = Rect {
-                        x: start_x + x_offset,
-                        y: legend_area.y,
-                        width: text_width.min(legend_area.width.saturating_sub(x_offset)),
-                        height: 1,
-                    };
-
-                    line.render(item_area, buf);
-                    x_offset = x_offset.saturating_add(text_width);
-                }
+                self.render_horizontal_legend(buf, legend_area, total);
             }
+        }
+    }
+
+    fn render_vertical_legend(&self, buf: &mut Buffer, legend_area: Rect, total: f64) {
+        for (idx, slice) in self.slices.iter().enumerate() {
+            #[allow(clippy::cast_possible_truncation)]
+            let y_offset = (idx as u16) * 2;
+
+            if y_offset >= legend_area.height {
+                break;
+            }
+
+            let legend_text = self.format_legend_text(slice, total, "");
+            #[allow(clippy::cast_possible_truncation)]
+            let text_width = legend_text.len() as u16;
+            let x_pos = self.calculate_aligned_x(legend_area, text_width);
+
+            let line = Line::from(vec![Span::styled(
+                legend_text,
+                Style::default().fg(slice.color),
+            )]);
+            let item_area = Rect {
+                x: x_pos,
+                y: legend_area.y + y_offset,
+                width: text_width.min(legend_area.width),
+                height: 1,
+            };
+
+            line.render(item_area, buf);
+        }
+    }
+
+    fn render_horizontal_legend(&self, buf: &mut Buffer, legend_area: Rect, total: f64) {
+        let mut total_width = 0u16;
+        let mut item_widths = Vec::new();
+
+        for slice in &self.slices {
+            let legend_text = self.format_legend_text(slice, total, "  ");
+            #[allow(clippy::cast_possible_truncation)]
+            let text_width = legend_text.len() as u16;
+            item_widths.push(text_width);
+            total_width = total_width.saturating_add(text_width);
+        }
+
+        let start_x = self.calculate_aligned_x(legend_area, total_width.min(legend_area.width));
+        let mut x_offset = 0u16;
+
+        for (idx, slice) in self.slices.iter().enumerate() {
+            if x_offset >= legend_area.width {
+                break;
+            }
+
+            let legend_text = self.format_legend_text(slice, total, "  ");
+            let text_width = item_widths[idx];
+
+            let line = Line::from(vec![Span::styled(
+                legend_text,
+                Style::default().fg(slice.color),
+            )]);
+            let item_area = Rect {
+                x: start_x + x_offset,
+                y: legend_area.y,
+                width: text_width.min(legend_area.width.saturating_sub(x_offset)),
+                height: 1,
+            };
+
+            line.render(item_area, buf);
+            x_offset = x_offset.saturating_add(text_width);
         }
     }
 
