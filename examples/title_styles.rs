@@ -137,16 +137,14 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     app.selected_position = (app.selected_position + 1) % app.positions.len();
                 }
                 KeyCode::Up | KeyCode::Char('k') => {
-                    if app.mode == DemoMode::Styles
-                        && app.selected_style > 0 {
-                            app.selected_style -= 1;
-                        }
+                    if app.mode == DemoMode::Styles && app.selected_style > 0 {
+                        app.selected_style -= 1;
+                    }
                 }
                 KeyCode::Down | KeyCode::Char('j') => {
-                    if app.mode == DemoMode::Styles
-                        && app.selected_style < app.styles.len() - 1 {
-                            app.selected_style += 1;
-                        }
+                    if app.mode == DemoMode::Styles && app.selected_style < app.styles.len() - 1 {
+                        app.selected_style += 1;
+                    }
                 }
                 KeyCode::Left | KeyCode::Char('h') => {
                     if app.selected_alignment > 0 {
