@@ -168,7 +168,8 @@ fn render_programming_languages(frame: &mut Frame, area: Rect, is_selected: bool
     let piechart = PieChart::new(slices)
         .block(block)
         .show_legend(true)
-        .show_percentages(true);
+        .show_percentages(true)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }

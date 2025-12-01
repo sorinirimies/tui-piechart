@@ -162,7 +162,8 @@ fn render_chart_diamond(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_DIAMOND)
-        .legend_marker(symbols::LEGEND_MARKER_DIAMOND);
+        .legend_marker(symbols::LEGEND_MARKER_DIAMOND)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -191,7 +192,8 @@ fn render_chart_star(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_STAR)
-        .legend_marker(symbols::LEGEND_MARKER_STAR);
+        .legend_marker(symbols::LEGEND_MARKER_STAR)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -220,7 +222,8 @@ fn render_chart_white_star(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_WHITE_STAR)
-        .legend_marker(symbols::LEGEND_MARKER_WHITE_STAR);
+        .legend_marker(symbols::LEGEND_MARKER_WHITE_STAR)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }
@@ -250,7 +253,8 @@ fn render_chart_heart(frame: &mut Frame, area: Rect, is_selected: bool) {
         .show_legend(true)
         .show_percentages(true)
         .pie_char(symbols::PIE_CHAR_HEART)
-        .legend_marker(symbols::LEGEND_MARKER_HEART);
+        .legend_marker(symbols::LEGEND_MARKER_HEART)
+        .legend_alignment(tui_piechart::LegendAlignment::Center);
 
     frame.render_widget(piechart, area);
 }

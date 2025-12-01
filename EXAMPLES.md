@@ -192,17 +192,60 @@ This example demonstrates all legend positioning and layout options:
 
 ---
 
-## 8. Title Styles & Positioning Demo
+## 7. Legend Alignment Demo
 
-**File:** `examples/title_styles.rs`
+**File:** `examples/legend_alignment.rs`
+
+**Run:** `cargo run --example legend_alignment`
+
+**Features:**
+This example demonstrates legend alignment options for better visual balance:
+- **3 Alignment Options:**
+  - Left (default) - Items align to the left edge
+  - Center - Items are centered within the legend area
+  - Right - Items align to the right edge
+- **Combined with:**
+  - 4 Legend positions (Right, Left, Top, Bottom)
+  - 2 Legend layouts (Vertical, Horizontal)
+- Interactive controls:
+  - ↑/↓ or k/j - Change alignment
+  - ←/→ or h/l - Change position
+  - Space - Toggle layout
+  - Shows all 24 combinations (3 alignments × 4 positions × 2 layouts)
+- Particularly useful for grid layouts and small chart areas
+
+**Description:** Demonstrates the new `LegendAlignment` feature that controls how legend items are aligned within their allocated space. This is especially useful when working with grid layouts or varying chart sizes, as it allows you to create visually balanced and aesthetically pleasing legends. Center alignment works particularly well in tight spaces like the custom symbols grid example.
+
+---
+
+## 8. Title Positioning Demo
+
+**File:** `examples/title_positioning.rs`
 
 **Run:** `cargo run --example title_styles`
 
 **Features:**
 A comprehensive demo combining title font styles and positioning options with two interactive modes:
 
-**Mode 1: Font Styles**
-- **10 Unicode Font Styles:**
+**Description:** Demonstrates how to use `TitleAlignment` and `TitlePosition` with the `BlockExt` trait to customize block title placement. Shows how titles can be positioned at the top or bottom with left, center, or right alignment.
+
+**VHS Tape:** `examples/vhs/title_positioning.tape`
+
+**Generate GIF:** `vhs examples/vhs/title_positioning.tape`
+
+![Title Positioning Demo](examples/vhs/output/title_positioning.gif)
+
+---
+
+## 9. Title Styles Demo
+
+**File:** `examples/title_styles_example.rs`
+
+**Run:** `cargo run --example title_styles_example`
+
+**Features:**
+This example demonstrates all available title font styles using Unicode character variants:
+- **10 Font Styles:**
   - Normal (default, no transformation)
   - Bold (Mathematical Bold Unicode)
   - Italic (Mathematical Italic Unicode)
@@ -239,7 +282,7 @@ A unified demo showing both `TitleStyle` font transformations and `TitleAlignmen
 
 ---
 
-## 9. Border Styles Demo
+## 10. Border Styles Demo
 
 **File:** `examples/border_styles.rs`
 
@@ -269,21 +312,17 @@ This example showcases all 11 available border styles for PieChart blocks:
 
 ---
 
-## 10. Custom Symbols Demo
+## 11. Custom Symbols Demo
 
 **File:** `examples/custom_symbols.rs`
 
 **Run:** `cargo run --example custom_symbols`
 
 **Features:**
-- Showcases 12 truly custom Unicode symbols NOT in the predefined list
-- 4x3 grid layout showing:
-  - Medium Circles (⚫ / ⚪)
-  - Emoji (🔥 / 🌟)
+- Showcases 8 truly custom Unicode symbols NOT in the predefined list
+- 4x2 grid layout showing:
   - Large Circle & Ring (⬤ / ○)
   - Pentagon & Ring (⬟ / ◯)
-  - Art Emoji (🎯 / 🎨)
-  - Electric (⚡ / ⭐)
   - Circle Operators (⊕ / ⊗)
   - Symbols (☯ / ☮)
   - Science (⚛ / ☢)
@@ -301,7 +340,7 @@ This example showcases all 11 available border styles for PieChart blocks:
 
 ---
 
-## 11. High Resolution Demo
+## 12. High Resolution Demo
 
 **File:** `examples/high_resolution.rs`
 
@@ -362,6 +401,13 @@ High resolution mode uses braille characters which provide 8 dots per character 
 - Applied via `.legend_position()` and `.legend_layout()`
 - Affects the overall chart layout and space allocation
 
+**Legend Alignment:**
+- Control how legend items are aligned within the legend area
+- Use `LegendAlignment` enum (Left, Center, Right)
+- Applied via `.legend_alignment()`
+- Particularly useful for grid layouts and small chart areas
+- Center alignment creates balanced, symmetric layouts
+
 **Title Positioning & Styling:**
 - Control block title alignment and position
 - Use `TitleAlignment` (Start, Center, End) and `TitlePosition` (Top, Bottom)
@@ -416,6 +462,7 @@ All examples support consistent navigation:
 | Triangles & hexagons | `symbols_triangles_hexagons` |
 | Shades & bars | `symbols_shades_bars` |
 | Legend positioning | `legend_positioning` |
+| Legend alignment | `legend_alignment` |
 | Title positioning | `title_positioning` |
 | Title font styles | `title_styles_example` |
 | Border customization | `border_styles` |
@@ -457,6 +504,7 @@ All examples now have VHS tapes for generating demo GIFs!
 cargo run --example piechart                     # Main features
 cargo run --example symbols_circles_squares      # Circles & squares
 cargo run --example legend_positioning           # Legend placement
+cargo run --example legend_alignment             # Legend alignment
 cargo run --example title_positioning            # Title alignment
 cargo run --example title_styles_example         # Title font styles
 cargo run --example border_styles                # Border customization
@@ -477,13 +525,14 @@ cargo run --example symbols_shades_bars          # Shades & bars
 - **6 examples** use 2x2 grid (4 charts)
 - **3 positioning/styling examples** with interactive controls
 - **1 example** uses 4-row grid (11 border styles)
-- **1 example** uses 4x3 grid (12 charts)
+- **1 example** uses 4x2 grid (8 charts)
 - **16 predefined symbol combinations** across 4 examples
 - **8 legend positioning combinations** (4 positions × 2 layouts)
+- **24 legend alignment combinations** (3 alignments × 4 positions × 2 layouts)
 - **6 title positioning combinations** (2 positions × 3 alignments)
 - **10 title font styles** using Unicode character variants
 - **11 border style examples** in 1 example
-- **12 custom symbol examples** in 1 example
+- **8 custom symbol examples** in 1 example (with centered legend alignment)
 - **1 high resolution demo** with interactive toggle
 - **All examples have VHS tapes** for generating demo GIFs
 - **Consistent navigation** across all examples

@@ -8,8 +8,8 @@
 
 A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui) TUI applications.
 
-## Preview Standard and High Resolution
-![tui-piechart](https://github.com/user-attachments/assets/1e142d27-67c6-4452-8562-4273776851e9)
+## Preview - High Resolution Mode
+![High Resolution Mode](examples/vhs/output/high_resolution.gif)
 
 
 ## Features
@@ -17,7 +17,7 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 - 🥧 Simple pie chart with customizable slices
 - 🎨 Customizable colors for each slice
 - 🔤 Labels and percentages
-- 📊 Legend support
+- 📊 Legend support with position, layout, and alignment options
 - 📦 Optional block wrapper with multiple border styles
 - ✨ Custom symbols for pie chart and legend
 - 🔍 High resolution mode using braille patterns (8x resolution)
@@ -78,13 +78,61 @@ let standard = PieChart::new(slices).resolution(Resolution::Standard);
 let braille = PieChart::new(slices).resolution(Resolution::Braille);
 ```
 
+## Legend Customization
+
+The library provides comprehensive legend control with three key aspects:
+
+### Position
+Control where the legend appears relative to the pie chart:
+```rust
+use tui_piechart::{PieChart, LegendPosition};
+
+let chart = PieChart::new(slices)
+    .legend_position(LegendPosition::Right)   // Default
+    .legend_position(LegendPosition::Left)
+    .legend_position(LegendPosition::Top)
+    .legend_position(LegendPosition::Bottom);
+```
+
+### Layout
+Choose between vertical (stacked) or horizontal (single row) arrangement:
+```rust
+use tui_piechart::{PieChart, LegendLayout};
+
+let chart = PieChart::new(slices)
+    .legend_layout(LegendLayout::Vertical)     // Default - items stacked
+    .legend_layout(LegendLayout::Horizontal);  // Items in a row
+```
+
+### Alignment
+Align legend items within their allocated space (particularly useful for grid layouts):
+```rust
+use tui_piechart::{PieChart, LegendAlignment};
+
+let chart = PieChart::new(slices)
+    .legend_alignment(LegendAlignment::Left)    // Default
+    .legend_alignment(LegendAlignment::Center)  // Centered - great for grids
+    .legend_alignment(LegendAlignment::Right);  // Right-aligned
+```
+
+### Combined Example
+```rust
+let chart = PieChart::new(slices)
+    .legend_position(LegendPosition::Bottom)
+    .legend_layout(LegendLayout::Horizontal)
+    .legend_alignment(LegendAlignment::Center);
+```
+
+This gives you **24 possible combinations** (4 positions × 2 layouts × 3 alignments) to perfectly match your UI design!
+
 ## Modules
 
 The library is organized into focused modules:
 
-- **`legend`** - Legend positioning and layout configuration
+- **`legend`** - Legend positioning, layout, and alignment configuration
   - `LegendPosition` - Position legend on any side (Right, Left, Top, Bottom)
   - `LegendLayout` - Vertical or Horizontal layout modes
+  - `LegendAlignment` - Align items Left, Center, or Right within their area
   
 - **`title`** - Title positioning, alignment, and font styling for block wrappers
   - `TitleAlignment` - Horizontal alignment (Start, Center, End)
@@ -125,6 +173,7 @@ cargo run --example symbols_shades_bars          # Asterism, Horizontal Bar, Sha
 
 # Layout and positioning examples:
 cargo run --example legend_positioning           # 4 positions × 2 layouts
+cargo run --example legend_alignment             # 3 alignments × 4 positions × 2 layouts
 cargo run --example title_positioning            # 2 positions × 3 alignments
 cargo run --example title_styles_example         # 10 Unicode font styles
 
@@ -139,6 +188,7 @@ cargo run --example high_resolution
 
 # Or use just commands:
 just run-legend-positioning
+just run-legend-alignment
 just run-title-positioning
 just run-title-styles-example
 just run-border-styles
@@ -265,10 +315,11 @@ For comprehensive documentation of all examples, see [EXAMPLES.md](EXAMPLES.md).
 | Triangles & Hexagons | `cargo run --example symbols_triangles_hexagons` | Geometric symbols |
 | Shades & Bars | `cargo run --example symbols_shades_bars` | Pattern symbols |
 | Legend Positioning | `cargo run --example legend_positioning` | 4 positions × 2 layouts |
+| Legend Alignment | `cargo run --example legend_alignment` | 3 alignments × 4 positions × 2 layouts |
 | Title Positioning | `cargo run --example title_positioning` | 2 positions × 3 alignments |
 | Title Styles | `cargo run --example title_styles_example` | 10 font styles |
 | Border Styles | `cargo run --example border_styles` | 11 border variants |
-| Custom Symbols | `cargo run --example custom_symbols` | 12 custom symbols |
+| Custom Symbols | `cargo run --example custom_symbols` | 8 custom symbols |
 | High Resolution | `cargo run --example high_resolution` | Braille rendering |
 
 For detailed documentation on each example, usage patterns, and more, see [EXAMPLES.md](EXAMPLES.md).
@@ -704,7 +755,7 @@ cargo run --example custom_symbols
 ```
 
 This example showcases truly custom Unicode characters NOT in the predefined list:
-- 12 unique custom symbol combinations
+- 8 unique custom symbol combinations
 - Hexagons, emoji, asterisms, and more
 - Demonstrates the full flexibility of custom Unicode
 - Navigate with ↑/↓ to compare styles

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.4 - 2025-11-30
+### ♻️ Refactor
+- Refactor legend rendering into helper methods
+### ➕ Added
+- Add legend alignment feature and update examples
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.2...v0.2.4
 ## 0.2.2 - 2025-11-29
 ### ➕ Added
 - Add publish readiness check script and Gitea pull commands
@@ -17,6 +23,7 @@ All notable changes to this project will be documented in this file.
 ### 🔧 Chores
 - chore: bump version to 0.2.0
 - chore: bump version to 0.2.1
+- chore: bump version to 0.2.2
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.2
 ## 0.1.9 - 2025-11-13
 ### ➕ Added

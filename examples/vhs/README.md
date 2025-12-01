@@ -23,25 +23,26 @@ vhs --version
 
 ## Available Tapes
 
-This directory contains 11 VHS tape files, one for each example:
+This directory contains 12 VHS tape files, one for each example:
 
 1. **piechart.tape** - Main interactive demo with 4 chart examples
 2. **border_styles.tape** - All 11 border style variants
 3. **legend_positioning.tape** - 4 legend positions × 2 layouts
-4. **title_positioning.tape** - 2 vertical positions × 3 alignments
-5. **title_styles.tape** - 10 Unicode font styles for titles
-6. **custom_symbols.tape** - 8 custom Unicode symbol combinations
-7. **high_resolution.tape** - Standard vs braille high-resolution rendering
-8. **symbols_circles_squares.tape** - Circle and square symbol styles
-9. **symbols_stars_hearts.tape** - Star and heart symbol styles
-10. **symbols_triangles_hexagons.tape** - Triangle and hexagon symbol styles
-11. **symbols_shades_bars.tape** - Shade and bar symbol styles
+4. **legend_alignment.tape** - 3 alignments × 4 positions × 2 layouts
+5. **title_positioning.tape** - 2 vertical positions × 3 alignments
+6. **title_styles.tape** - 10 Unicode font styles for titles
+7. **custom_symbols.tape** - 8 custom Unicode symbol combinations
+8. **high_resolution.tape** - Standard vs braille high-resolution rendering
+9. **symbols_circles_squares.tape** - Circle and square symbol styles
+10. **symbols_stars_hearts.tape** - Star and heart symbol styles
+11. **symbols_triangles_hexagons.tape** - Triangle and hexagon symbol styles
+12. **symbols_shades_bars.tape** - Shade and bar symbol styles
 
 ## Generating Demo GIFs
 
 ### Generate All Demos
 
-The easiest way to generate all 11 demo GIFs at once:
+The easiest way to generate all 12 demo GIFs at once:
 
 ```bash
 # From project root
@@ -51,7 +52,7 @@ The easiest way to generate all 11 demo GIFs at once:
 This script will:
 - Check if VHS is installed
 - Build all examples in release mode
-- Generate all 11 demo GIFs
+- Generate all 12 demo GIFs
 - Show a summary of generated files
 
 ### Generate Individual Demos
@@ -63,6 +64,7 @@ To generate a specific demo GIF:
 vhs examples/vhs/piechart.tape
 vhs examples/vhs/border_styles.tape
 vhs examples/vhs/legend_positioning.tape
+vhs examples/vhs/legend_alignment.tape
 vhs examples/vhs/title_positioning.tape
 vhs examples/vhs/title_styles.tape
 vhs examples/vhs/custom_symbols.tape
@@ -82,6 +84,7 @@ just vhs-all
 just vhs-piechart
 just vhs-border-styles
 just vhs-legend-positioning
+just vhs-legend-alignment
 just vhs-title-positioning
 just vhs-title-styles-example
 just vhs-custom-symbols
