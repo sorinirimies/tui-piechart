@@ -456,6 +456,12 @@ HAS_FMT_CHECK=$(grep -q "^fmt-check:" justfile && echo "yes" || echo "no")
 HAS_CLIPPY=$(grep -q "^clippy:" justfile && echo "yes" || echo "no")
 HAS_CHECK_ALL=$(grep -q "^check-all:" justfile && echo "yes" || echo "no")
 HAS_BUMP=$(grep -q "^bump" justfile && echo "yes" || echo "no")
+HAS_PULL=$(grep -q "^pull:" justfile && echo "yes" || echo "no")
+HAS_PULL_GITEA=$(grep -q "^pull-gitea:" justfile && echo "yes" || echo "no")
+HAS_PULL_ALL=$(grep -q "^pull-all:" justfile && echo "yes" || echo "no")
+HAS_PUSH=$(grep -q "^push:" justfile && echo "yes" || echo "no")
+HAS_PUSH_GITEA=$(grep -q "^push-gitea:" justfile && echo "yes" || echo "no")
+HAS_PUSH_ALL=$(grep -q "^push-all:" justfile && echo "yes" || echo "no")
 
 # Build list of missing commands
 MISSING_COMMANDS=""
@@ -471,6 +477,12 @@ MISSING_COMMANDS=""
 [ "$HAS_VERSION" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • version (display current version)"
 [ "$HAS_INFO" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • info (show project information)"
 [ "$HAS_BUMP" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • bump (bump version with checks)"
+[ "$HAS_PULL" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • pull (pull from GitHub)"
+[ "$HAS_PULL_GITEA" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • pull-gitea (pull from Gitea)"
+[ "$HAS_PULL_ALL" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • pull-all (pull from both Gitea and GitHub)"
+[ "$HAS_PUSH" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • push (push to GitHub)"
+[ "$HAS_PUSH_GITEA" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • push-gitea (push to Gitea)"
+[ "$HAS_PUSH_ALL" = "no" ] && MISSING_COMMANDS="${MISSING_COMMANDS}\n  • push-all (push to both GitHub and Gitea)"
 
 if [ -n "$MISSING_COMMANDS" ]; then
     info "Missing common commands:${MISSING_COMMANDS}"
@@ -622,6 +634,65 @@ bump version: check-all
 "
                 fi
             fi
+        fi
+
+        # Add git operations (independent of project type)
+        if [ "$HAS_PULL" = "no" ]; then
+            ADDITIONS="${ADDITIONS}
+# Git: pull from GitHub (origin)
+pull:
+    git pull origin main
+
+"
+        fi
+
+        if [ "$HAS_PULL_GITEA" = "no" ]; then
+            ADDITIONS="${ADDITIONS}
+# Git: pull from Gitea
+pull-gitea:
+    git pull gitea main
+
+"
+        fi
+
+        if [ "$HAS_PULL_ALL" = "no" ]; then
+            ADDITIONS="${ADDITIONS}
+# Git: pull from both (Gitea first, then GitHub)
+pull-all:
+    git pull gitea main
+    git pull origin main
+    @echo \"✅ Pulled from both Gitea and GitHub!\"
+
+"
+        fi
+
+        if [ "$HAS_PUSH" = "no" ]; then
+            ADDITIONS="${ADDITIONS}
+# Git: push to GitHub (origin)
+push:
+    git push origin main
+
+"
+        fi
+
+        if [ "$HAS_PUSH_GITEA" = "no" ]; then
+            ADDITIONS="${ADDITIONS}
+# Git: push to Gitea
+push-gitea:
+    git push gitea main
+
+"
+        fi
+
+        if [ "$HAS_PUSH_ALL" = "no" ]; then
+            ADDITIONS="${ADDITIONS}
+# Git: push to both GitHub and Gitea
+push-all:
+    git push origin main
+    git push gitea main
+    @echo \"✅ Pushed to both GitHub and Gitea!\"
+
+"
         fi
 
         if [ -n "$ADDITIONS" ]; then
