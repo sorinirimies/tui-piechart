@@ -2,35 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.2.5 - 2025-11-30
+## 0.2.6 - 2025-12-01
+### ➕ Added
+- Add checks and templates for git pull/push commands in justfile
+- Add Git pull commands for origin and gitea remotes
 ### 📦 Other Changes
 - Exclude CI, setup files, and example GIFs from package
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.4...v0.2.5
+- Merge remote-tracking branch 'origin/main'
+- Clean up conditional formatting in key event handlers
+### 🔧 Chores
+- chore: bump version to 0.2.5
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.4...v0.2.6
 ## 0.2.4 - 2025-11-30
 ### ♻️ Refactor
 - Refactor legend rendering into helper methods
 ### ➕ Added
+- Add legend marker showcase and unify title styles demo
 - Add legend alignment feature and update examples
 ### 🔧 Chores
 - chore: bump version to 0.2.4
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.2...v0.2.4
 ## 0.2.2 - 2025-11-29
 ### ➕ Added
-- Add publish readiness check script and Gitea pull commands
-- Add border styles, legend, and title modules with examples
 - Add setup-just.sh script for interactive just setup
 ### 📚 Documentation
 - docs: add comprehensive examples section with all demo GIFs to README
 ### 📦 Other Changes
-- Adds recipe for pulling from a Gitea repository
-- Merge remote-tracking branch 'origin/main'
 - Remove dual hosting and SSH setup documentation
 - Reduce custom symbols demo from 12 to 8 examples
 ### 🔧 Chores
+- chore: bump version to 0.2.2
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.1...v0.2.2
+## 0.2.1 - 2025-11-23
+### ➕ Added
+- Add publish readiness check script and Gitea pull commands
+- Add border styles, legend, and title modules with examples
+### 📦 Other Changes
+- Adds recipe for pulling from a Gitea repository
+- Merge remote-tracking branch 'origin/main'
+### 🔧 Chores
 - chore: bump version to 0.2.0
 - chore: bump version to 0.2.1
-- chore: bump version to 0.2.2
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.2
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.1.9...v0.2.1
 ## 0.1.9 - 2025-11-13
 ### ➕ Added
 - Add comprehensive justfile and version bump script for automation
