@@ -286,7 +286,7 @@ For comprehensive documentation of all examples, see [EXAMPLES.md](EXAMPLES.md).
 
 ![Custom Symbols](examples/vhs/output/custom_symbols.gif)
 
-- 8 custom Unicode symbols not in predefined list
+- custom Unicode symbols not in predefined list
 - Demonstrates unlimited customization potential
 - Emoji support (terminal-dependent)
 
