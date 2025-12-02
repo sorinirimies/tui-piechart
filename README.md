@@ -180,7 +180,7 @@ cargo run --example title_styles_example         # 10 Unicode font styles
 # Border styles showcase (11 charts in 4-row grid)
 cargo run --example border_styles
 
-# Custom (non-predefined) symbols showcase (12 charts)
+# Custom (non-predefined) symbols showcase (6 charts)
 cargo run --example custom_symbols
 
 # High resolution mode demo (animated, toggle with Space)

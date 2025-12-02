@@ -319,16 +319,14 @@ This example showcases all 11 available border styles for PieChart blocks:
 **Run:** `cargo run --example custom_symbols`
 
 **Features:**
-- Showcases 8 truly custom Unicode symbols NOT in the predefined list
-- 4x2 grid layout showing:
+- Showcases 6 truly custom Unicode symbols NOT in the predefined list
+- 3x2 grid layout showing:
   - Large Circle & Ring (⬤ / ○)
-  - Pentagon & Ring (⬟ / ◯)
-  - Circle Operators (⊕ / ⊗)
+  - Circle Operators (⊕/⊗)
   - Symbols (☯ / ☮)
   - Science (⚛ / ☢)
   - Music (♫ / ♬)
-  - Nature (☘ / ❀)
-  - Tools (⚙ / ⚒)
+  - Nature (☘/❀)
 - Demonstrates the full flexibility of custom Unicode characters
 - Note: Some emoji may require specific terminal font support
 
@@ -532,7 +530,7 @@ cargo run --example symbols_shades_bars          # Shades & bars
 - **6 title positioning combinations** (2 positions × 3 alignments)
 - **10 title font styles** using Unicode character variants
 - **11 border style examples** in 1 example
-- **8 custom symbol examples** in 1 example (with centered legend alignment)
+- **6 custom symbol examples** in 1 example (with centered legend alignment)
 - **1 high resolution demo** with interactive toggle
 - **All examples have VHS tapes** for generating demo GIFs
 - **Consistent navigation** across all examples

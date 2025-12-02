@@ -6,7 +6,7 @@
 Output "examples/vhs/output/custom_symbols.gif"
 Set Theme "Catppuccin Macchiato"
 Set Width 1600
-Set Height 1000
+Set Height 1200
 Set FontSize 16
 Set Padding 20
 
@@ -21,10 +21,6 @@ Sleep 1.5s
 Sleep 1s
 
 # Large Circle & Ring
-Down
-Sleep 1.5s
-
-# Pentagon & Ring
 Down
 Sleep 1.5s
 
@@ -45,19 +41,13 @@ Down
 Sleep 1.5s
 
 # Nature (shamrock & flower)
-Down
-Sleep 1.5s
-
-# Tools (gear & hammer)
 Sleep 1.5s
 
 # Go back to top
 Type "Home"
 Sleep 1s
 
-# Navigate through a few more
-Down
-Sleep 0.8s
+# Navigate through a few
 Down
 Sleep 0.8s
 Down
@@ -68,7 +58,6 @@ Type "End"
 Sleep 1.5s
 
 # Back to middle
-Up
 Up
 Up
 Sleep 0.5s

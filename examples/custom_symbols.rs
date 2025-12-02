@@ -32,12 +32,6 @@ const CUSTOM_SYMBOLS: &[SymbolSet] = &[
         description: "Large black circle & white ring",
     },
     SymbolSet {
-        pie_char: '⬟',
-        legend_marker: "◯",
-        name: "Pentagon & Ring",
-        description: "Pentagon & large circle",
-    },
-    SymbolSet {
         pie_char: '⊕',
         legend_marker: "⊗",
         name: "Circle Operators",
@@ -66,12 +60,6 @@ const CUSTOM_SYMBOLS: &[SymbolSet] = &[
         legend_marker: "❀",
         name: "Nature",
         description: "Shamrock & flower",
-    },
-    SymbolSet {
-        pie_char: '⚙',
-        legend_marker: "⚒",
-        name: "Tools",
-        description: "Gear & hammer and pick",
     },
 ];
 
@@ -183,29 +171,25 @@ fn render_content(frame: &mut Frame, area: Rect, app: &App) {
 
     render_symbol_info(frame, layout[0], app);
 
-    // 4x2 grid for 8 charts
+    // 3x2 grid for 6 charts
     let rows =
         Layout::vertical([Constraint::Percentage(50), Constraint::Percentage(50)]).split(layout[1]);
 
     let cols1 = Layout::horizontal([
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
+        Constraint::Percentage(33),
+        Constraint::Percentage(34),
+        Constraint::Percentage(33),
     ])
     .split(rows[0]);
 
     let cols2 = Layout::horizontal([
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
-        Constraint::Percentage(25),
+        Constraint::Percentage(33),
+        Constraint::Percentage(34),
+        Constraint::Percentage(33),
     ])
     .split(rows[1]);
 
-    let areas = [
-        cols1[0], cols1[1], cols1[2], cols1[3], cols2[0], cols2[1], cols2[2], cols2[3],
-    ];
+    let areas = [cols1[0], cols1[1], cols1[2], cols2[0], cols2[1], cols2[2]];
 
     for (i, &symbol_set) in CUSTOM_SYMBOLS.iter().enumerate() {
         if i < areas.len() {
