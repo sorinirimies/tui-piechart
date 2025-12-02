@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.7 - 2025-12-02
+### 📦 Other Changes
+- Reduce custom symbols example from 8 to 6 charts
+### 🔄 Updated
+- Update custom_symbols.gif with new output
+- Update custom symbols description in README
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.6...v0.2.7
 ## 0.2.6 - 2025-12-01
 ### ➕ Added
 - Add checks and templates for git pull/push commands in justfile
@@ -12,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - Clean up conditional formatting in key event handlers
 ### 🔧 Chores
 - chore: bump version to 0.2.5
+- chore: bump version to 0.2.6
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.4...v0.2.6
 ## 0.2.4 - 2025-11-30
 ### ♻️ Refactor
