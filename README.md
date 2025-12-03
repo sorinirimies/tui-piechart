@@ -326,36 +326,6 @@ For detailed documentation on each example, usage patterns, and more, see [EXAMP
 
 ---
 
-### Visual Previews (Legacy)
-
-**Main Interactive Demo:**
-
-![Main Demo](examples/vhs/output/piechart.gif)
-
-**Predefined Symbols:**
-
-| Circles & Squares | Stars & Hearts |
-|-------------------|----------------|
-| ![Circles & Squares](examples/vhs/output/symbols_circles_squares.gif) | ![Stars & Hearts](examples/vhs/output/symbols_stars_hearts.gif) |
-
-| Triangles & Hexagons | Shades & Bars |
-|----------------------|---------------|
-| ![Triangles & Hexagons](examples/vhs/output/symbols_triangles_hexagons.gif) | ![Shades & Bars](examples/vhs/output/symbols_shades_bars.gif) |
-
-**Border Styles:**
-
-![Border Styles](examples/vhs/output/border_styles.gif)
-
-**Custom Symbols:**
-
-![Custom Symbols](examples/vhs/output/custom_symbols.gif)
-
-**High Resolution Mode:**
-
-![High Resolution](examples/vhs/output/high_resolution.gif)
-
-*All demos generated with [VHS](https://github.com/charmbracelet/vhs). See [EXAMPLES.md](EXAMPLES.md) for detailed documentation.*
-
 ### Interactive Mode (Default)
 
 Navigate through different chart types with your keyboard:
