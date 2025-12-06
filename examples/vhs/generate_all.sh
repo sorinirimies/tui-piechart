@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Generate all VHS demo GIFs for tui-piechart examples
-# This script runs all VHS tapes to create demo GIFs for documentation
+# This script automatically discovers and runs all VHS tapes to create demo GIFs
 #
 # Prerequisites:
 # - VHS installed (https://github.com/charmbracelet/vhs)
@@ -49,41 +49,35 @@ echo
 # Create output directory if it doesn't exist
 mkdir -p examples/vhs/output
 
-# List of all VHS tapes
-TAPES=(
-    "piechart"
-    "border_styles"
-    "legend_positioning"
-    "legend_alignment"
-    "title_positioning"
-    "title_styles"
-    "high_resolution"
-    "custom_symbols"
-    "symbols_circles_squares"
-    "symbols_shades_bars"
-    "symbols_stars_hearts"
-    "symbols_triangles_hexagons"
-)
+# Dynamically find all .tape files
+TAPE_FILES=($(find examples/vhs -maxdepth 1 -name "*.tape" -type f | sort))
+
+if [ ${#TAPE_FILES[@]} -eq 0 ]; then
+    echo -e "${YELLOW}⚠ No .tape files found in examples/vhs/${NC}"
+    exit 0
+fi
+
+echo -e "${BLUE}Found ${#TAPE_FILES[@]} VHS tape(s)${NC}"
+echo
 
 # Generate each tape
-TOTAL=${#TAPES[@]}
+TOTAL=${#TAPE_FILES[@]}
 CURRENT=0
+SUCCEEDED=0
+FAILED=0
 
-for tape in "${TAPES[@]}"; do
+for tape_path in "${TAPE_FILES[@]}"; do
     CURRENT=$((CURRENT + 1))
-    TAPE_FILE="examples/vhs/${tape}.tape"
+    tape_name=$(basename "$tape_path" .tape)
 
-    if [ ! -f "$TAPE_FILE" ]; then
-        echo -e "${YELLOW}⚠ Skipping ${tape}.tape (not found)${NC}"
-        continue
-    fi
+    echo -e "${BLUE}[${CURRENT}/${TOTAL}] Generating ${tape_name}.gif...${NC}"
 
-    echo -e "${BLUE}[${CURRENT}/${TOTAL}] Generating ${tape}.gif...${NC}"
-
-    if vhs "$TAPE_FILE"; then
-        echo -e "${GREEN}✓ Generated ${tape}.gif${NC}"
+    if vhs "$tape_path"; then
+        echo -e "${GREEN}✓ Generated ${tape_name}.gif${NC}"
+        SUCCEEDED=$((SUCCEEDED + 1))
     else
-        echo -e "${YELLOW}⚠ Failed to generate ${tape}.gif${NC}"
+        echo -e "${YELLOW}⚠ Failed to generate ${tape_name}.gif${NC}"
+        FAILED=$((FAILED + 1))
     fi
     echo
 done
@@ -91,8 +85,16 @@ done
 # Summary
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${GREEN}✓ Demo generation complete!${NC}"
+echo -e "  Succeeded: ${GREEN}${SUCCEEDED}${NC}"
+if [ $FAILED -gt 0 ]; then
+    echo -e "  Failed: ${YELLOW}${FAILED}${NC}"
+fi
 echo
-echo "Generated GIFs in: examples/vhs/output/"
-ls -lh examples/vhs/output/*.gif | awk '{printf "  • %s (%s)\n", $9, $5}'
-echo
+
+if [ $SUCCEEDED -gt 0 ]; then
+    echo "Generated GIFs in: examples/vhs/output/"
+    ls -lh examples/vhs/output/*.gif 2>/dev/null | awk '{printf "  • %s (%s)\n", $9, $5}' || true
+    echo
+fi
+
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"

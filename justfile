@@ -329,9 +329,9 @@ vhs-title-positioning: (vhs-tape "title_positioning")
 # Run the VHS tape to generate demo GIF for title_styles_example
 vhs-title-styles-example: (vhs-tape "title_styles")
 
-# Run all VHS tapes to generate all demo GIFs
-vhs-all: build-examples vhs-piechart vhs-custom-symbols vhs-high-resolution vhs-symbols-circles-squares vhs-symbols-stars-hearts vhs-symbols-triangles-hexagons vhs-symbols-shades-bars vhs-border-styles vhs-legend-positioning vhs-legend-alignment vhs-title-positioning vhs-title-styles-example
-    @echo "✅ All demo GIFs generated!"
+# Run all VHS tapes to generate all demo GIFs (dynamically discovers all .tape files)
+vhs-all:
+    @./examples/vhs/generate_all.sh
 
 # ============================================
 # Commands added by setup-just.sh
@@ -347,5 +347,3 @@ pull-all:
     git pull gitea main
     git pull origin main
     @echo "✅ Pulled from both Gitea and GitHub!"
-
-
