@@ -2,12 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.8 - 2025-12-06
+### 📦 Other Changes
+- Remove legacy visual previews section from README
+- Auto-discover VHS tapes in generate_all.sh and update vhs-all task
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.7...v0.2.8
 ## 0.2.7 - 2025-12-02
 ### 📦 Other Changes
 - Reduce custom symbols example from 8 to 6 charts
 ### 🔄 Updated
 - Update custom_symbols.gif with new output
 - Update custom symbols description in README
+### 🔧 Chores
+- chore: bump version to 0.2.7
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.6...v0.2.7
 ## 0.2.6 - 2025-12-01
 ### ➕ Added
