@@ -524,7 +524,7 @@ impl<'a> BlockExt<'a> for Block<'a> {
     }
 
     fn title_vertical_position(self, position: TitlePosition) -> Self {
-        use ratatui::widgets::block::Position as RatatuiPosition;
+        use ratatui::widgets::TitlePosition as RatatuiPosition;
         match position {
             TitlePosition::Top => self.title_position(RatatuiPosition::Top),
             TitlePosition::Bottom => self.title_position(RatatuiPosition::Bottom),
