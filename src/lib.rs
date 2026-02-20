@@ -1798,13 +1798,13 @@ mod tests {
 
     // --- Render with no slices (empty) ---
 
-    render_empty_test!(piechart_render_empty_slices, { PieChart::default() });
+    render_empty_test!(piechart_render_empty_slices, PieChart::default());
 
     // --- Render single slice ---
 
     render_test!(
         piechart_render_single_slice,
-        { PieChart::new(vec![PieSlice::new("Only", 100.0, Color::Cyan)]) },
+        PieChart::new(vec![PieSlice::new("Only", 100.0, Color::Cyan)]),
         Rect::new(0, 0, 30, 15)
     );
 
