@@ -1426,4 +1426,394 @@ mod tests {
         // Test wrap around
         assert!(PieChart::is_angle_in_slice(0.1, 1.5 * PI, 0.5));
     }
+
+    // --- Resolution ---
+
+    #[test]
+    fn piechart_resolution_standard() {
+        let piechart = PieChart::default().resolution(Resolution::Standard);
+        assert!(matches!(piechart.resolution, Resolution::Standard));
+    }
+
+    #[test]
+    fn piechart_resolution_braille() {
+        let piechart = PieChart::default().resolution(Resolution::Braille);
+        assert!(matches!(piechart.resolution, Resolution::Braille));
+    }
+
+    #[test]
+    fn piechart_high_resolution_true() {
+        let piechart = PieChart::default().high_resolution(true);
+        assert!(matches!(piechart.resolution, Resolution::Braille));
+    }
+
+    #[test]
+    fn piechart_high_resolution_false() {
+        let piechart = PieChart::default().high_resolution(false);
+        assert!(matches!(piechart.resolution, Resolution::Standard));
+    }
+
+    // --- Legend position / layout / alignment setters ---
+
+    #[test]
+    fn piechart_legend_position_left() {
+        let piechart = PieChart::default().legend_position(LegendPosition::Left);
+        assert!(matches!(piechart.legend_position, LegendPosition::Left));
+    }
+
+    #[test]
+    fn piechart_legend_position_right() {
+        let piechart = PieChart::default().legend_position(LegendPosition::Right);
+        assert!(matches!(piechart.legend_position, LegendPosition::Right));
+    }
+
+    #[test]
+    fn piechart_legend_position_top() {
+        let piechart = PieChart::default().legend_position(LegendPosition::Top);
+        assert!(matches!(piechart.legend_position, LegendPosition::Top));
+    }
+
+    #[test]
+    fn piechart_legend_position_bottom() {
+        let piechart = PieChart::default().legend_position(LegendPosition::Bottom);
+        assert!(matches!(piechart.legend_position, LegendPosition::Bottom));
+    }
+
+    #[test]
+    fn piechart_legend_layout_horizontal() {
+        let piechart = PieChart::default().legend_layout(LegendLayout::Horizontal);
+        assert!(matches!(piechart.legend_layout, LegendLayout::Horizontal));
+    }
+
+    #[test]
+    fn piechart_legend_layout_vertical() {
+        let piechart = PieChart::default().legend_layout(LegendLayout::Vertical);
+        assert!(matches!(piechart.legend_layout, LegendLayout::Vertical));
+    }
+
+    #[test]
+    fn piechart_legend_alignment_left() {
+        let piechart = PieChart::default().legend_alignment(LegendAlignment::Left);
+        assert!(matches!(piechart.legend_alignment, LegendAlignment::Left));
+    }
+
+    #[test]
+    fn piechart_legend_alignment_center() {
+        let piechart = PieChart::default().legend_alignment(LegendAlignment::Center);
+        assert!(matches!(piechart.legend_alignment, LegendAlignment::Center));
+    }
+
+    #[test]
+    fn piechart_legend_alignment_right() {
+        let piechart = PieChart::default().legend_alignment(LegendAlignment::Right);
+        assert!(matches!(piechart.legend_alignment, LegendAlignment::Right));
+    }
+
+    // --- legend_marker setter ---
+
+    #[test]
+    fn piechart_legend_marker_custom() {
+        use crate::symbols::LEGEND_MARKER;
+        let piechart = PieChart::default().legend_marker(LEGEND_MARKER);
+        assert_eq!(piechart.legend_marker, LEGEND_MARKER);
+    }
+
+    // --- format_legend_text ---
+
+    #[test]
+    fn piechart_format_legend_text_with_percentage() {
+        let slices = vec![
+            PieSlice::new("Rust", 50.0, Color::Red),
+            PieSlice::new("Go", 50.0, Color::Blue),
+        ];
+        let piechart = PieChart::new(slices.clone()).show_percentages(true);
+        let text = piechart.format_legend_text(&slices[0], 100.0, "");
+        assert!(text.contains("Rust"));
+        assert!(text.contains("50.0%"));
+    }
+
+    #[test]
+    fn piechart_format_legend_text_without_percentage() {
+        let slices = vec![PieSlice::new("Rust", 50.0, Color::Red)];
+        let piechart = PieChart::new(slices.clone()).show_percentages(false);
+        let text = piechart.format_legend_text(&slices[0], 100.0, "");
+        assert!(text.contains("Rust"));
+        assert!(!text.contains('%'));
+    }
+
+    #[test]
+    fn piechart_format_legend_text_zero_total() {
+        let slices = vec![PieSlice::new("X", 0.0, Color::Red)];
+        let piechart = PieChart::new(slices.clone()).show_percentages(true);
+        let text = piechart.format_legend_text(&slices[0], 0.0, "");
+        assert!(text.contains("0.0%"));
+    }
+
+    // --- calculate_aligned_x ---
+
+    #[test]
+    fn piechart_calculate_aligned_x_left() {
+        let slices = vec![PieSlice::new("A", 100.0, Color::Red)];
+        let piechart = PieChart::new(slices).legend_alignment(LegendAlignment::Left);
+        let area = Rect::new(5, 0, 20, 10);
+        assert_eq!(piechart.calculate_aligned_x(area, 10), 5);
+    }
+
+    #[test]
+    fn piechart_calculate_aligned_x_center() {
+        let slices = vec![PieSlice::new("A", 100.0, Color::Red)];
+        let piechart = PieChart::new(slices).legend_alignment(LegendAlignment::Center);
+        let area = Rect::new(0, 0, 20, 10);
+        // (20 - 10) / 2 = 5
+        assert_eq!(piechart.calculate_aligned_x(area, 10), 5);
+    }
+
+    #[test]
+    fn piechart_calculate_aligned_x_right() {
+        let slices = vec![PieSlice::new("A", 100.0, Color::Red)];
+        let piechart = PieChart::new(slices).legend_alignment(LegendAlignment::Right);
+        let area = Rect::new(0, 0, 20, 10);
+        // 20 - 10 = 10
+        assert_eq!(piechart.calculate_aligned_x(area, 10), 10);
+    }
+
+    // --- Braille render ---
+
+    render_test!(
+        piechart_render_braille,
+        {
+            let slices = vec![
+                PieSlice::new("Rust", 60.0, Color::Red),
+                PieSlice::new("Go", 40.0, Color::Blue),
+            ];
+            PieChart::new(slices).resolution(Resolution::Braille)
+        },
+        Rect::new(0, 0, 40, 20)
+    );
+
+    render_test!(
+        piechart_render_braille_with_legend,
+        {
+            let slices = vec![
+                PieSlice::new("Rust", 60.0, Color::Red),
+                PieSlice::new("Go", 40.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .resolution(Resolution::Braille)
+                .show_legend(true)
+        },
+        Rect::new(0, 0, 40, 20)
+    );
+
+    // --- Legend layout render paths ---
+
+    render_test!(
+        piechart_render_legend_left,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Left)
+                .legend_layout(LegendLayout::Vertical)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_right,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Right)
+                .legend_layout(LegendLayout::Vertical)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_top_horizontal,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Top)
+                .legend_layout(LegendLayout::Horizontal)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_bottom_horizontal,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Bottom)
+                .legend_layout(LegendLayout::Horizontal)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_top_vertical,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Top)
+                .legend_layout(LegendLayout::Vertical)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_bottom_vertical,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Bottom)
+                .legend_layout(LegendLayout::Vertical)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_left_horizontal,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Left)
+                .legend_layout(LegendLayout::Horizontal)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_right_horizontal,
+        {
+            let slices = vec![
+                PieSlice::new("Alpha", 50.0, Color::Red),
+                PieSlice::new("Beta", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_position(LegendPosition::Right)
+                .legend_layout(LegendLayout::Horizontal)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    // --- Legend with percentages ---
+
+    render_test!(
+        piechart_render_legend_with_percentages,
+        {
+            let slices = vec![
+                PieSlice::new("Rust", 45.0, Color::Red),
+                PieSlice::new("Go", 30.0, Color::Blue),
+                PieSlice::new("Python", 25.0, Color::Green),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .show_percentages(true)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    // Legend alignment render paths
+    render_test!(
+        piechart_render_legend_alignment_center,
+        {
+            let slices = vec![
+                PieSlice::new("A", 50.0, Color::Red),
+                PieSlice::new("B", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_alignment(LegendAlignment::Center)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    render_test!(
+        piechart_render_legend_alignment_right,
+        {
+            let slices = vec![
+                PieSlice::new("A", 50.0, Color::Red),
+                PieSlice::new("B", 50.0, Color::Blue),
+            ];
+            PieChart::new(slices)
+                .show_legend(true)
+                .legend_alignment(LegendAlignment::Right)
+        },
+        Rect::new(0, 0, 60, 20)
+    );
+
+    // --- calculate_layout: small area returns no legend ---
+
+    #[test]
+    fn piechart_layout_too_small_no_legend() {
+        let slices = vec![PieSlice::new("A", 100.0, Color::Red)];
+        let piechart = PieChart::new(slices).show_legend(true);
+        // area too narrow (< 20)
+        let area = Rect::new(0, 0, 10, 5);
+        let (pie_area, legend_opt) = piechart.calculate_layout(area);
+        assert_eq!(pie_area, area);
+        assert!(legend_opt.is_none());
+    }
+
+    #[test]
+    fn piechart_layout_show_legend_false_no_legend() {
+        let slices = vec![PieSlice::new("A", 100.0, Color::Red)];
+        let piechart = PieChart::new(slices).show_legend(false);
+        let area = Rect::new(0, 0, 60, 20);
+        let (pie_area, legend_opt) = piechart.calculate_layout(area);
+        assert_eq!(pie_area, area);
+        assert!(legend_opt.is_none());
+    }
+
+    // --- Render with no slices (empty) ---
+
+    render_empty_test!(piechart_render_empty_slices, { PieChart::default() });
+
+    // --- Render single slice ---
+
+    render_test!(
+        piechart_render_single_slice,
+        { PieChart::new(vec![PieSlice::new("Only", 100.0, Color::Cyan)]) },
+        Rect::new(0, 0, 30, 15)
+    );
+
+    // --- Percentage zero total ---
+
+    #[test]
+    fn piechart_percentage_zero_total() {
+        let slices = vec![PieSlice::new("A", 0.0, Color::Red)];
+        let piechart = PieChart::new(slices.clone());
+        assert_eq!(piechart.percentage(&slices[0]), 0.0);
+    }
 }

@@ -17,7 +17,7 @@ use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
-    style::{Color, Style, Stylize},
+    style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Padding, Paragraph},
     DefaultTerminal, Frame,

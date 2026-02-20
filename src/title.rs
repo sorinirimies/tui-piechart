@@ -728,4 +728,140 @@ mod tests {
         assert_ne!(result, "TeSt");
         assert_eq!(result.chars().count(), 4);
     }
+
+    // --- Title builder: left / right / top ---
+
+    #[test]
+    fn title_builder_left() {
+        let title = Title::new("Test").left();
+        assert_eq!(title.alignment, TitleAlignment::Start);
+    }
+
+    #[test]
+    fn title_builder_right() {
+        let title = Title::new("Test").right();
+        assert_eq!(title.alignment, TitleAlignment::End);
+    }
+
+    #[test]
+    fn title_builder_top() {
+        let title = Title::new("Test").bottom().top();
+        assert_eq!(title.position, TitlePosition::Top);
+    }
+
+    // --- Title getters: alignment() / position() / render() ---
+
+    #[test]
+    fn title_alignment_getter() {
+        let title = Title::new("Test").right();
+        assert_eq!(title.alignment(), TitleAlignment::End);
+    }
+
+    #[test]
+    fn title_position_getter() {
+        let title = Title::new("Test").bottom();
+        assert_eq!(title.position(), TitlePosition::Bottom);
+    }
+
+    #[test]
+    fn title_render_returns_line() {
+        let title = Title::new("Hello");
+        let line = title.render();
+        assert_eq!(line.to_string(), "Hello");
+    }
+
+    #[test]
+    fn title_into_line() {
+        let title = Title::new("World");
+        let line: ratatui::text::Line = title.into();
+        assert_eq!(line.to_string(), "World");
+    }
+
+    // --- BlockExt::apply_title ---
+
+    #[test]
+    fn block_ext_apply_title_top_center() {
+        let title = Title::new("My Chart").center().top();
+        let block = Block::bordered().apply_title(title);
+        assert!(format!("{block:?}").contains("My Chart"));
+    }
+
+    #[test]
+    fn block_ext_apply_title_bottom_right() {
+        let title = Title::new("Footer").right().bottom();
+        let block = Block::bordered().apply_title(title);
+        assert!(format!("{block:?}").contains("Footer"));
+    }
+
+    #[test]
+    fn block_ext_apply_title_bottom_left() {
+        let title = Title::new("Left Footer").left().bottom();
+        let block = Block::bordered().apply_title(title);
+        assert!(format!("{block:?}").contains("Left Footer"));
+    }
+
+    // --- TitleStyle remaining variants ---
+
+    #[test]
+    fn title_style_bold_italic() {
+        let result = TitleStyle::BoldItalic.apply("Test");
+        assert_ne!(result, "Test");
+        assert_eq!(result.chars().count(), 4);
+    }
+
+    #[test]
+    fn title_style_bold_script() {
+        let result = TitleStyle::BoldScript.apply("Test");
+        assert_ne!(result, "Test");
+        assert_eq!(result.chars().count(), 4);
+    }
+
+    #[test]
+    fn title_style_bold_sans_serif() {
+        let result = TitleStyle::BoldSansSerif.apply("Test");
+        assert_ne!(result, "Test");
+        assert_eq!(result.chars().count(), 4);
+    }
+
+    #[test]
+    fn title_style_italic_sans_serif() {
+        let result = TitleStyle::ItalicSansSerif.apply("Test");
+        assert_ne!(result, "Test");
+        assert_eq!(result.chars().count(), 4);
+    }
+
+    #[test]
+    fn title_style_bold_script_with_numbers() {
+        // BoldScript has no digit support, digits pass through unchanged
+        let result = TitleStyle::BoldScript.apply("Test 42");
+        assert!(result.contains('4'));
+        assert!(result.contains('2'));
+    }
+
+    #[test]
+    fn title_style_bold_italic_preserves_spaces() {
+        let result = TitleStyle::BoldItalic.apply("A B");
+        assert!(result.contains(' '));
+    }
+
+    #[test]
+    fn title_style_all_variants_non_empty() {
+        let text = "ABC";
+        let variants = [
+            TitleStyle::Normal,
+            TitleStyle::Bold,
+            TitleStyle::Italic,
+            TitleStyle::BoldItalic,
+            TitleStyle::Script,
+            TitleStyle::BoldScript,
+            TitleStyle::SansSerif,
+            TitleStyle::BoldSansSerif,
+            TitleStyle::ItalicSansSerif,
+            TitleStyle::Monospace,
+        ];
+        for variant in &variants {
+            let result = variant.apply(text);
+            assert_eq!(result.chars().count(), 3, "{variant:?} changed char count");
+        }
+    }
 }
