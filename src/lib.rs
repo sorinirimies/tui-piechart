@@ -1816,4 +1816,237 @@ mod tests {
         let piechart = PieChart::new(slices.clone());
         assert_eq!(piechart.percentage(&slices[0]), 0.0);
     }
+
+    // --- calculate_legend_width Vertical: zero total with percentages (line 1041) ---
+    // Must call the private method directly: render_piechart returns early when total == 0,
+    // so the zero-total branch inside calculate_legend_width is only reachable this way.
+
+    #[test]
+    fn piechart_calculate_legend_width_vertical_zero_total_with_percentages() {
+        let slices = vec![
+            PieSlice::new("A", 0.0, Color::Red),
+            PieSlice::new("B", 0.0, Color::Blue),
+        ];
+        let piechart = PieChart::new(slices)
+            .legend_layout(LegendLayout::Vertical)
+            .show_percentages(true);
+        let width = piechart.calculate_legend_width();
+        // Each label shows "• A 0.0%  " — width must be > 0
+        assert!(width > 0);
+    }
+
+    render_test!(
+        piechart_render_legend_vertical_zero_total_with_percentages,
+        PieChart::new(vec![
+            PieSlice::new("A", 0.0, Color::Red),
+            PieSlice::new("B", 0.0, Color::Blue),
+        ])
+        .show_legend(true)
+        .show_percentages(true)
+        .legend_position(LegendPosition::Right)
+        .legend_layout(LegendLayout::Vertical),
+        Rect::new(0, 0, 60, 20)
+    );
+
+    // --- calculate_legend_width Vertical: show_percentages=false (line 1045) ---
+
+    render_test!(
+        piechart_render_legend_vertical_no_percentages,
+        PieChart::new(vec![
+            PieSlice::new("Rust", 60.0, Color::Red),
+            PieSlice::new("Go", 40.0, Color::Blue),
+        ])
+        .show_legend(true)
+        .show_percentages(false)
+        .legend_position(LegendPosition::Right)
+        .legend_layout(LegendLayout::Vertical),
+        Rect::new(0, 0, 60, 20)
+    );
+
+    // --- render_piechart: total <= 0.0 guard (line 631) ---
+
+    render_test!(
+        piechart_render_all_zero_values,
+        PieChart::new(vec![
+            PieSlice::new("A", 0.0, Color::Red),
+            PieSlice::new("B", 0.0, Color::Blue),
+        ]),
+        Rect::new(0, 0, 40, 20)
+    );
+
+    // --- render_slice: percent <= 0.0 guard (line 691) ---
+
+    render_test!(
+        piechart_render_zero_value_slice_in_mix,
+        PieChart::new(vec![
+            PieSlice::new("A", 100.0, Color::Red),
+            PieSlice::new("B", 0.0, Color::Blue),
+        ]),
+        Rect::new(0, 0, 40, 20)
+    );
+
+    // --- render_slice: radius == 0 guard — tiny 1×1 area (line 691) ---
+
+    render_test!(
+        piechart_render_tiny_area_radius_zero,
+        PieChart::new(vec![PieSlice::new("A", 100.0, Color::Red)]),
+        Rect::new(0, 0, 1, 1)
+    );
+
+    // --- render_vertical_legend: overflow break (line 814) ---
+    // Many slices in a tall-enough outer area but tiny legend height forces the break.
+
+    render_test!(
+        piechart_render_vertical_legend_overflow,
+        PieChart::new(vec![
+            PieSlice::new("Slice1", 10.0, Color::Red),
+            PieSlice::new("Slice2", 10.0, Color::Blue),
+            PieSlice::new("Slice3", 10.0, Color::Green),
+            PieSlice::new("Slice4", 10.0, Color::Yellow),
+            PieSlice::new("Slice5", 10.0, Color::Cyan),
+            PieSlice::new("Slice6", 10.0, Color::Magenta),
+            PieSlice::new("Slice7", 10.0, Color::White),
+            PieSlice::new("Slice8", 10.0, Color::Red),
+            PieSlice::new("Slice9", 10.0, Color::Blue),
+            PieSlice::new("Slice10", 10.0, Color::Green),
+        ])
+        .show_legend(true)
+        .legend_position(LegendPosition::Right)
+        .legend_layout(LegendLayout::Vertical),
+        // height=12 → legend area height ≈ 10 → only 5 items fit (each takes 2 rows)
+        Rect::new(0, 0, 60, 12)
+    );
+
+    // --- render_horizontal_legend: overflow break (line 854) ---
+    // Many slices with a very narrow area forces the x_offset >= width break.
+
+    render_test!(
+        piechart_render_horizontal_legend_overflow,
+        PieChart::new(vec![
+            PieSlice::new("LongLabelA", 20.0, Color::Red),
+            PieSlice::new("LongLabelB", 20.0, Color::Blue),
+            PieSlice::new("LongLabelC", 20.0, Color::Green),
+            PieSlice::new("LongLabelD", 20.0, Color::Yellow),
+            PieSlice::new("LongLabelE", 20.0, Color::Cyan),
+        ])
+        .show_legend(true)
+        .legend_position(LegendPosition::Bottom)
+        .legend_layout(LegendLayout::Horizontal),
+        // width=22 is very narrow relative to the label sizes
+        Rect::new(0, 0, 22, 15)
+    );
+
+    // --- layout_horizontal_split: early return when area.width <= legend_width (line 988) ---
+
+    #[test]
+    fn piechart_layout_horizontal_split_too_narrow() {
+        let area = Rect::new(0, 0, 5, 20);
+        // legend_width (100) > area.width (5) → early return
+        let (pie_area, legend_opt) = PieChart::<'_>::layout_horizontal_split(area, 100, true);
+        assert_eq!(pie_area, area);
+        assert!(legend_opt.is_none());
+    }
+
+    // --- layout_vertical_split: early return when area.height <= legend_height (line 1041) ---
+
+    #[test]
+    fn piechart_layout_vertical_split_too_short() {
+        let area = Rect::new(0, 0, 60, 3);
+        // legend_height (100) > area.height (3) → early return
+        let (pie_area, legend_opt) = PieChart::<'_>::layout_vertical_split(area, 100, true);
+        assert_eq!(pie_area, area);
+        assert!(legend_opt.is_none());
+    }
+
+    // --- calculate_legend_width: LegendLayout::Horizontal branch (lines 1057-1076) ---
+    // This branch is only reachable by calling the method directly in tests.
+
+    #[test]
+    fn piechart_calculate_legend_width_horizontal_with_percentages() {
+        let slices = vec![
+            PieSlice::new("Rust", 60.0, Color::Red),
+            PieSlice::new("Go", 40.0, Color::Blue),
+        ];
+        let piechart = PieChart::new(slices)
+            .legend_layout(LegendLayout::Horizontal)
+            .show_percentages(true);
+        let width = piechart.calculate_legend_width();
+        assert!(width > 0);
+    }
+
+    #[test]
+    fn piechart_calculate_legend_width_horizontal_without_percentages() {
+        let slices = vec![
+            PieSlice::new("Alpha", 50.0, Color::Red),
+            PieSlice::new("Beta", 50.0, Color::Blue),
+        ];
+        let piechart = PieChart::new(slices)
+            .legend_layout(LegendLayout::Horizontal)
+            .show_percentages(false);
+        let width = piechart.calculate_legend_width();
+        assert!(width > 0);
+    }
+
+    #[test]
+    fn piechart_calculate_legend_width_horizontal_zero_total() {
+        let slices = vec![
+            PieSlice::new("A", 0.0, Color::Red),
+            PieSlice::new("B", 0.0, Color::Blue),
+        ];
+        let piechart = PieChart::new(slices)
+            .legend_layout(LegendLayout::Horizontal)
+            .show_percentages(true);
+        let width = piechart.calculate_legend_width();
+        // Zero total → 0.0% for each item, but width is still > 0
+        assert!(width > 0);
+    }
+
+    // --- calculate_legend_horizontal_width: zero total branch (lines 1090, 1094) ---
+
+    #[test]
+    fn piechart_calculate_legend_horizontal_width_zero_total() {
+        let slices = vec![
+            PieSlice::new("X", 0.0, Color::Red),
+            PieSlice::new("Y", 0.0, Color::Blue),
+        ];
+        let piechart = PieChart::new(slices).show_percentages(true);
+        let width = piechart.calculate_legend_horizontal_width();
+        assert!(width > 0);
+    }
+
+    #[test]
+    fn piechart_calculate_legend_horizontal_width_without_percentages() {
+        let slices = vec![PieSlice::new("Item", 100.0, Color::Green)];
+        let piechart = PieChart::new(slices).show_percentages(false);
+        let width = piechart.calculate_legend_horizontal_width();
+        assert!(width > 0);
+    }
+
+    // --- calculate_vertical_grid_height: very narrow width clamps columns to 1 ---
+
+    #[test]
+    fn piechart_calculate_vertical_grid_height_narrow() {
+        let slices = vec![
+            PieSlice::new("A", 50.0, Color::Red),
+            PieSlice::new("B", 50.0, Color::Blue),
+        ];
+        let piechart = PieChart::new(slices);
+        // width=1 → columns clamped to 1 → all items stack in one column
+        let height = piechart.calculate_vertical_grid_height(1);
+        assert!(height >= 4);
+    }
+
+    #[test]
+    fn piechart_calculate_vertical_grid_height_wide() {
+        let slices = vec![
+            PieSlice::new("A", 25.0, Color::Red),
+            PieSlice::new("B", 25.0, Color::Blue),
+            PieSlice::new("C", 25.0, Color::Green),
+            PieSlice::new("D", 25.0, Color::Yellow),
+        ];
+        let piechart = PieChart::new(slices);
+        // wide enough for 2 columns
+        let height = piechart.calculate_vertical_grid_height(60);
+        assert!(height >= 4);
+    }
 }

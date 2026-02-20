@@ -845,6 +845,14 @@ mod tests {
     }
 
     #[test]
+    fn block_ext_title_vertical_position_top() {
+        let block = Block::bordered()
+            .title("Test")
+            .title_vertical_position(TitlePosition::Top);
+        assert!(format!("{block:?}").contains("Test"));
+    }
+
+    #[test]
     fn title_style_all_variants_non_empty() {
         let text = "ABC";
         let variants = [
