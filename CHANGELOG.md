@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 - 2026-02-20
+### 🐛 Bug Fixes
+- fix(warnings): remove unused Stylize imports from all examples
+- fix(warnings): remove unnecessary braces around macro arguments
+### 🧪 Testing
+- test: achieve 100% coverage (95.54% -> 100%)
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.9...v0.3.0
 ## 0.2.9 - 2026-02-20
 ### ➕ Added
 - Add checks and templates for git pull/push commands in justfile
@@ -25,6 +32,7 @@ All notable changes to this project will be documented in this file.
 - chore: bump version to 0.2.7
 - chore: bump version to 0.2.8
 - chore: upgrade dependencies to latest versions
+- chore: bump version to 0.2.9
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.4...v0.2.9
 ## 0.2.4 - 2025-11-30
 ### ♻️ Refactor
