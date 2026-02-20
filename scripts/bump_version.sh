@@ -45,12 +45,12 @@ fi
 
 # Update Cargo.toml
 echo -e "${GREEN}Updating Cargo.toml...${NC}"
-sed -i "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
+sed -i '' "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
 
 # Update README.md version badge if it exists
 echo -e "${GREEN}Updating README.md...${NC}"
 if grep -q "version-[0-9]*\.[0-9]*\.[0-9]*-blue" README.md 2>/dev/null; then
-    sed -i "s/version-[0-9]*\.[0-9]*\.[0-9]*-blue/version-${NEW_VERSION}-blue/" README.md
+    sed -i '' "s/version-[0-9]*\.[0-9]*\.[0-9]*-blue/version-${NEW_VERSION}-blue/" README.md
 fi
 
 # Update Cargo.lock
