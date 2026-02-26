@@ -2,10 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.1 - 2026-02-26
+### 📦 Other Changes
+- added zed rules
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.0...v0.3.1
 ## 0.3.0 - 2026-02-20
 ### 🐛 Bug Fixes
 - fix(warnings): remove unused Stylize imports from all examples
 - fix(warnings): remove unnecessary braces around macro arguments
+### 🔧 Chores
+- chore: bump version to 0.3.0
 ### 🧪 Testing
 - test: achieve 100% coverage (95.54% -> 100%)
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.9...v0.3.0
