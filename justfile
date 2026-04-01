@@ -147,7 +147,7 @@ changelog-update: check-git-cliff
 # Bump version (usage: just bump 0.2.0)
 bump version: check-all check-git-cliff
     @echo "Bumping version to {{version}}..."
-    @./scripts/bump_version.sh {{version}}
+    nu scripts/bump_version.nu {{version}}
 
 # Quick release: format, check, test, and build
 release-check: fmt clippy test build-release
@@ -267,7 +267,15 @@ setup-gitea url:
 
 # Show current version
 version:
-    @grep '^version = ' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/'
+    @nu scripts/version.nu
+
+# Run Nu script tests
+nu-test:
+    nu scripts/tests/run_all.nu
+
+# Check publish readiness
+check-publish:
+    nu scripts/check_publish.nu
 
 # Show git-cliff info
 cliff-info:
