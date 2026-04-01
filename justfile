@@ -295,55 +295,48 @@ info:
 view-changelog:
     @cat CHANGELOG.md
 
-# Generic VHS tape runner (usage: just vhs-tape piechart)
-vhs-tape NAME:
+# Run a single VHS tape by name (usage: just vhs-tape piechart)
+vhs-tape NAME: build-examples
     @echo "Running VHS tape to generate {{NAME}} demo..."
+    @mkdir -p examples/vhs/output
     vhs examples/vhs/{{NAME}}.tape
     @echo "✅ Demo generated at examples/vhs/output/{{NAME}}.gif"
 
-# Run the VHS tape to generate demo GIF for piechart
-vhs-piechart: (vhs-tape "piechart")
-
-# Run the VHS tape to generate demo GIF for custom_symbols
-vhs-custom-symbols: (vhs-tape "custom_symbols")
-
-# Run the VHS tape to generate demo GIF for high_resolution
-vhs-high-resolution: (vhs-tape "high_resolution")
-
-# Run the VHS tape to generate demo GIF for symbols_circles_squares
-vhs-symbols-circles-squares: (vhs-tape "symbols_circles_squares")
-
-# Run the VHS tape to generate demo GIF for symbols_stars_hearts
-vhs-symbols-stars-hearts: (vhs-tape "symbols_stars_hearts")
-
-# Run the VHS tape to generate demo GIF for symbols_triangles_hexagons
-vhs-symbols-triangles-hexagons: (vhs-tape "symbols_triangles_hexagons")
-
-# Run the VHS tape to generate demo GIF for symbols_shades_bars
-vhs-symbols-shades-bars: (vhs-tape "symbols_shades_bars")
-
-# Run the VHS tape to generate demo GIF for border_styles
-vhs-border-styles: (vhs-tape "border_styles")
-
-# Run the VHS tape to generate demo GIF for legend_positioning
-vhs-legend-positioning: (vhs-tape "legend_positioning")
-
-# Run the VHS tape to generate demo GIF for legend_alignment
-vhs-legend-alignment: (vhs-tape "legend_alignment")
-
-# Run the VHS tape to generate demo GIF for title_positioning
-vhs-title-positioning: (vhs-tape "title_positioning")
-
-# Run the VHS tape to generate demo GIF for title_styles_example
-vhs-title-styles-example: (vhs-tape "title_styles")
-
 # Run all VHS tapes to generate all demo GIFs (dynamically discovers all .tape files)
-vhs-all:
-    @./examples/vhs/generate_all.sh
-
-# ============================================
-# Commands added by setup-just.sh
-# ============================================
+vhs-all: build-examples
+    #!/usr/bin/env sh
+    set -eu
+    command -v vhs >/dev/null 2>&1 || { echo "❌ VHS not found! Install: brew install vhs"; exit 1; }
+    mkdir -p examples/vhs/output
+    tapes=$(find examples/vhs -maxdepth 1 -name '*.tape' -type f | sort)
+    total=$(echo "$tapes" | wc -l | tr -d ' ')
+    if [ "$total" -eq 0 ]; then echo "⚠ No .tape files found in examples/vhs/"; exit 0; fi
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "  TUI PieChart — VHS Demo Generator"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "Found $total VHS tape(s)"
+    echo ""
+    current=0; succeeded=0; failed=0
+    for tape in $tapes; do
+        current=$((current + 1))
+        name=$(basename "$tape" .tape)
+        echo "[$current/$total] Generating ${name}.gif..."
+        if vhs "$tape"; then
+            echo "✓ Generated ${name}.gif"
+            succeeded=$((succeeded + 1))
+        else
+            echo "⚠ Failed to generate ${name}.gif"
+            failed=$((failed + 1))
+        fi
+    done
+    echo ""
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    echo "✅ Demo generation complete! $succeeded succeeded, $failed failed."
+    if [ "$succeeded" -gt 0 ]; then
+        echo "Generated GIFs:"
+        ls -lh examples/vhs/output/*.gif 2>/dev/null | awk '{printf "  • %s (%s)\n", $9, $5}' || true
+    fi
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # Git: pull from GitHub (origin)
 pull:
