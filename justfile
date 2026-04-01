@@ -277,6 +277,10 @@ nu-test:
 check-publish:
     nu scripts/check_publish.nu
 
+# Upgrade dependencies locally (dry-run by default)
+upgrade-deps *FLAGS:
+    nu scripts/upgrade_deps.nu --dry-run {{FLAGS}}
+
 # Show git-cliff info
 cliff-info:
     @echo "Git-cliff configuration:"

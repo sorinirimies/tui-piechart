@@ -1,0 +1,163 @@
+name: Nightly Dependency Upgrade
+
+on:
+  schedule:
+    # Runs at 02:30 UTC every day (03:30 CET)
+    # Offset 30 min from GitHub to avoid simultaneous runs.
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: deps-update
+  cancel-in-progress: true
+
+jobs:
+  upgrade-deps:
+    name: Upgrade Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITEA_TOKEN || github.token }}
+          fetch-depth: 0
+
+      # ── Rust toolchain ────────────────────────────────────────────────────────
+      - name: Install Rust stable (rustfmt + clippy)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # ── cargo-edit (provides `cargo upgrade`) ────────────────────────────────
+      - name: Install cargo-edit
+        run: cargo install cargo-edit --locked
+
+      # ── Pre-warm cargo registry ───────────────────────────────────────────────
+      # `cargo upgrade`'s recursive-dep resolver runs in offline mode and only
+      # considers package sources that are physically present in the local cache.
+      # Running `cargo update` first refreshes the registry index and rewrites
+      # Cargo.lock to non-yanked versions; `cargo fetch` then downloads those
+      # sources so the offline phase has at least one valid, non-yanked candidate
+      # for every transitive dependency.
+      - name: Pre-warm cargo registry (refresh index + fetch sources)
+        run: cargo update && cargo fetch
+
+      # ── Upgrade all dependency pins ──────────────────────────────────────────
+      # `cargo upgrade --incompatible allow` rewrites version constraints in
+      # [dependencies] and [dev-dependencies] so pinned libs like
+      # `ratatui = "0.30"` can advance to newer releases.
+      # `cargo update` then resolves the new constraints into Cargo.lock.
+      - name: Upgrade dependency pins
+        run: cargo upgrade --incompatible allow
+
+      - name: Sync Cargo.lock
+        run: cargo update
+
+      # ── Check for changes ────────────────────────────────────────────────────
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet Cargo.toml Cargo.lock; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── Quality gate ─────────────────────────────────────────────────────────
+      - name: Check formatting
+        if: steps.check.outputs.has_changes == 'true'
+        run: cargo fmt -- --check
+
+      - name: Run clippy
+        if: steps.check.outputs.has_changes == 'true'
+        run: cargo clippy -- -D warnings
+
+      - name: Run tests
+        if: steps.check.outputs.has_changes == 'true'
+        run: cargo test --locked --all-features --all-targets
+
+      # ── Push upgrade branch ──────────────────────────────────────────────────
+      - name: Push upgrade branch
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          BRANCH="deps/nightly-dependency-upgrade"
+          DATE=$(date -u '+%Y-%m-%d')
+
+          git config user.name  "gitea-actions[bot]"
+          git config user.email "gitea-actions[bot]@noreply.gitea"
+
+          # Force-create or update the branch
+          git checkout -B "$BRANCH"
+          git add Cargo.toml Cargo.lock
+          git commit -m "chore(deps): nightly dependency upgrade $DATE"
+          git push --force origin "$BRANCH"
+
+          echo "✅ Branch '$BRANCH' pushed."
+
+      # ── Create PR via Gitea API + auto-merge ─────────────────────────────────
+      # The full quality gate already passed above, so merging is safe.
+      - name: Create and auto-merge Pull Request
+        if: steps.check.outputs.has_changes == 'true'
+        run: |
+          BRANCH="deps/nightly-dependency-upgrade"
+          DATE=$(date -u '+%Y-%m-%d')
+          GITEA_URL="${GITHUB_SERVER_URL}"
+          REPO="${GITHUB_REPOSITORY}"
+          API="${GITEA_URL}/api/v1"
+
+          # ── Create the PR ────────────────────────────────────────────────────
+          echo "Creating PR on ${REPO}..."
+          PR_RESPONSE=$(curl -s -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${API}/repos/${REPO}/pulls" \
+            -d "{
+              \"title\": \"chore(deps): nightly dependency upgrade ${DATE}\",
+              \"head\": \"${BRANCH}\",
+              \"base\": \"main\",
+              \"body\": \"## Automated Nightly Dependency Upgrade\n\nAll quality checks passed: **fmt**, **clippy**, **tests**.\n\nCreated by the Nightly Dependency Upgrade workflow.\"
+            }")
+
+          PR_NUMBER=$(echo "$PR_RESPONSE" | python3 -c "import sys,json; print(json.load(sys.stdin).get('number',''))" 2>/dev/null || true)
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "⚠️  Could not create PR (branch may already have an open PR)."
+            # Try to find the existing open PR for this branch
+            PR_NUMBER=$(curl -s \
+              -H "Authorization: token ${GITEA_TOKEN}" \
+              "${API}/repos/${REPO}/pulls?state=open&head=${BRANCH}" \
+              | python3 -c "import sys,json; prs=json.load(sys.stdin); print(prs[0]['number'] if prs else '')" 2>/dev/null || true)
+          fi
+
+          if [ -z "$PR_NUMBER" ]; then
+            echo "❌ Could not create or find PR. Skipping auto-merge."
+            exit 0
+          fi
+
+          echo "✅ PR #${PR_NUMBER} ready."
+
+          # ── Merge the PR ─────────────────────────────────────────────────────
+          echo "Merging PR #${PR_NUMBER}..."
+          curl -s -X POST \
+            -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            "${API}/repos/${REPO}/pulls/${PR_NUMBER}/merge" \
+            -d "{
+              \"Do\": \"merge\",
+              \"delete_branch_after_merge\": true
+            }"
+
+          echo "✅ PR #${PR_NUMBER} merged and branch deleted."
+        env:
+          GITEA_TOKEN: ${{ secrets.GITEA_TOKEN || github.token }}
+
+      - name: Nothing to update
+        if: steps.check.outputs.has_changes == 'false'
+        run: echo "✅ All dependencies already up to date — nothing to upgrade."

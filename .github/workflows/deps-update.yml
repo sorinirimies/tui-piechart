@@ -1,0 +1,158 @@
+name: Nightly Dependency Upgrade
+
+on:
+  schedule:
+    # Runs at 02:00 UTC every day (03:00 CET)
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+concurrency:
+  group: deps-update
+  cancel-in-progress: true
+
+jobs:
+  upgrade-deps:
+    name: Upgrade Dependencies
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      # ── Rust toolchain ────────────────────────────────────────────────────────
+      - name: Install Rust stable (rustfmt + clippy)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache Cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      # ── cargo-edit (provides `cargo upgrade`) ────────────────────────────────
+      - name: Install cargo-edit
+        run: cargo install cargo-edit --locked
+
+      # ── Pre-warm cargo registry ───────────────────────────────────────────────
+      # `cargo upgrade`'s recursive-dep resolver runs in offline mode and only
+      # considers package sources that are physically present in the local cache.
+      # Running `cargo update` first refreshes the registry index and rewrites
+      # Cargo.lock to non-yanked versions; `cargo fetch` then downloads those
+      # sources so the offline phase has at least one valid, non-yanked candidate
+      # for every transitive dependency.
+      - name: Pre-warm cargo registry (refresh index + fetch sources)
+        run: cargo update && cargo fetch
+
+      # ── Upgrade all dependency pins ──────────────────────────────────────────
+      # `cargo upgrade --incompatible allow` rewrites version constraints in
+      # [dependencies] and [dev-dependencies] so pinned libs like
+      # `ratatui = "0.30"` can advance to newer releases.
+      # `cargo update` then resolves the new constraints into Cargo.lock.
+      - name: Upgrade dependency pins
+        run: cargo upgrade --incompatible allow
+
+      - name: Sync Cargo.lock
+        run: cargo update
+
+      # ── Check for changes ────────────────────────────────────────────────────
+      - name: Check for changes
+        id: check
+        run: |
+          if git diff --quiet Cargo.toml Cargo.lock; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # ── Generate upgrade summary for the PR body ─────────────────────────────
+      - name: Generate upgrade summary
+        if: steps.check.outputs.has_changes == 'true'
+        id: summary
+        run: |
+          {
+            echo 'diff<<EOF'
+
+            TOML_DIFF=$(git diff Cargo.toml)
+            if [ -n "$TOML_DIFF" ]; then
+              echo '### `Cargo.toml` pin changes'
+              echo ''
+              echo '```diff'
+              echo "$TOML_DIFF" | head -200
+              echo '```'
+              echo ''
+            fi
+
+            echo '### `Cargo.lock` changes (truncated)'
+            echo ''
+            echo '```diff'
+            git diff --stat Cargo.lock
+            echo '```'
+
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      # ── Quality gate ─────────────────────────────────────────────────────────
+      - name: Check formatting
+        if: steps.check.outputs.has_changes == 'true'
+        run: cargo fmt -- --check
+
+      - name: Run clippy
+        if: steps.check.outputs.has_changes == 'true'
+        run: cargo clippy -- -D warnings
+
+      - name: Run tests
+        if: steps.check.outputs.has_changes == 'true'
+        run: cargo test --locked --all-features --all-targets
+
+      # ── Create Pull Request ──────────────────────────────────────────────────
+      - name: Create Pull Request
+        if: steps.check.outputs.has_changes == 'true'
+        id: create-pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(deps): nightly dependency upgrade"
+          title: "chore(deps): nightly dependency upgrade"
+          body: |
+            ## Automated Nightly Dependency Upgrade
+
+            This PR was automatically created by the **Nightly Dependency Upgrade** workflow.
+
+            `cargo upgrade --incompatible allow` + `cargo update` were run to
+            upgrade all dependencies — including major-version bumps for pins
+            in `[dependencies]` and `[dev-dependencies]`.
+
+            ### What was updated
+
+            ${{ steps.summary.outputs.diff }}
+
+            ---
+
+            > ✅ All quality checks passed: **fmt**, **clippy**, and **tests**.
+          branch: deps/nightly-dependency-upgrade
+          labels: dependencies
+          delete-branch: true
+
+      # ── Auto-merge the PR ────────────────────────────────────────────────────
+      # The full quality gate (fmt, clippy, tests) already passed above, so
+      # merging is safe.  Try --auto first (honours branch protection rules and
+      # waits for any required status checks triggered by the PR); fall back to
+      # immediate merge if auto-merge is not enabled in the repo.
+      - name: Auto-merge Pull Request
+        if: steps.create-pr.outputs.pull-request-number
+        run: |
+          PR="${{ steps.create-pr.outputs.pull-request-number }}"
+          echo "Merging PR #${PR}..."
+          gh pr merge "$PR" --auto --merge --delete-branch 2>/dev/null \
+            || gh pr merge "$PR" --merge --delete-branch
+          echo "✅ PR #${PR} merged."
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      - name: Nothing to update
+        if: steps.check.outputs.has_changes == 'false'
+        run: echo "✅ All dependencies already up to date — nothing to upgrade."
