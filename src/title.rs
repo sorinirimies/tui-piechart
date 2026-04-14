@@ -524,11 +524,13 @@ impl<'a> BlockExt<'a> for Block<'a> {
     }
 
     fn title_vertical_position(self, position: TitlePosition) -> Self {
-        use ratatui::widgets::TitlePosition as RatatuiPosition;
-        match position {
-            TitlePosition::Top => self.title_position(RatatuiPosition::Top),
-            TitlePosition::Bottom => self.title_position(RatatuiPosition::Bottom),
-        }
+        // `Block::title_position()` and `ratatui::widgets::TitlePosition` were
+        // removed in ratatui 0.30.  Position is now set per-title when the title
+        // is added: `Block::title()` places at the top, `Block::title_bottom()`
+        // at the bottom.  `apply_title()` already handles this correctly, so
+        // this method is intentionally a no-op to preserve API compatibility.
+        let _ = position;
+        self
     }
 }
 
