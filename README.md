@@ -882,12 +882,6 @@ just --list
 
 MIT License - see [LICENSE](LICENSE) for details.
 
-## Contributing
+---
 
-Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## Acknowledgments
-
-This widget was created for the [Ratatui](https://github.com/ratatui/ratatui) ecosystem.
-
-Special thanks to the Ratatui team for creating such an amazing TUI framework.
+Made with 🦀 by Sorin Albu-Irimies
