@@ -129,10 +129,11 @@ jobs:
 
           if [ -z "$PR_NUMBER" ]; then
             echo "⚠️  Could not create PR (branch may already have an open PR)."
-            # Try to find the existing open PR for this branch
+            # Gitea API requires owner:branch format for the head filter
+            OWNER=$(echo "$REPO" | cut -d/ -f1)
             PR_NUMBER=$(curl -s \
               -H "Authorization: token ${GITEA_TOKEN}" \
-              "${API}/repos/${REPO}/pulls?state=open&head=${BRANCH}" \
+              "${API}/repos/${REPO}/pulls?state=open&head=${OWNER}:${BRANCH}" \
               | python3 -c "import sys,json; prs=json.load(sys.stdin); print(prs[0]['number'] if prs else '')" 2>/dev/null || true)
           fi
 
