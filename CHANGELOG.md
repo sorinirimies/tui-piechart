@@ -2,9 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.2 - 2026-04-23
+### ♻️ Refactor
+- refactor: migrate shell scripts to Nushell
+- refactor: inline VHS generation into justfile, remove generate_all.sh
+### ✨ Features
+- feat: add nightly dependency upgrade workflow
+### 🐛 Bug Fixes
+- fix: add Stylize trait import to all examples for ratatui 0.29 compat
+### 📦 Other Changes
+- Make title_vertical_position a no-op for ratatui 0.30
+- Remove contribution and Gitea setup docs, update justfile tasks
+- Reorder Stylize import and allow_unused_imports in examples
+### 🔄 Updated
+- Update README with author credit and remove extra sections
+- Update dependencies and fix Gitea PR head filter format
+### 🔧 Chores
+- chore: update rules and widen dep-update commit scope
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.1...v0.3.2
 ## 0.3.1 - 2026-02-26
 ### 📦 Other Changes
 - added zed rules
+### 🔧 Chores
+- chore: bump version to 0.3.1
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.0...v0.3.1
 ## 0.3.0 - 2026-02-20
 ### 🐛 Bug Fixes
