@@ -17,6 +17,8 @@ use ratatui::{
     widgets::Padding,
     DefaultTerminal, Frame,
 };
+#[allow(unused_imports)]
+use ratatui::style::Stylize;
 use tui_piechart::{border_style::BorderStyle, PieChart, PieSlice};
 
 struct App {

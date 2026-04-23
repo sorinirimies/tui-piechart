@@ -19,6 +19,8 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph},
     DefaultTerminal, Frame,
 };
+#[allow(unused_imports)]
+use ratatui::style::Stylize;
 use std::time::{Duration, Instant};
 use tui_piechart::{symbols, PieChart, PieSlice};
 

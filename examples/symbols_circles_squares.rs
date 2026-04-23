@@ -14,6 +14,8 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph},
     DefaultTerminal, Frame,
 };
+#[allow(unused_imports)]
+use ratatui::style::Stylize;
 use tui_piechart::{symbols, PieChart, PieSlice};
 
 #[derive(Default)]
