@@ -25,18 +25,16 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 
 ## Installation
 
-Add this to your `Cargo.toml`:
+```bash
+cargo add tui-piechart
+```
+
+Or add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tui-piechart = "0.1.0"
-ratatui = "0.29"
-```
-
-Or install with cargo:
-
-```bash
-cargo add tui-piechart
+tui-piechart = "0.3.2"
+ratatui = "0.30"
 ```
 
 ## Quick Start

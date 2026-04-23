@@ -142,22 +142,61 @@ Version must be in format: X.Y.Z or X.Y.Z-suffix \(e.g., 0.3.2 or 1.0.0-beta.1\)
     }
     print $"($green)✓ Cargo.toml updated \(($current_version) → ($new_version)\)($reset)"
 
-    # ── Step 2: Update README.md badges ──────────────────────────────────────
+    # ── Step 2: Update README.md badges + installation snippet ───────────────
     print ""
-    print $"($cyan)Step 2/6: Updating README.md badges...($reset)"
+    print $"($cyan)Step 2/6: Updating README.md...($reset)"
 
     if ("README.md" | path exists) {
         let readme = (open README.md --raw)
-        if ($readme =~ 'version-[0-9]+\.[0-9]+\.[0-9]+-blue') {
-            let updated_readme = (
+
+        # Update version badge
+        let readme = if ($readme =~ 'version-[0-9]+\.[0-9]+\.[0-9]+-blue') {
+            let updated = (
                 $readme
                 | str replace --all --regex 'version-[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9]+)?-blue' $"version-($new_version)-blue"
             )
-            $updated_readme | save --force README.md
             print $"($green)✓ README.md badges updated($reset)"
+            $updated
         } else {
             print $"($yellow)⚠ No version badge found in README.md — skipping($reset)"
+            $readme
         }
+
+        # Update installation snippet: tui-piechart = "X.Y.Z"
+        let readme = if ($readme =~ 'tui-piechart\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+"') {
+            let updated = (
+                $readme
+                | str replace --all --regex 'tui-piechart\s*=\s*"[0-9]+\.[0-9]+\.[0-9]+"' $'tui-piechart = "($new_version)"'
+            )
+            print $"($green)✓ README.md installation snippet updated($reset)"
+            $updated
+        } else {
+            print $"($yellow)⚠ No tui-piechart version pin found in README.md — skipping($reset)"
+            $readme
+        }
+
+        # Update ratatui version from Cargo.toml
+        let ratatui_ver = (
+            $cargo_content
+            | lines
+            | where { |line| $line =~ 'ratatui\s*=' }
+            | first
+            | parse --regex 'ratatui\s*=\s*\{?\s*version\s*=\s*"(?P<v>[^"]+)"'
+            | get v
+            | first
+        )
+        let readme = if (not ($ratatui_ver | is-empty)) and ($readme =~ 'ratatui\s*=\s*"[0-9]+\.[0-9]+"') {
+            let updated = (
+                $readme
+                | str replace --all --regex 'ratatui\s*=\s*"[0-9]+\.[0-9]+"' $'ratatui = "($ratatui_ver)"'
+            )
+            print $"($green)✓ README.md ratatui version updated to ($ratatui_ver)($reset)"
+            $updated
+        } else {
+            $readme
+        }
+
+        $readme | save --force README.md
     } else {
         print $"($yellow)⚠ README.md not found — skipping($reset)"
     }
