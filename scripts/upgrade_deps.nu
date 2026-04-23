@@ -11,10 +11,10 @@
 #      Phase 1 produced no Cargo.toml changes.
 #   3. Quality gate: fmt → clippy → tests
 #   4. Commit strategy:
-#      • Gate passed  + Cargo.toml changed → commit Cargo.toml + Cargo.lock
+#      • Gate passed  + Cargo.toml changed → commit Cargo.toml + Cargo.lock + source fixes
 #      • Gate failed  + Cargo.toml changed → revert Cargo.toml, re-sync lock,
 #                                            commit lock only, then exit 1
-#      • Gate passed  + only Cargo.lock   → commit Cargo.lock only
+#      • Gate passed  + only Cargo.lock   → commit Cargo.lock + any source fixes
 #      • Nothing changed                  → nothing to commit, exit 0
 #
 # Usage:
@@ -180,7 +180,7 @@ def main [
         run-external "git" "config" "user.email" $bot_email
 
         if $toml_dirty {
-            run-external "git" "add" "Cargo.toml" "Cargo.lock"
+            run-external "git" "add" "Cargo.toml" "Cargo.lock" "src/" "examples/"
             # Include a summary of what was upgraded in the commit body (cap at 60 lines)
             let body = ($upgrade_log | lines | first 60 | str join "\n")
             if ($body | is-empty) {
@@ -189,7 +189,7 @@ def main [
                 run-external "git" "commit" "-m" $label "-m" $body
             }
         } else {
-            run-external "git" "add" "Cargo.lock"
+            run-external "git" "add" "Cargo.lock" "src/" "examples/"
             run-external "git" "commit" "-m" $label
         }
 

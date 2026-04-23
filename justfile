@@ -279,7 +279,7 @@ update-deps:
     cargo clippy -- -D warnings -A deprecated
     cargo test --locked --all-features --all-targets
     @echo "✅ All checks passed — committing dependency updates…"
-    git add Cargo.lock
+    git add Cargo.lock Cargo.toml src/ examples/
     git diff --cached --quiet || git commit -m "chore: update dependencies"
     git push origin main
     @echo "✅ Dependency updates pushed to GitHub."
@@ -293,7 +293,7 @@ update-deps-gitea:
     cargo clippy -- -D warnings -A deprecated
     cargo test --locked --all-features --all-targets
     @echo "✅ All checks passed — committing dependency updates…"
-    git add Cargo.lock
+    git add Cargo.lock Cargo.toml src/ examples/
     git diff --cached --quiet || git commit -m "chore: update dependencies"
     git push gitea main
     @echo "✅ Dependency updates pushed to Gitea."
@@ -307,7 +307,7 @@ update-deps-gitea-starscream:
     cargo clippy -- -D warnings -A deprecated
     cargo test --locked --all-features --all-targets
     @echo "✅ All checks passed — committing dependency updates…"
-    git add Cargo.lock
+    git add Cargo.lock Cargo.toml src/ examples/
     git diff --cached --quiet || git commit -m "chore: update dependencies"
     git push gitea_starscream main
     @echo "✅ Dependency updates pushed to Gitea Starscream."
@@ -322,7 +322,7 @@ update-deps-all:
     cargo clippy -- -D warnings -A deprecated || exit 1
     cargo test --locked --all-features --all-targets || exit 1
     echo "✅ All checks passed — committing dependency updates…"
-    git add Cargo.lock
+    git add Cargo.lock Cargo.toml src/ examples/
     git diff --cached --quiet || git commit -m "chore: update dependencies"
     failed=""
     git push origin main             || failed="$failed origin"

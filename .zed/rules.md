@@ -145,6 +145,14 @@ BREAKING CHANGE: PieChart::new() now returns builder instead of
 configured widget. Call .build() to finalize.
 ```
 
+## Auto-Commit Rules
+
+- After any code fix (including dependency adaptation), always run `just check-all` before committing.
+- The `just update-deps*` recipes and `scripts/upgrade_deps.nu` will automatically commit and push all staged changes (Cargo files + source fixes) if the quality gate passes.
+- The `just commit "message"` recipe stages all files (`git add .`) and commits — use it for quick single-purpose commits.
+- Always use conventional commit messages (see Commit Message Format above).
+- The `.zed/rules.md` file itself is tracked in git and should be committed whenever it changes.
+
 ## Pull Request Guidelines
 
 ### PR Structure
@@ -234,6 +242,28 @@ cargo update              # Update dependencies
 cargo outdated            # Check for outdated deps
 just update               # Via just command
 ```
+
+## Dependency Upgrade Handling
+
+### Breaking API Changes
+When a nightly dependency upgrade introduces breaking API changes (e.g., a trait method becomes inherent, a type is renamed, an import path changes), fix the source code to match the new API rather than pinning the old version. Common patterns include:
+- **Missing trait imports**: e.g., `use ratatui::style::Stylize` was needed in 0.29 but not 0.30 — remove the import if the trait method became inherent.
+- **Renamed or moved types**: update all `use` statements and type references throughout `src/` and `examples/`.
+- **Changed method signatures**: adapt call sites to the new signature.
+
+### Quality Gate Failures
+When `cargo clippy`, `cargo test`, or `cargo fmt --check` fail after a dep update, investigate the root cause. If it's a straightforward API migration, fix the code and re-run the gate.
+
+### Commit Scope
+When fixing breakage from a dependency upgrade, commit **all** affected files — not just `Cargo.toml` and `Cargo.lock` but also any modified source files in `src/` and `examples/`. Use the commit message format:
+- `fix: adapt to <crate> <version> API changes`
+- `chore(deps): update for <crate> <version> compatibility`
+
+### Automated Workflows
+The nightly CI workflows (`.gitea/workflows/deps-update.yml`, `.github/workflows/deps-update.yml`) run `cargo upgrade --incompatible allow` + quality gate. If the gate fails, the PR is not created. Developers must then fix the source manually, run `just check-all`, and commit everything together.
+
+### Local Dep Update
+Use `just update-deps` (or the remote-specific variants) which runs the quality gate and commits all changes. Always verify examples compile with `cargo check --examples` after upgrading.
 
 ## Release Process
 
@@ -408,6 +438,6 @@ just release 0.4.0       # Full release workflow
 
 ---
 
-**Last Updated**: 2026-02-26
-**Project Version**: 0.3.0
+**Last Updated**: 2025-07-17
+**Project Version**: 0.3.1
 **Maintainer**: Sorin Albu-Irimies (@sorinirimies)
