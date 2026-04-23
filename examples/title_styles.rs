@@ -14,6 +14,8 @@
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode};
+#[allow(unused_imports)]
+use ratatui::style::Stylize;
 use ratatui::{
     layout::{Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
@@ -21,8 +23,6 @@ use ratatui::{
     widgets::Padding,
     DefaultTerminal, Frame,
 };
-#[allow(unused_imports)]
-use ratatui::style::Stylize;
 use tui_piechart::{
     border_style::BorderStyle,
     title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle},

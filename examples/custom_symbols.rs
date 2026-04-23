@@ -7,6 +7,8 @@
 
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode};
+#[allow(unused_imports)]
+use ratatui::style::Stylize;
 use ratatui::{
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Style},
@@ -14,8 +16,6 @@ use ratatui::{
     widgets::{Block, Padding, Paragraph},
     DefaultTerminal, Frame,
 };
-#[allow(unused_imports)]
-use ratatui::style::Stylize;
 use tui_piechart::{PieChart, PieSlice};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
