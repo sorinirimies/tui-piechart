@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.3 - 2026-04-26
+### 📦 Other Changes
+- Simplify deps-update workflow to push directly to main
+### 🔄 Updated
+- Update README installation instructions and bump_version script
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.2...v0.3.3
 ## 0.3.2 - 2026-04-23
 ### ♻️ Refactor
 - refactor: migrate shell scripts to Nushell
@@ -19,6 +25,7 @@ All notable changes to this project will be documented in this file.
 - Update dependencies and fix Gitea PR head filter format
 ### 🔧 Chores
 - chore: update rules and widen dep-update commit scope
+- chore: bump version to 0.3.2
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.1...v0.3.2
 ## 0.3.1 - 2026-02-26
 ### 📦 Other Changes
