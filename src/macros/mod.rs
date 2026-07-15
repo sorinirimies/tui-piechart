@@ -23,6 +23,7 @@
 //! - [`enum_tests!`] - Generate default, clone, and debug tests for enums
 //! - [`assert_test!`] - Create simple boolean assertion tests
 //! - [`assert_eq_test!`] - Create equality comparison tests
+//! - [`matches_test!`] - Assert an expression matches a pattern (e.g. an enum variant)
 //! - [`debug_format_tests!`] - Test debug formatting for multiple enum variants
 //! - [`conversion_test!`] - Test From/Into trait implementations
 //! - [`instantiate_variants_test!`] - Verify all enum variants are accessible

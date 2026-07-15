@@ -180,63 +180,47 @@ pub enum LegendAlignment {
 }
 
 #[cfg(test)]
+#[allow(unnameable_test_items)]
 mod tests {
     use super::*;
+    use crate::{debug_format_tests, enum_tests};
 
-    #[test]
-    fn legend_position_default() {
-        assert_eq!(LegendPosition::default(), LegendPosition::Right);
+    enum_tests! {
+        enum_type: LegendPosition,
+        default_test: (legend_position_default, LegendPosition::Right),
+        clone_test: (legend_position_clone, LegendPosition::Left),
+        debug_test: (legend_position_debug, LegendPosition::Top, "Top"),
     }
 
-    #[test]
-    fn legend_layout_default() {
-        assert_eq!(LegendLayout::default(), LegendLayout::Vertical);
+    enum_tests! {
+        enum_type: LegendLayout,
+        default_test: (legend_layout_default, LegendLayout::Vertical),
+        clone_test: (legend_layout_clone, LegendLayout::Horizontal),
+        debug_test: (legend_layout_debug, LegendLayout::Vertical, "Vertical"),
     }
 
-    #[test]
-    fn legend_position_clone() {
-        let pos = LegendPosition::Left;
-        let cloned = pos;
-        assert_eq!(pos, cloned);
+    enum_tests! {
+        enum_type: LegendAlignment,
+        default_test: (legend_alignment_default, LegendAlignment::Left),
+        clone_test: (legend_alignment_clone, LegendAlignment::Center),
+        debug_test: (legend_alignment_debug, LegendAlignment::Right, "Right"),
     }
 
-    #[test]
-    fn legend_layout_clone() {
-        let layout = LegendLayout::Horizontal;
-        let cloned = layout;
-        assert_eq!(layout, cloned);
+    // Exhaustive debug-format coverage for every variant.
+    debug_format_tests! {
+        enum_type: LegendPosition,
+        tests: [
+            (legend_position_debug_left, LegendPosition::Left, "Left"),
+            (legend_position_debug_right, LegendPosition::Right, "Right"),
+            (legend_position_debug_bottom, LegendPosition::Bottom, "Bottom"),
+        ]
     }
 
-    #[test]
-    fn legend_position_debug() {
-        let pos = LegendPosition::Top;
-        let debug = format!("{pos:?}");
-        assert_eq!(debug, "Top");
-    }
-
-    #[test]
-    fn legend_layout_debug() {
-        let layout = LegendLayout::Vertical;
-        let debug = format!("{layout:?}");
-        assert_eq!(debug, "Vertical");
-    }
-
-    #[test]
-    fn legend_alignment_default() {
-        assert_eq!(LegendAlignment::default(), LegendAlignment::Left);
-    }
-
-    #[test]
-    fn legend_alignment_clone() {
-        let alignment = LegendAlignment::Center;
-        let cloned = alignment;
-        assert_eq!(alignment, cloned);
-    }
-
-    #[test]
-    fn legend_alignment_debug() {
-        let alignment = LegendAlignment::Right;
-        let debug = format!("{:?}", alignment);
-        assert_eq!(debug, "Right");
+    debug_format_tests! {
+        enum_type: LegendAlignment,
+        tests: [
+            (legend_alignment_debug_left, LegendAlignment::Left, "Left"),
+            (legend_alignment_debug_center, LegendAlignment::Center, "Center"),
+        ]
     }
 }

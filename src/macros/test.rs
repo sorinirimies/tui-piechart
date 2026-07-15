@@ -195,6 +195,30 @@ macro_rules! assert_eq_test {
     };
 }
 
+/// Generate a test asserting that an expression matches a pattern.
+///
+/// This is ideal for verifying that a builder-style setter stored the expected
+/// enum variant, collapsing many near-identical tests into single lines.
+///
+/// # Examples
+///
+/// ```ignore
+/// matches_test!(
+///     test_resolution_braille,
+///     PieChart::default().resolution(Resolution::Braille).resolution,
+///     Resolution::Braille
+/// );
+/// ```
+#[macro_export]
+macro_rules! matches_test {
+    ($test_name:ident, $value:expr, $pattern:pat $(,)?) => {
+        #[test]
+        fn $test_name() {
+            assert!(matches!($value, $pattern));
+        }
+    };
+}
+
 /// Generate debug format tests for multiple enum variants.
 ///
 /// This macro creates a test for each variant that checks its Debug output.
@@ -451,6 +475,7 @@ mod tests {
     // Test the macros themselves
     assert_test!(macro_assert_test_works, true);
     assert_eq_test!(macro_assert_eq_test_works, 2 + 2, 4);
+    matches_test!(macro_matches_test_works, TestEnum::Second, TestEnum::Second);
 
     instantiate_variants_test!(test_enum_variants, TestEnum, [First, Second, Third]);
 
