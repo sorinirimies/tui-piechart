@@ -726,7 +726,7 @@ dependencies = [
 
 [[package]]
 name = "tui-piechart"
-version = "0.3.3"
+version = "1.0.0"
 dependencies = [
  "color-eyre",
  "crossterm 0.29.0",

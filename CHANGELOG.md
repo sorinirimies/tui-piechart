@@ -2,13 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## 0.3.3 - 2026-04-26
-### 📦 Other Changes
-- Simplify deps-update workflow to push directly to main
-### 🔄 Updated
-- Update README installation instructions and bump_version script
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.2...v0.3.3
-## 0.3.2 - 2026-04-23
+## 1.0.0 - 2026-07-16
 ### ♻️ Refactor
 - refactor: migrate shell scripts to Nushell
 - refactor: inline VHS generation into justfile, remove generate_all.sh
@@ -16,17 +10,25 @@ All notable changes to this project will be documented in this file.
 - feat: add nightly dependency upgrade workflow
 ### 🐛 Bug Fixes
 - fix: add Stylize trait import to all examples for ratatui 0.29 compat
+- fix: render a 100% pie slice as a filled disc instead of a line (#2)
 ### 📦 Other Changes
 - Make title_vertical_position a no-op for ratatui 0.30
 - Remove contribution and Gitea setup docs, update justfile tasks
 - Reorder Stylize import and allow_unused_imports in examples
+- Simplify deps-update workflow to push directly to main
 ### 🔄 Updated
 - Update README with author credit and remove extra sections
 - Update dependencies and fix Gitea PR head filter format
+- Update README installation instructions and bump_version script
 ### 🔧 Chores
 - chore: update rules and widen dep-update commit scope
 - chore: bump version to 0.3.2
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.1...v0.3.2
+- chore: bump version to 0.3.3
+- chore(deps): nightly dependency upgrade 2026-04-27
+- chore: bump version to 1.0.0
+### 🧪 Testing
+- test: add matches_test! macro and consolidate legend enum tests
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.1...v1.0.0
 ## 0.3.1 - 2026-02-26
 ### 📦 Other Changes
 - added zed rules
