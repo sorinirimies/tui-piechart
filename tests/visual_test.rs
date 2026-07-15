@@ -452,3 +452,56 @@ fn buffer_contains_char(buffer: &Buffer, c: char) -> bool {
     }
     false
 }
+
+/// Regression test for https://github.com/sorinirimies/tui-piechart/issues/2
+/// A single slice covering 100% should render as a filled disc, not a line.
+#[test]
+fn test_full_circle_single_slice_renders_disc() {
+    fn count_filled_cells(chart: PieChart) -> usize {
+        let backend = TestBackend::new(40, 20);
+        let mut terminal = Terminal::new(backend).unwrap();
+        terminal
+            .draw(|frame| {
+                frame.render_widget(chart, frame.area());
+            })
+            .unwrap();
+
+        let buffer = terminal.backend().buffer();
+        let area = buffer.area();
+        let mut count = 0;
+        for y in 0..area.height {
+            for x in 0..area.width {
+                if let Some(cell) = buffer.cell((x, y)) {
+                    let s = cell.symbol();
+                    if !s.trim().is_empty() {
+                        count += 1;
+                    }
+                }
+            }
+        }
+        count
+    }
+
+    // Standard resolution
+    let standard = PieChart::new(vec![PieSlice::new("Online", 100.0, Color::Green)])
+        .show_legend(false)
+        .show_percentages(false);
+    let standard_cells = count_filled_cells(standard);
+    // A filled disc must occupy many more than a single line of cells.
+    assert!(
+        standard_cells > 30,
+        "expected filled disc for 100% slice (standard), got {standard_cells} cells"
+    );
+
+    // Braille resolution
+    use tui_piechart::Resolution;
+    let braille = PieChart::new(vec![PieSlice::new("Online", 100.0, Color::Green)])
+        .resolution(Resolution::Braille)
+        .show_legend(false)
+        .show_percentages(false);
+    let braille_cells = count_filled_cells(braille);
+    assert!(
+        braille_cells > 30,
+        "expected filled disc for 100% slice (braille), got {braille_cells} cells"
+    );
+}

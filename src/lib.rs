@@ -550,14 +550,21 @@ impl<'a> PieChart<'a> {
         self.slices.iter().map(|s| s.value).sum()
     }
 
-    /// Calculates the percentage for a given slice.
-    fn percentage(&self, slice: &PieSlice) -> f64 {
-        let total = self.total_value();
+    /// Computes the percentage a value represents of a total.
+    ///
+    /// Returns `0.0` when `total` is not strictly positive, which keeps the
+    /// arithmetic safe for empty charts and all-zero data sets.
+    fn value_percent(value: f64, total: f64) -> f64 {
         if total > 0.0 {
-            (slice.value / total) * 100.0
+            (value / total) * 100.0
         } else {
             0.0
         }
+    }
+
+    /// Calculates the percentage for a given slice.
+    fn percentage(&self, slice: &PieSlice) -> f64 {
+        Self::value_percent(slice.value, self.total_value())
     }
 }
 
@@ -675,6 +682,18 @@ impl PieChart<'_> {
         }
     }
 
+    /// Returns the `(start_angle, end_angle, is_full_circle)` for a slice.
+    ///
+    /// Angles start at the top of the circle (12 o'clock) and increase
+    /// clockwise. A slice covering the whole circle is flagged so callers can
+    /// fill the entire disc instead of collapsing to a single boundary line.
+    fn slice_angles(start_percent: f64, percent: f64) -> (f64, f64, bool) {
+        let start_angle = (start_percent / 100.0) * 2.0 * PI - PI / 2.0;
+        let end_angle = ((start_percent + percent) / 100.0) * 2.0 * PI - PI / 2.0;
+        let is_full_circle = percent >= 100.0 - f64::EPSILON;
+        (start_angle, end_angle, is_full_circle)
+    }
+
     #[allow(clippy::too_many_arguments, clippy::similar_names)]
     fn render_slice(
         &self,
@@ -691,9 +710,10 @@ impl PieChart<'_> {
             return;
         }
 
-        // Start angle at top (90 degrees) and go clockwise
-        let start_angle = (start_percent / 100.0) * 2.0 * PI - PI / 2.0;
-        let end_angle = ((start_percent + percent) / 100.0) * 2.0 * PI - PI / 2.0;
+        // A slice covering the whole (or effectively the whole) circle must be
+        // rendered as a full disc. Otherwise the start and end angles collapse
+        // to the same value and only the boundary line gets drawn.
+        let (start_angle, end_angle, is_full_circle) = Self::slice_angles(start_percent, percent);
 
         // Scan the entire area around the center
         let scan_width = i32::from(radius + 1);
@@ -730,7 +750,7 @@ impl PieChart<'_> {
                     let angle = adjusted_dy.atan2(adjusted_dx);
 
                     // Check if angle is within slice
-                    if Self::is_angle_in_slice(angle, start_angle, end_angle) {
+                    if is_full_circle || Self::is_angle_in_slice(angle, start_angle, end_angle) {
                         #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
                         {
                             let cell = &mut buf[(x as u16, y as u16)];
@@ -766,11 +786,7 @@ impl PieChart<'_> {
 
     fn format_legend_text(&self, slice: &PieSlice, total: f64, spacing: &str) -> String {
         if self.show_percentages {
-            let percent = if total > 0.0 {
-                (slice.value / total) * 100.0
-            } else {
-                0.0
-            };
+            let percent = Self::value_percent(slice.value, total);
             format!(
                 "{} {} {:.1}%{}",
                 self.legend_marker, slice.label, percent, spacing
@@ -778,6 +794,13 @@ impl PieChart<'_> {
         } else {
             format!("{} {}{}", self.legend_marker, slice.label, spacing)
         }
+    }
+
+    /// Rendered display width of a single legend entry (marker, label, and an
+    /// optional percentage) followed by two spaces of trailing padding.
+    fn legend_item_width(&self, slice: &PieSlice, total: f64) -> u16 {
+        u16::try_from(self.format_legend_text(slice, total, "  ").chars().count())
+            .unwrap_or(u16::MAX)
     }
 
     fn calculate_aligned_x(&self, legend_area: Rect, content_width: u16) -> u16 {
@@ -816,7 +839,7 @@ impl PieChart<'_> {
 
             let legend_text = self.format_legend_text(slice, total, "");
             #[allow(clippy::cast_possible_truncation)]
-            let text_width = legend_text.len() as u16;
+            let text_width = u16::try_from(legend_text.chars().count()).unwrap_or(u16::MAX);
             let x_pos = self.calculate_aligned_x(legend_area, text_width);
 
             let line = Line::from(vec![Span::styled(
@@ -841,7 +864,7 @@ impl PieChart<'_> {
         for slice in &self.slices {
             let legend_text = self.format_legend_text(slice, total, "  ");
             #[allow(clippy::cast_possible_truncation)]
-            let text_width = legend_text.len() as u16;
+            let text_width = u16::try_from(legend_text.chars().count()).unwrap_or(u16::MAX);
             item_widths.push(text_width);
             total_width = total_width.saturating_add(text_width);
         }
@@ -1027,79 +1050,25 @@ impl PieChart<'_> {
 
     fn calculate_legend_width(&self) -> u16 {
         let total = self.total_value();
+        let widths = self.slices.iter().map(|s| self.legend_item_width(s, total));
 
-        match self.legend_layout {
-            LegendLayout::Vertical => {
-                // For vertical layout, find the maximum width of a single item
-                let mut max_width = 0u16;
+        let base = match self.legend_layout {
+            // For vertical layout, the column is as wide as the widest item.
+            LegendLayout::Vertical => widths.max().unwrap_or(0),
+            // For horizontal layout, all items sit on one row.
+            LegendLayout::Horizontal => widths.fold(0u16, u16::saturating_add),
+        };
 
-                for slice in &self.slices {
-                    let text = if self.show_percentages {
-                        let percent = if total > 0.0 {
-                            (slice.value / total) * 100.0
-                        } else {
-                            0.0
-                        };
-                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
-                    } else {
-                        format!("{} {}  ", self.legend_marker, slice.label)
-                    };
-
-                    #[allow(clippy::cast_possible_truncation)]
-                    let text_width = text.len() as u16;
-                    max_width = max_width.max(text_width);
-                }
-
-                max_width.saturating_add(2)
-            }
-            LegendLayout::Horizontal => {
-                // For horizontal layout, sum the width of all items
-                let mut total_width = 0u16;
-
-                for slice in &self.slices {
-                    let text = if self.show_percentages {
-                        let percent = if total > 0.0 {
-                            (slice.value / total) * 100.0
-                        } else {
-                            0.0
-                        };
-                        format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
-                    } else {
-                        format!("{} {}  ", self.legend_marker, slice.label)
-                    };
-
-                    #[allow(clippy::cast_possible_truncation)]
-                    let text_width = text.len() as u16;
-                    total_width = total_width.saturating_add(text_width);
-                }
-
-                total_width.saturating_add(2)
-            }
-        }
+        base.saturating_add(2)
     }
 
     fn calculate_legend_horizontal_width(&self) -> u16 {
         let total = self.total_value();
-        let mut total_width = 0u16;
-
-        for slice in &self.slices {
-            let text = if self.show_percentages {
-                let percent = if total > 0.0 {
-                    (slice.value / total) * 100.0
-                } else {
-                    0.0
-                };
-                format!("{} {} {:.1}%  ", self.legend_marker, slice.label, percent)
-            } else {
-                format!("{} {}  ", self.legend_marker, slice.label)
-            };
-
-            #[allow(clippy::cast_possible_truncation)]
-            let text_width = text.len() as u16;
-            total_width = total_width.saturating_add(text_width);
-        }
-
-        total_width.saturating_add(2)
+        self.slices
+            .iter()
+            .map(|s| self.legend_item_width(s, total))
+            .fold(0u16, u16::saturating_add)
+            .saturating_add(2)
     }
 
     #[allow(clippy::similar_names)]
@@ -1133,8 +1102,8 @@ impl PieChart<'_> {
         let mut cumulative_percent = 0.0;
         for (slice_idx, slice) in self.slices.iter().enumerate() {
             let percent = self.percentage(slice);
-            let start_angle = (cumulative_percent / 100.0) * 2.0 * PI - PI / 2.0;
-            let end_angle = ((cumulative_percent + percent) / 100.0) * 2.0 * PI - PI / 2.0;
+            let (start_angle, end_angle, is_full_circle) =
+                Self::slice_angles(cumulative_percent, percent);
 
             for dy in 0..height_dots {
                 for dx in 0..width_dots {
@@ -1147,7 +1116,8 @@ impl PieChart<'_> {
 
                     if distance <= f64::from(radius) {
                         let angle = rel_y.atan2(rel_x);
-                        if Self::is_angle_in_slice(angle, start_angle, end_angle) {
+                        if is_full_circle || Self::is_angle_in_slice(angle, start_angle, end_angle)
+                        {
                             dot_slices[dy as usize][dx as usize] = Some(slice_idx);
                         }
                     }
@@ -1225,6 +1195,7 @@ impl PieChart<'_> {
 
 #[cfg(test)]
 #[allow(clippy::float_cmp)]
+#[allow(unnameable_test_items)]
 mod tests {
     use super::*;
 
@@ -1429,85 +1400,96 @@ mod tests {
 
     // --- Resolution ---
 
-    #[test]
-    fn piechart_resolution_standard() {
-        let piechart = PieChart::default().resolution(Resolution::Standard);
-        assert!(matches!(piechart.resolution, Resolution::Standard));
-    }
-
-    #[test]
-    fn piechart_resolution_braille() {
-        let piechart = PieChart::default().resolution(Resolution::Braille);
-        assert!(matches!(piechart.resolution, Resolution::Braille));
-    }
-
-    #[test]
-    fn piechart_high_resolution_true() {
-        let piechart = PieChart::default().high_resolution(true);
-        assert!(matches!(piechart.resolution, Resolution::Braille));
-    }
-
-    #[test]
-    fn piechart_high_resolution_false() {
-        let piechart = PieChart::default().high_resolution(false);
-        assert!(matches!(piechart.resolution, Resolution::Standard));
-    }
+    matches_test!(
+        piechart_resolution_standard,
+        PieChart::default()
+            .resolution(Resolution::Standard)
+            .resolution,
+        Resolution::Standard
+    );
+    matches_test!(
+        piechart_resolution_braille,
+        PieChart::default()
+            .resolution(Resolution::Braille)
+            .resolution,
+        Resolution::Braille
+    );
+    matches_test!(
+        piechart_high_resolution_true,
+        PieChart::default().high_resolution(true).resolution,
+        Resolution::Braille
+    );
+    matches_test!(
+        piechart_high_resolution_false,
+        PieChart::default().high_resolution(false).resolution,
+        Resolution::Standard
+    );
 
     // --- Legend position / layout / alignment setters ---
 
-    #[test]
-    fn piechart_legend_position_left() {
-        let piechart = PieChart::default().legend_position(LegendPosition::Left);
-        assert!(matches!(piechart.legend_position, LegendPosition::Left));
-    }
-
-    #[test]
-    fn piechart_legend_position_right() {
-        let piechart = PieChart::default().legend_position(LegendPosition::Right);
-        assert!(matches!(piechart.legend_position, LegendPosition::Right));
-    }
-
-    #[test]
-    fn piechart_legend_position_top() {
-        let piechart = PieChart::default().legend_position(LegendPosition::Top);
-        assert!(matches!(piechart.legend_position, LegendPosition::Top));
-    }
-
-    #[test]
-    fn piechart_legend_position_bottom() {
-        let piechart = PieChart::default().legend_position(LegendPosition::Bottom);
-        assert!(matches!(piechart.legend_position, LegendPosition::Bottom));
-    }
-
-    #[test]
-    fn piechart_legend_layout_horizontal() {
-        let piechart = PieChart::default().legend_layout(LegendLayout::Horizontal);
-        assert!(matches!(piechart.legend_layout, LegendLayout::Horizontal));
-    }
-
-    #[test]
-    fn piechart_legend_layout_vertical() {
-        let piechart = PieChart::default().legend_layout(LegendLayout::Vertical);
-        assert!(matches!(piechart.legend_layout, LegendLayout::Vertical));
-    }
-
-    #[test]
-    fn piechart_legend_alignment_left() {
-        let piechart = PieChart::default().legend_alignment(LegendAlignment::Left);
-        assert!(matches!(piechart.legend_alignment, LegendAlignment::Left));
-    }
-
-    #[test]
-    fn piechart_legend_alignment_center() {
-        let piechart = PieChart::default().legend_alignment(LegendAlignment::Center);
-        assert!(matches!(piechart.legend_alignment, LegendAlignment::Center));
-    }
-
-    #[test]
-    fn piechart_legend_alignment_right() {
-        let piechart = PieChart::default().legend_alignment(LegendAlignment::Right);
-        assert!(matches!(piechart.legend_alignment, LegendAlignment::Right));
-    }
+    matches_test!(
+        piechart_legend_position_left,
+        PieChart::default()
+            .legend_position(LegendPosition::Left)
+            .legend_position,
+        LegendPosition::Left
+    );
+    matches_test!(
+        piechart_legend_position_right,
+        PieChart::default()
+            .legend_position(LegendPosition::Right)
+            .legend_position,
+        LegendPosition::Right
+    );
+    matches_test!(
+        piechart_legend_position_top,
+        PieChart::default()
+            .legend_position(LegendPosition::Top)
+            .legend_position,
+        LegendPosition::Top
+    );
+    matches_test!(
+        piechart_legend_position_bottom,
+        PieChart::default()
+            .legend_position(LegendPosition::Bottom)
+            .legend_position,
+        LegendPosition::Bottom
+    );
+    matches_test!(
+        piechart_legend_layout_horizontal,
+        PieChart::default()
+            .legend_layout(LegendLayout::Horizontal)
+            .legend_layout,
+        LegendLayout::Horizontal
+    );
+    matches_test!(
+        piechart_legend_layout_vertical,
+        PieChart::default()
+            .legend_layout(LegendLayout::Vertical)
+            .legend_layout,
+        LegendLayout::Vertical
+    );
+    matches_test!(
+        piechart_legend_alignment_left,
+        PieChart::default()
+            .legend_alignment(LegendAlignment::Left)
+            .legend_alignment,
+        LegendAlignment::Left
+    );
+    matches_test!(
+        piechart_legend_alignment_center,
+        PieChart::default()
+            .legend_alignment(LegendAlignment::Center)
+            .legend_alignment,
+        LegendAlignment::Center
+    );
+    matches_test!(
+        piechart_legend_alignment_right,
+        PieChart::default()
+            .legend_alignment(LegendAlignment::Right)
+            .legend_alignment,
+        LegendAlignment::Right
+    );
 
     // --- legend_marker setter ---
 
@@ -2036,17 +2018,83 @@ mod tests {
         assert!(height >= 4);
     }
 
+    // --- value_percent / slice_angles helpers ---
+
     #[test]
-    fn piechart_calculate_vertical_grid_height_wide() {
-        let slices = vec![
-            PieSlice::new("A", 25.0, Color::Red),
-            PieSlice::new("B", 25.0, Color::Blue),
-            PieSlice::new("C", 25.0, Color::Green),
-            PieSlice::new("D", 25.0, Color::Yellow),
-        ];
-        let piechart = PieChart::new(slices);
-        // wide enough for 2 columns
-        let height = piechart.calculate_vertical_grid_height(60);
-        assert!(height >= 4);
+    fn piechart_value_percent_positive_total() {
+        assert_eq!(PieChart::value_percent(25.0, 200.0), 12.5);
+    }
+
+    #[test]
+    fn piechart_value_percent_zero_total() {
+        assert_eq!(PieChart::value_percent(25.0, 0.0), 0.0);
+    }
+
+    #[test]
+    fn piechart_value_percent_negative_total() {
+        // Non-positive totals are treated as empty to avoid nonsensical output.
+        assert_eq!(PieChart::value_percent(25.0, -5.0), 0.0);
+    }
+
+    #[test]
+    fn piechart_slice_angles_full_circle_flag() {
+        let (_, _, is_full) = PieChart::slice_angles(0.0, 100.0);
+        assert!(is_full);
+    }
+
+    #[test]
+    fn piechart_slice_angles_partial_not_full() {
+        let (start, end, is_full) = PieChart::slice_angles(0.0, 50.0);
+        assert!(!is_full);
+        assert!((end - start - PI).abs() < 1e-9);
+    }
+
+    #[test]
+    fn piechart_legend_item_width_matches_text() {
+        let slices = vec![PieSlice::new("Rust", 50.0, Color::Red)];
+        let chart = PieChart::new(slices.clone()).show_percentages(true);
+        let expected = chart
+            .format_legend_text(&slices[0], 100.0, "  ")
+            .chars()
+            .count();
+        assert_eq!(
+            usize::from(chart.legend_item_width(&slices[0], 100.0)),
+            expected
+        );
+    }
+
+    #[test]
+    fn piechart_legend_item_width_unicode_label() {
+        // Multi-byte labels must be measured by character count, not byte length.
+        let slices = vec![PieSlice::new("日本語", 100.0, Color::Red)];
+        let chart = PieChart::new(slices.clone()).show_percentages(false);
+        // "■ 日本語  " => marker(1) + space(1) + 3 chars + 2 trailing spaces = 7
+        assert_eq!(chart.legend_item_width(&slices[0], 100.0), 7);
+    }
+
+    // --- Full circle rendering (regression for issue #2) ---
+
+    #[test]
+    fn piechart_full_circle_fills_more_than_a_line() {
+        fn filled_cells(chart: &PieChart) -> usize {
+            let mut buffer = Buffer::empty(Rect::new(0, 0, 30, 15));
+            Widget::render(chart, buffer.area, &mut buffer);
+            buffer
+                .content
+                .iter()
+                .filter(|c| !c.symbol().trim().is_empty())
+                .count()
+        }
+
+        let standard = PieChart::new(vec![PieSlice::new("Only", 100.0, Color::Green)])
+            .show_legend(false)
+            .show_percentages(false);
+        assert!(filled_cells(&standard) > 30);
+
+        let braille = PieChart::new(vec![PieSlice::new("Only", 100.0, Color::Green)])
+            .resolution(Resolution::Braille)
+            .show_legend(false)
+            .show_percentages(false);
+        assert!(filled_cells(&braille) > 30);
     }
 }
