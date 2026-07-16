@@ -1,6 +1,7 @@
 # tui-piechart
 
 [![Crates.io](https://img.shields.io/crates/v/tui-piechart)](https://crates.io/crates/tui-piechart)
+[![Downloads](https://img.shields.io/crates/d/tui-piechart)](https://crates.io/crates/tui-piechart)
 [![Documentation](https://docs.rs/tui-piechart/badge.svg)](https://docs.rs/tui-piechart)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Release](https://github.com/sorinirimies/tui-piechart/actions/workflows/release.yml/badge.svg)](https://github.com/sorinirimies/tui-piechart/actions/workflows/release.yml)
