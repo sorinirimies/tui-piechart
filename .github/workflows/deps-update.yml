@@ -49,6 +49,9 @@ jobs:
       # Cargo.lock to non-yanked versions; `cargo fetch` then downloads those
       # sources so the offline phase has at least one valid, non-yanked candidate
       # for every transitive dependency.
+      - name: Snapshot original Cargo.lock
+        run: cp Cargo.lock Cargo.lock.before
+
       - name: Pre-warm cargo registry (refresh index + fetch sources)
         run: cargo update && cargo fetch
 
@@ -63,7 +66,54 @@ jobs:
       - name: Sync Cargo.lock
         run: cargo update
 
-      # ── Check for changes ────────────────────────────────────────────────────
+      # ── Guard against accidental downgrades ──────────────────────────────────
+      # `cargo upgrade`/`cargo update` should only ever move versions forward.
+      # If the local registry index/cache is stale, they can silently pick an
+      # older version than what's already pinned (seen in practice: ratatui
+      # 0.30 -> 0.29, with all quality checks still passing). Compare full
+      # lockfile contents (not just the diff) so unchanged transitive deps
+      # still have a version to compare against. Fail loudly instead of
+      # letting auto-merge ship a downgrade.
+      - name: Guard against downgrades
+        run: |
+          python3 - <<'PY'
+          import re, sys
+
+          def parse_lockfile(path):
+              versions = {}
+              name = None
+              with open(path) as f:
+                  for line in f:
+                      line = line.strip()
+                      if line.startswith('name = "'):
+                          name = line.split('"')[1]
+                      elif line.startswith('version = "') and name:
+                          versions[name] = line.split('"')[1]
+                          name = None
+              return versions
+
+          old = parse_lockfile("Cargo.lock.before")
+          new = parse_lockfile("Cargo.lock")
+
+          def key(v):
+              return tuple(int(p) if p.isdigit() else 0 for p in re.split(r"[.\-+]", v))
+
+          downgrades = [
+              f"  {name}: {old_v} -> {new[name]}"
+              for name, old_v in old.items()
+              if name in new and key(new[name]) < key(old_v)
+          ]
+
+          if downgrades:
+              print("::error::Detected dependency downgrade(s), aborting:")
+              for d in downgrades:
+                  print(d)
+              sys.exit(1)
+
+          print("No downgrades detected.")
+          PY
+          rm -f Cargo.lock.before
+
       - name: Check for changes
         id: check
         run: |
