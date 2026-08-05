@@ -13,6 +13,10 @@ concurrency:
   group: deps-update
   cancel-in-progress: true
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   upgrade-deps:
     name: Upgrade Dependencies
