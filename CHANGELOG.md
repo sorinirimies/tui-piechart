@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.2 - 2026-08-05
+### 📚 Documentation
+- docs: add crates.io downloads badge to README
+### 📦 Other Changes
+- ignore codegraph setup
+- Merge pull request #3 from SomethingSomehow/main
+### 🔄 Updated
+- update ratatui to 0.30
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.0.1...v1.0.2
+## 1.0.1 - 2026-07-16
+### 🔧 Chores
+- chore: bump version to 1.0.1
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.0.0...v1.0.1
 ## 1.0.0 - 2026-07-16
 ### ♻️ Refactor
 - refactor: migrate shell scripts to Nushell

@@ -34,8 +34,8 @@ Or add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-tui-piechart = "1.0.1"
-ratatui = "0.29"
+tui-piechart = "1.0.2"
+ratatui = "0.30"
 ```
 
 ## Quick Start
