@@ -56,6 +56,81 @@ def is_dirty [path: string] {
     $r.exit_code != 0
 }
 
+# ── Downgrade guard ───────────────────────────────────────────────────────────
+# `cargo upgrade`/`cargo update` should only ever move dependency versions
+# forward. If the local registry index/cache is stale they can silently pick
+# an older version than what's already pinned (seen in practice: ratatui
+# 0.30.2 -> 0.29.0, plus 8 transitive deps, with fmt/clippy/tests all still
+# passing on the older versions). These pure helpers detect that case so the
+# caller can abort before committing/pushing a downgrade.
+
+# Parse a Cargo.lock file into a record mapping package name -> version.
+# When a package name appears more than once (multiple semver-incompatible
+# versions resolved simultaneously) the last occurrence wins, matching the
+# order Cargo itself writes the lockfile in.
+export def parse_lockfile [path: string] {
+    open $path --raw
+    | lines
+    | reduce --fold {name: null, map: {}} {|line, acc|
+        let l = ($line | str trim)
+        if ($l | str starts-with 'name = "') {
+            let n = ($l | parse --regex '"(?P<n>[^"]+)"' | get n | first)
+            {name: $n, map: $acc.map}
+        } else if ($l | str starts-with 'version = "') and ($acc.name != null) {
+            let v = ($l | parse --regex '"(?P<v>[^"]+)"' | get v | first)
+            {name: null, map: ($acc.map | upsert $acc.name $v)}
+        } else {
+            $acc
+        }
+    }
+    | get map
+}
+
+# Turn a semver-ish version string into a list<int> for ordinal comparison,
+# e.g. "0.30.2" -> [0, 30, 2]. Pre-release/build metadata (after the first
+# "-" or "+") is dropped; non-numeric segments compare as 0.
+export def version_key [v: string] {
+    $v
+    | split row "-" | get 0
+    | split row "+" | get 0
+    | split row "."
+    | each {|p| if ($p =~ '^[0-9]+$') { $p | into int } else { 0 } }
+}
+
+# True when list `a` sorts strictly before list `b`, lexicographically,
+# padding whichever list is shorter with trailing zeros.
+export def list_less_than [a: list, b: list] {
+    let max_len = ([($a | length) ($b | length)] | math max)
+    let pairs = (0..<$max_len | each {|i|
+        let av = if $i < ($a | length) { $a | get $i } else { 0 }
+        let bv = if $i < ($b | length) { $b | get $i } else { 0 }
+        {av: $av, bv: $bv}
+    })
+    let first_diff = ($pairs | where {|r| $r.av != $r.bv} | first)
+    if ($first_diff | is-empty) {
+        false
+    } else {
+        $first_diff.av < $first_diff.bv
+    }
+}
+
+# Compare two { name -> version } records and return a table of every
+# package whose version decreased from `old` to `new`. Packages only present
+# in one side (added/removed deps) are not downgrades and are ignored.
+export def find_downgrades [old: record, new: record] {
+    $old
+    | transpose name old_version
+    | each {|row|
+        let nv = ($new | get -o $row.name)
+        if ($nv != null) and (list_less_than (version_key $nv) (version_key $row.old_version)) {
+            {name: $row.name, old: $row.old_version, new: $nv}
+        } else {
+            null
+        }
+    }
+    | compact
+}
+
 # Return the short commit label string for the given dirty state.
 # Returns an empty string when nothing needs committing.
 export def commit_label [toml_dirty: bool, lock_dirty: bool, date: string] {
@@ -99,6 +174,8 @@ def main [
     # The quality gate below acts as the safety net.
     print $"($cyan)Phase 1/2 — Upgrading Cargo.toml dependency pins...($reset)"
 
+    let lockfile_before = (parse_lockfile "Cargo.lock")
+
     let upgrade_result = (do {
         run-external "cargo" "upgrade" "--incompatible" "allow"
     } | complete)
@@ -126,6 +203,26 @@ def main [
     print $"($cyan)Phase 2/2 — Syncing Cargo.lock...($reset)"
     run-external "cargo" "update"
     print $"($green)✓ Cargo.lock synced($reset)"
+
+    # ── Guard against accidental downgrades ──────────────────────────────────
+    print ""
+    print $"($cyan)Downgrade guard:($reset)"
+
+    let lockfile_after = (parse_lockfile "Cargo.lock")
+    let downgrades = (find_downgrades $lockfile_before $lockfile_after)
+
+    if not ($downgrades | is-empty) {
+        print $"($red)✗ Detected dependency downgrade\(s\) — aborting without committing:($reset)"
+        for d in $downgrades {
+            print $"  ($d.name): ($d.old) -> ($d.new)"
+        }
+        print ""
+        print $"($yellow)Restoring Cargo.toml and Cargo.lock to their pre-upgrade state.($reset)"
+        run-external "git" "checkout" "--" "Cargo.toml" "Cargo.lock"
+        exit 1
+    }
+
+    print $"($green)✓ No downgrades detected($reset)"
 
     # ── Quality gate ──────────────────────────────────────────────────────────
     print ""

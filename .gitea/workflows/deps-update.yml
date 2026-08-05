@@ -38,68 +38,14 @@ jobs:
       - name: Install cargo-edit
         run: cargo install cargo-edit --locked
 
-      # ── Pre-warm cargo registry ───────────────────────────────────────────────
-      # `cargo upgrade`'s recursive-dep resolver runs in offline mode and only
-      # considers package sources that are physically present in the local cache.
-      # If a previously-cached version has since been yanked the offline resolver
-      # finds no valid candidate and aborts.  Running `cargo update` first
-      # refreshes the registry index and rewrites Cargo.lock to non-yanked
-      # versions; `cargo fetch` then downloads those sources so the offline
-      # phase has at least one valid, non-yanked candidate for every transitive
-      # dependency.
-      - name: Pre-warm cargo registry (refresh index + fetch sources)
-        run: cargo update && cargo fetch
+      # ── Nushell (shared upgrade script runs on both Gitea and GitHub) ────────
+      - name: Install Nushell
+        run: cargo install nu --locked
 
-      # ── Upgrade all dependency pins ──────────────────────────────────────────
-      # `cargo upgrade --incompatible allow` rewrites version constraints in
-      # [dependencies] and [dev-dependencies] so pinned libs like
-      # `ratatui = "0.30"` can advance to newer releases.
-      # `cargo update` then resolves the new constraints into Cargo.lock.
-      - name: Upgrade dependency pins
-        run: cargo upgrade --incompatible allow
-
-      - name: Sync Cargo.lock
-        run: cargo update
-
-      # ── Check for changes ────────────────────────────────────────────────────
-      - name: Check for changes
-        id: check
+      # ── Upgrade, quality-gate, downgrade-guard, commit + push ────────────────
+      # See scripts/upgrade_deps.nu for the full logic (shared with GitHub).
+      - name: Run nightly dependency upgrade
         run: |
-          if git diff --quiet Cargo.toml Cargo.lock; then
-            echo "has_changes=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          fi
-
-      # ── Quality gate ─────────────────────────────────────────────────────────
-      - name: Check formatting
-        if: steps.check.outputs.has_changes == 'true'
-        run: cargo fmt -- --check
-
-      - name: Run clippy
-        if: steps.check.outputs.has_changes == 'true'
-        run: cargo clippy -- -D warnings
-
-      - name: Run tests
-        if: steps.check.outputs.has_changes == 'true'
-        run: cargo test --locked --all-features --all-targets
-
-      # ── Commit and push directly to main ───────────────────────────────────────
-      # The quality gate already passed — safe to push directly.
-      - name: Commit and push dependency updates
-        if: steps.check.outputs.has_changes == 'true'
-        run: |
-          DATE=$(date -u '+%Y-%m-%d')
-
-          git config user.name  "gitea-actions[bot]"
-          git config user.email "gitea-actions[bot]@noreply.gitea"
-
-          git add Cargo.toml Cargo.lock
-          git commit -m "chore(deps): nightly dependency upgrade $DATE"
-          git push origin main
-
-          echo "✅ Dependency updates pushed to main."
-
-      - name: Nothing to update
-        if: steps.check.outputs.has_changes == 'false'
-        run: echo "✅ All dependencies already up to date — nothing to upgrade."
+          nu scripts/upgrade_deps.nu \
+            --bot-name "gitea-actions[bot]" \
+            --bot-email "gitea-actions[bot]@noreply.gitea"

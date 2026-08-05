@@ -5,7 +5,7 @@
 
 use std/assert
 use runner.nu *
-use ../upgrade_deps.nu [commit_label all_passed]
+use ../upgrade_deps.nu [commit_label all_passed parse_lockfile version_key list_less_than find_downgrades]
 
 # ── commit_label tests ────────────────────────────────────────────────────────
 
@@ -247,6 +247,144 @@ def "test package name is tui-piechart" [] {
 def "test ratatui is a dependency" [] {
     let data = (open Cargo.toml)
     assert ($data | get dependencies.ratatui | is-not-empty) "ratatui must be listed in [dependencies]"
+}
+
+# ── parse_lockfile tests ──────────────────────────────────────────────────────
+
+def "test parse lockfile reads simple package" [] {
+    let versions = (parse_lockfile "scripts/tests/fixtures/lockfile_before_regression.lock")
+    assert equal ($versions | get ratatui) "0.30.2"
+}
+
+def "test parse lockfile reads many packages" [] {
+    let versions = (parse_lockfile "scripts/tests/fixtures/lockfile_before_regression.lock")
+    # The real regression lockfile resolves 190+ packages.
+    assert (($versions | columns | length) > 100)
+}
+
+def "test parse lockfile handles duplicate package names" [] {
+    # hashbrown appears twice in the pre-regression lockfile (0.16.1 and
+    # 0.17.1) — last occurrence should win, matching Cargo's own ordering.
+    let versions = (parse_lockfile "scripts/tests/fixtures/lockfile_before_regression.lock")
+    assert equal ($versions | get hashbrown) "0.17.1"
+}
+
+# ── version_key tests ─────────────────────────────────────────────────────────
+
+def "test version key parses semver triple" [] {
+    assert equal (version_key "0.30.2") [0 30 2]
+}
+
+def "test version key drops prerelease suffix" [] {
+    assert equal (version_key "1.2.3-beta.1") [1 2 3]
+}
+
+def "test version key drops build metadata" [] {
+    assert equal (version_key "1.2.3+build5") [1 2 3]
+}
+
+def "test version key handles two part version" [] {
+    assert equal (version_key "0.29") [0 29]
+}
+
+# ── list_less_than tests ──────────────────────────────────────────────────────
+
+def "test list less than detects minor version downgrade" [] {
+    assert (list_less_than (version_key "0.29.0") (version_key "0.30.2"))
+}
+
+def "test list less than detects patch version downgrade" [] {
+    assert (list_less_than (version_key "0.30.1") (version_key "0.30.2"))
+}
+
+def "test list less than false for upgrade" [] {
+    assert not (list_less_than (version_key "0.30.2") (version_key "0.29.0"))
+}
+
+def "test list less than false for equal versions" [] {
+    assert not (list_less_than (version_key "0.30.2") (version_key "0.30.2"))
+}
+
+def "test list less than handles differing segment counts" [] {
+    # "0.29" vs "0.29.0" should compare as equal (trailing zero padding)
+    assert not (list_less_than (version_key "0.29") (version_key "0.29.0"))
+    assert not (list_less_than (version_key "0.29.0") (version_key "0.29"))
+}
+
+def "test list less than major version downgrade" [] {
+    assert (list_less_than (version_key "1.0.0") (version_key "2.0.0"))
+}
+
+# ── find_downgrades tests ─────────────────────────────────────────────────────
+
+def "test find downgrades detects single downgrade" [] {
+    let old = {ratatui: "0.30.2"}
+    let new = {ratatui: "0.29.0"}
+    let result = (find_downgrades $old $new)
+    assert equal ($result | length) 1
+    assert equal ($result | first | get name) "ratatui"
+}
+
+def "test find downgrades empty when versions equal" [] {
+    let old = {ratatui: "0.30.2"}
+    let new = {ratatui: "0.30.2"}
+    assert (find_downgrades $old $new | is-empty)
+}
+
+def "test find downgrades empty for an upgrade" [] {
+    let old = {ratatui: "0.29.0"}
+    let new = {ratatui: "0.30.2"}
+    assert (find_downgrades $old $new | is-empty)
+}
+
+def "test find downgrades ignores packages only in old" [] {
+    # A dependency that was removed entirely is not a "downgrade".
+    let old = {ratatui: "0.30.2", old_only_dep: "1.0.0"}
+    let new = {ratatui: "0.30.2"}
+    assert (find_downgrades $old $new | is-empty)
+}
+
+def "test find downgrades ignores packages only in new" [] {
+    # A newly-added transitive dependency is not a "downgrade".
+    let old = {ratatui: "0.30.2"}
+    let new = {ratatui: "0.30.2", new_only_dep: "1.0.0"}
+    assert (find_downgrades $old $new | is-empty)
+}
+
+def "test find downgrades detects multiple downgrades" [] {
+    let old = {ratatui: "0.30.2", itertools: "0.14.0", lru: "0.18.1"}
+    let new = {ratatui: "0.29.0", itertools: "0.13.0", lru: "0.18.1"}
+    let result = (find_downgrades $old $new)
+    assert equal ($result | length) 2
+    let names = ($result | get name)
+    assert ("ratatui" in $names)
+    assert ("itertools" in $names)
+    assert not ("lru" in $names)
+}
+
+def "test find downgrades reproduces real ratatui regression" [] {
+    # Regression test for the incident where a stale registry cache caused
+    # `cargo upgrade`/`cargo update` to silently downgrade ratatui 0.30.2 ->
+    # 0.29.0 (plus 8 transitive deps); all quality checks still passed on
+    # the older versions and it was auto-merged. This must never slip
+    # through undetected again.
+    let old = (parse_lockfile "scripts/tests/fixtures/lockfile_before_regression.lock")
+    let new = (parse_lockfile "scripts/tests/fixtures/lockfile_after_regression.lock")
+    let result = (find_downgrades $old $new)
+
+    let names = ($result | get name)
+    for expected in ["ratatui" "compact_str" "foldhash" "hashbrown" "itertools" "lru" "strum" "strum_macros" "unicode-truncate"] {
+        assert ($expected in $names) $"expected ($expected) to be flagged as a downgrade"
+    }
+
+    let ratatui_row = ($result | where name == "ratatui" | first)
+    assert equal $ratatui_row.old "0.30.2"
+    assert equal $ratatui_row.new "0.29.0"
+}
+
+def "test find downgrades empty when comparing regression lockfile to itself" [] {
+    let versions = (parse_lockfile "scripts/tests/fixtures/lockfile_before_regression.lock")
+    assert (find_downgrades $versions $versions | is-empty)
 }
 
 # ── Runner ────────────────────────────────────────────────────────────────────
