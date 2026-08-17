@@ -232,6 +232,14 @@ release-gitea-starscream version: check-all check-git-cliff check-nu
     git push gitea_starscream v{{ version }}
     @echo "✅ Release v{{ version }} pushed to Gitea Starscream."
 
+# Full automated release to Gitea (nexus-lab instance) only.
+release-gitea-nexus-lab version: check-all check-git-cliff check-nu
+    nu scripts/bump_version.nu --yes {{ version }}
+    @echo "Pushing branch and tag to Gitea (nexus-lab)..."
+    git push gitea-nexus-lab main
+    git push gitea-nexus-lab v{{ version }}
+    @echo "✅ Release v{{ version }} pushed to Gitea (nexus-lab)."
+
 # Full automated release to all remotes (continues on failure).
 release-all version: check-all check-git-cliff check-nu
     #!/usr/bin/env sh
@@ -243,10 +251,11 @@ release-all version: check-all check-git-cliff check-nu
     git push --follow-tags origin main             || failed="$failed origin"
     git push --follow-tags gitea main              || failed="$failed gitea"
     git push --follow-tags gitea_starscream main   || failed="$failed gitea_starscream"
+    git push --follow-tags gitea-nexus-lab main    || failed="$failed gitea-nexus-lab"
     if [ -n "$failed" ]; then
         echo "⚠️  Release v{{ version }} failed to push to:$failed"
     else
-        echo "✅ Release v{{ version }} pushed to GitHub, Gitea, and Gitea Starscream!"
+        echo "✅ Release v{{ version }} pushed to GitHub, Gitea, Gitea Starscream, and Gitea (nexus-lab)!"
     fi
 
 # Push the latest commit and all tags to every remote (no bump, continues on failure).
@@ -256,6 +265,7 @@ push-release-all: check-all
     git push --follow-tags origin main             || failed="$failed origin"
     git push --follow-tags gitea main              || failed="$failed gitea"
     git push --follow-tags gitea_starscream main   || failed="$failed gitea_starscream"
+    git push --follow-tags gitea-nexus-lab main    || failed="$failed gitea-nexus-lab"
     if [ -n "$failed" ]; then
         echo "⚠️  Failed to push to:$failed"
     else
@@ -415,6 +425,10 @@ pull-gitea:
 pull-gitea-starscream:
     git pull gitea_starscream main
 
+# Pull from Gitea (nexus-lab instance)
+pull-gitea-nexus-lab:
+    git pull gitea-nexus-lab main
+
 # Pull from all remotes (continues on failure)
 pull-all:
     #!/usr/bin/env sh
@@ -422,10 +436,11 @@ pull-all:
     git pull origin main             || failed="$failed origin"
     git pull gitea main              || failed="$failed gitea"
     git pull gitea_starscream main   || failed="$failed gitea_starscream"
+    git pull gitea-nexus-lab main    || failed="$failed gitea-nexus-lab"
     if [ -n "$failed" ]; then
         echo "⚠️  Failed to pull from:$failed"
     else
-        echo "✅ Pulled from GitHub, Gitea, and Gitea Starscream!"
+        echo "✅ Pulled from GitHub, Gitea, Gitea Starscream, and Gitea (nexus-lab)!"
     fi
 
 # Push to GitHub
@@ -440,6 +455,10 @@ push-gitea:
 push-gitea-starscream:
     git push gitea_starscream main
 
+# Push to Gitea (nexus-lab instance)
+push-gitea-nexus-lab:
+    git push gitea-nexus-lab main
+
 # Push to all remotes (continues on failure)
 push-all:
     #!/usr/bin/env sh
@@ -447,10 +466,11 @@ push-all:
     git push origin main             || failed="$failed origin"
     git push gitea main              || failed="$failed gitea"
     git push gitea_starscream main   || failed="$failed gitea_starscream"
+    git push gitea-nexus-lab main    || failed="$failed gitea-nexus-lab"
     if [ -n "$failed" ]; then
         echo "⚠️  Failed to push to:$failed"
     else
-        echo "✅ Pushed to GitHub, Gitea, and Gitea Starscream!"
+        echo "✅ Pushed to GitHub, Gitea, Gitea Starscream, and Gitea (nexus-lab)!"
     fi
 
 # Force-push to all remotes
@@ -460,10 +480,11 @@ push-all-force:
     git push --force origin main             || failed="$failed origin"
     git push --force gitea main              || failed="$failed gitea"
     git push --force gitea_starscream main   || failed="$failed gitea_starscream"
+    git push --force gitea-nexus-lab main    || failed="$failed gitea-nexus-lab"
     if [ -n "$failed" ]; then
         echo "⚠️  Failed to force-push to:$failed"
     else
-        echo "✅ Force-pushed to GitHub, Gitea, and Gitea Starscream!"
+        echo "✅ Force-pushed to GitHub, Gitea, Gitea Starscream, and Gitea (nexus-lab)!"
     fi
 
 # Push tags to GitHub
@@ -477,6 +498,7 @@ push-tags-all:
     git push origin --tags             || failed="$failed origin"
     git push gitea --tags              || failed="$failed gitea"
     git push gitea_starscream --tags   || failed="$failed gitea_starscream"
+    git push gitea-nexus-lab --tags    || failed="$failed gitea-nexus-lab"
     if [ -n "$failed" ]; then
         echo "⚠️  Failed to push tags to:$failed"
     else
@@ -495,6 +517,12 @@ sync-gitea-starscream:
     git push gitea_starscream --tags --force
     @echo "✅ Gitea Starscream synced!"
 
+# Force-sync Gitea (nexus-lab instance) from GitHub
+sync-gitea-nexus-lab:
+    git push gitea-nexus-lab main --force
+    git push gitea-nexus-lab --tags --force
+    @echo "✅ Gitea (nexus-lab) synced!"
+
 # Force-sync all Gitea instances from GitHub (continues on failure)
 sync-all-gitea:
     #!/usr/bin/env sh
@@ -503,6 +531,8 @@ sync-all-gitea:
     git push gitea --tags --force                || failed="$failed gitea-tags"
     git push gitea_starscream main --force       || failed="$failed gitea_starscream"
     git push gitea_starscream --tags --force     || failed="$failed gitea_starscream-tags"
+    git push gitea-nexus-lab main --force        || failed="$failed gitea-nexus-lab"
+    git push gitea-nexus-lab --tags --force      || failed="$failed gitea-nexus-lab-tags"
     if [ -n "$failed" ]; then
         echo "⚠️  Failed to sync:$failed"
     else
