@@ -45,7 +45,47 @@ jobs:
       # ── Upgrade, quality-gate, downgrade-guard, commit + push ────────────────
       # See scripts/upgrade_deps.nu for the full logic (shared with GitHub).
       - name: Run nightly dependency upgrade
+        id: upgrade
         run: |
+          before=$(git rev-parse HEAD)
           nu scripts/upgrade_deps.nu \
             --bot-name "gitea-actions[bot]" \
             --bot-email "gitea-actions[bot]@noreply.gitea"
+          after=$(git rev-parse HEAD)
+          if [ "$before" != "$after" ]; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install git-cliff (bump_version.nu uses it for CHANGELOG.md)
+        if: steps.upgrade.outputs.changed == 'true'
+        run: cargo install git-cliff --locked
+
+      - name: Compute next patch version
+        if: steps.upgrade.outputs.changed == 'true'
+        id: version
+        run: |
+          current=$(grep -m1 '^version' Cargo.toml | sed -E 's/version[[:space:]]*=[[:space:]]*"(.*)"/\1/')
+          IFS='.' read -r major minor patch <<< "$current"
+          next="$major.$minor.$((patch + 1))"
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version, changelog, commit and tag
+        if: steps.upgrade.outputs.changed == 'true'
+        run: nu scripts/bump_version.nu --yes ${{ steps.version.outputs.next }}
+
+      - name: Push release commit and tag to Gitea
+        if: steps.upgrade.outputs.changed == 'true'
+        run: |
+          git push origin HEAD:main
+          git push origin "v${{ steps.version.outputs.next }}"
+
+      - name: Push release commit and tag to GitHub mirror
+        if: steps.upgrade.outputs.changed == 'true' && env.GITHUB_REMOTE_URL != ''
+        env:
+          GITHUB_REMOTE_URL: ${{ secrets.GITHUB_REMOTE_URL }}
+        run: |
+          git remote add github-ci "$GITHUB_REMOTE_URL"
+          git push github-ci HEAD:main
+          git push github-ci "v${{ steps.version.outputs.next }}"
