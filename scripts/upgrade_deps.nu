@@ -2,19 +2,22 @@
 # Nightly dependency upgrade for tui-piechart.
 #
 # Phases:
-#   1. cargo upgrade --incompatible allow
-#      Rewrites version pins in [dependencies] / [dev-dependencies] so libs
-#      like `ratatui = "0.30"` can advance to newer releases.
+#   1. cargo upgrade (compatible-only)
+#      Rewrites version pins in [dependencies] / [dev-dependencies] within
+#      their existing semver range. Major bumps are a deliberate manual step.
 #   2. cargo update
 #      Resolves the (possibly new) constraints into a fresh Cargo.lock.
 #      Runs unconditionally — also picks up compatible patch bumps when
 #      Phase 1 produced no Cargo.toml changes.
 #   3. Quality gate: fmt → clippy → tests
 #   4. Commit strategy:
-#      • Gate passed  + Cargo.toml changed → commit Cargo.toml + Cargo.lock + source fixes
+#      • Gate passed  + dep requirements changed → commit Cargo.toml + Cargo.lock,
+#                                            bump PATCH version, tag, push and
+#                                            emit `release_tag` (GITHUB_OUTPUT)
 #      • Gate failed  + Cargo.toml changed → revert Cargo.toml, re-sync lock,
 #                                            commit lock only, then exit 1
-#      • Gate passed  + only Cargo.lock   → commit Cargo.lock + any source fixes
+#      • Gate passed  + only Cargo.lock   → commit Cargo.lock only. NO release.
+#      • Cosmetic Cargo.toml reformatting by cargo-edit is discarded.
 #      • Nothing changed                  → nothing to commit, exit 0
 #
 # Usage:
@@ -143,6 +146,26 @@ export def commit_label [toml_dirty: bool, lock_dirty: bool, date: string] {
     }
 }
 
+# Snapshot of the *semantic* dependency requirements declared in Cargo.toml
+# (name, req, kind, features, ...). Unlike a text diff this ignores whitespace
+# / key-order rewrites by cargo-edit, so it only differs on real changes.
+export def deps_snapshot [] {
+    run-external "cargo" "metadata" "--no-deps" "--format-version" "1"
+    | from json
+    | get packages
+    | each {|p| $p.dependencies | select name req kind features optional target uses_default_features }
+    | flatten
+    | sort-by name kind
+    | to json --raw
+}
+
+# Next PATCH version for a plain X.Y.Z string, e.g. "0.4.2" -> "0.4.3".
+export def next_patch_version [v: string] {
+    let p = ($v | split row "-" | get 0 | split row ".")
+    let patch = (($p | get 2 | into int) + 1)
+    $"($p | get 0).($p | get 1).($patch)"
+}
+
 # Return true when every element of a bool list is true.
 export def all_passed [results: list<bool>] {
     $results | all { |x| $x }
@@ -169,15 +192,15 @@ def main [
 
     # ── Phase 1: Upgrade Cargo.toml pins ─────────────────────────────────────
     # cargo-edit's `cargo upgrade` rewrites the version strings in Cargo.toml
-    # ([dependencies] and [dev-dependencies]).  --incompatible allow lifts the
-    # major-version guard so `ratatui = "0.30"` can move to "0.31", etc.
+    # ([dependencies] and [dev-dependencies]) within their semver range.
     # The quality gate below acts as the safety net.
     print $"($cyan)Phase 1/2 — Upgrading Cargo.toml dependency pins...($reset)"
 
     let lockfile_before = (parse_lockfile "Cargo.lock")
+    let deps_before     = (deps_snapshot)
 
     let upgrade_result = (do {
-        run-external "cargo" "upgrade" "--incompatible" "allow"
+        run-external "cargo" "upgrade"
     } | complete)
 
     let upgrade_log = ($upgrade_result.stdout | str trim)
@@ -255,7 +278,16 @@ def main [
     }
 
     # ── Commit strategy ───────────────────────────────────────────────────────
-    # Re-read dirty state after the potential revert above.
+    # A release is cut ONLY when the dependency requirements declared in
+    # Cargo.toml really changed (consumers resolve from those, never from our
+    # Cargo.lock). Lock-only refreshes are committed but never released.
+    let reqs_changed = ((deps_snapshot) != $deps_before)
+
+    # Discard cosmetic-only Cargo.toml rewrites (reformat with no real change).
+    if (is_dirty "Cargo.toml") and (not $reqs_changed) and (not $dry_run) {
+        run-external "git" "checkout" "--" "Cargo.toml"
+    }
+
     let toml_dirty = (is_dirty "Cargo.toml")
     let lock_dirty = (is_dirty "Cargo.lock")
     let date       = (date now | format date "%Y-%m-%d")
@@ -264,13 +296,17 @@ def main [
     print ""
     print $"($cyan)Commit strategy:($reset)"
 
+    mut release_tag = ""
+
     if ($label | is-empty) {
         print $"  ($green)✓ Everything already up to date — nothing to commit($reset)"
 
     } else if $dry_run {
         let files = if $toml_dirty { "Cargo.toml + Cargo.lock" } else { "Cargo.lock" }
+        let rel   = if $reqs_changed { "yes (patch release)" } else { "no" }
         print $"  ($cyan)[dry-run] Would commit: ($label)($reset)"
         print $"  ($cyan)[dry-run] Files: ($files)($reset)"
+        print $"  ($cyan)[dry-run] Release: ($rel)($reset)"
 
     } else {
         run-external "git" "config" "user.name"  $bot_name
@@ -290,8 +326,25 @@ def main [
             run-external "git" "commit" "-m" $label
         }
 
-        run-external "git" "push" $remote "main"
-        print $"($green)✓ Committed and pushed: ($label)($reset)"
+        if $reqs_changed and $gate_passed {
+            let current = (open Cargo.toml --raw | lines
+                | where { |l| $l =~ '^version\s*=' } | first
+                | parse --regex '"(?P<v>[^"]+)"' | get v | first)
+            let next = (next_patch_version $current)
+            print $"  ($cyan)Dependency requirements changed → patch release ($current) → ($next)($reset)"
+            run-external "nu" "scripts/bump_version.nu" "--yes" $next
+            run-external "git" "push" "--follow-tags" $remote "main"
+            $release_tag = $"v($next)"
+            print $"($green)✓ Committed, tagged and pushed: ($label) + ($release_tag)($reset)"
+        } else {
+            run-external "git" "push" $remote "main"
+            print $"($green)✓ Committed and pushed \(no release\): ($label)($reset)"
+        }
+    }
+
+    # Expose the tag to the calling workflow (empty = no release).
+    if ($env.GITHUB_OUTPUT? | is-not-empty) {
+        $"release_tag=($release_tag)\n" | save --append $env.GITHUB_OUTPUT
     }
 
     # ── Summary ───────────────────────────────────────────────────────────────

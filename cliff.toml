@@ -33,6 +33,8 @@ trim = true
 conventional_commits = false
 # regex for parsing and grouping commits
 commit_parsers = [
+    # Lock-only dependency refreshes never appear in the changelog
+    { message = "^chore: nightly dependency update", skip = true },
     { message = "^[Ff]eat(?:\\(.*\\))?:?\\s", group = "✨ Features" },
     { message = "^[Ff]ix(?:\\(.*\\))?:?\\s", group = "🐛 Bug Fixes" },
     { message = "^[Dd]ocs(?:\\(.*\\))?:?\\s", group = "📚 Documentation" },

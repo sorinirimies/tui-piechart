@@ -38,6 +38,9 @@ jobs:
       - name: Install cargo-edit
         run: cargo install cargo-edit --locked
 
+      - name: Install git-cliff
+        run: cargo install git-cliff --locked
+
       # ── Nushell (shared upgrade script runs on both Gitea and GitHub) ────────
       - name: Install Nushell
         run: cargo install nu --locked
@@ -46,14 +49,25 @@ jobs:
       # See scripts/upgrade_deps.nu for the full logic (shared with GitHub).
       #
       # By convention (matching the GitHub mirror and sibling projects),
-      # deps-update only ever commits a plain dependency bump to main — it
-      # never auto-tags or auto-triggers a release. Cutting a release stays a
-      # deliberate, separate step (`just release <version>` or manually
-      # pushing a tag). This avoids needing any extra token/secret beyond the
-      # default one, since plain commit pushes (unlike tag pushes meant to
-      # trigger another workflow) aren't subject to the anti-recursion guard.
+      # deps-update commits dependency updates to main — it
+      # only releases (patch bump + tag) when Cargo.toml dependency requirements
+      # really changed. Lock-only updates are committed without a release.
       - name: Run nightly dependency upgrade
+        id: upgrade
         run: |
           nu scripts/upgrade_deps.nu \
             --bot-name "gitea-actions[bot]" \
             --bot-email "gitea-actions[bot]@noreply.gitea"
+
+      # Tag pushes by the built-in token may not trigger workflows, so dispatch
+      # release.yml explicitly when the script cut a release.
+      - name: Trigger release workflow
+        if: steps.upgrade.outputs.release_tag != ''
+        run: |
+          TAG="${{ steps.upgrade.outputs.release_tag }}"
+          echo "🚀 Dispatching release.yml for ${TAG}…"
+          curl -sf -X POST \
+            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/actions/workflows/release.yml/dispatches" \
+            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"ref\": \"main\", \"inputs\": {\"tag\": \"${TAG}\"}}"

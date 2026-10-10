@@ -15,6 +15,7 @@ concurrency:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   upgrade-deps:
@@ -41,6 +42,9 @@ jobs:
       - name: Install cargo-edit
         run: cargo install cargo-edit --locked
 
+      - name: Install git-cliff
+        run: cargo install git-cliff --locked
+
       # ── Nushell (shared upgrade script runs on both GitHub and Gitea) ────────
       - name: Install Nushell
         run: cargo install nu --locked
@@ -48,7 +52,16 @@ jobs:
       # ── Upgrade, quality-gate, downgrade-guard, commit + push ────────────────
       # See scripts/upgrade_deps.nu for the full logic (shared with Gitea).
       - name: Run nightly dependency upgrade
+        id: upgrade
         run: |
           nu scripts/upgrade_deps.nu \
             --bot-name "github-actions[bot]" \
             --bot-email "github-actions[bot]@users.noreply.github.com"
+
+      # Pushes authored by GITHUB_TOKEN don't trigger other workflows, so
+      # dispatch release.yml explicitly when the script cut a release.
+      - name: Trigger release workflow
+        if: steps.upgrade.outputs.release_tag != ''
+        run: gh workflow run release.yml --repo "${{ github.repository }}" -f tag="${{ steps.upgrade.outputs.release_tag }}"
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}

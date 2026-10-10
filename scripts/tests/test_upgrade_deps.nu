@@ -5,7 +5,7 @@
 
 use std/assert
 use runner.nu *
-use ../upgrade_deps.nu [commit_label all_passed parse_lockfile version_key list_less_than find_downgrades]
+use ../upgrade_deps.nu [commit_label all_passed parse_lockfile version_key list_less_than find_downgrades next_patch_version]
 
 # ── commit_label tests ────────────────────────────────────────────────────────
 
@@ -385,6 +385,20 @@ def "test find downgrades reproduces real ratatui regression" [] {
 def "test find downgrades empty when comparing regression lockfile to itself" [] {
     let versions = (parse_lockfile "scripts/tests/fixtures/lockfile_before_regression.lock")
     assert (find_downgrades $versions $versions | is-empty)
+}
+
+# ── next_patch_version tests ──────────────────────────────────────────────────
+
+def "test next patch version increments patch" [] {
+    assert equal (next_patch_version "0.4.2") "0.4.3"
+}
+
+def "test next patch version carries into double digits" [] {
+    assert equal (next_patch_version "0.4.9") "0.4.10"
+}
+
+def "test next patch version drops prerelease suffix" [] {
+    assert equal (next_patch_version "1.2.3-beta.1") "1.2.4"
 }
 
 # ── Runner ────────────────────────────────────────────────────────────────────
