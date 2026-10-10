@@ -502,6 +502,43 @@ push-all-force:
         echo "✅ Force-pushed to GitHub, Gitea, Gitea Starscream, and Gitea (nexus-lab)!"
     fi
 
+# Git: force-push to GitHub (origin)
+push-force:
+    git push --force origin main
+
+# Git: force-push to Gitea Microlab
+push-gitea-microlab-force:
+    git push --force gitea-microlab main
+
+# Git: force-push to Gitea (nexus-lab instance)
+push-gitea-nexus-lab-force:
+    git push --force gitea-nexus-lab main
+
+# Git: force-push to Gitea Starscream
+push-gitea-starscream-force:
+    git push --force gitea-starscream main
+
+# Git: force-push tags to GitHub
+push-tags-force:
+    git push --force origin --tags
+
+# Git: force-push tags to all remotes (continues on failure)
+push-tags-all-force:
+    #!/usr/bin/env sh
+    failed=""
+    git push --force origin --tags             || failed="$failed origin"
+    git push --force gitea-microlab --tags     || failed="$failed gitea-microlab"
+    git push --force gitea-starscream --tags   || failed="$failed gitea-starscream"
+    git push --force gitea-nexus-lab --tags    || failed="$failed gitea-nexus-lab"
+    if [ -n "$failed" ]; then
+        echo "⚠️  Failed to force-push tags to:$failed"
+    else
+        echo "✅ Tags force-pushed to all remotes!"
+    fi
+
+# Git: force-push branch + tags to all remotes (continues on failure)
+push-all-force-with-tags: push-all-force push-tags-all-force
+
 # Push tags to GitHub
 push-tags:
     git push origin --tags
