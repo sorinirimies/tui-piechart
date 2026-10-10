@@ -122,7 +122,7 @@ Version must be in format: X.Y.Z or X.Y.Z-suffix \(e.g., 0.3.2 or 1.0.0-beta.1\)
         let reply = (input "Continue with version bump? (y/n) ")
         if not ($reply =~ '^[Yy]') {
             print $"($yellow)Aborted($reset)"
-            return
+            exit 1
         }
     }
 
