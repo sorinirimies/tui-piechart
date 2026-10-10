@@ -2,6 +2,36 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.3 - 2026-10-10
+### 🐛 Bug Fixes
+- fix(deps): revert accidental ratatui 0.30 -> 0.29 downgrade
+- fix(ci): make Gitea deps-update commit-only, matching GitHub mirror
+- fix(scripts): drop deprecated str downcase; exit non-zero when bump is aborted
+### 📦 Other Changes
+- Merge pull request #5 from sorinirimies/deps/nightly-dependency-upgrade
+- justfile: add gitea-nexus-lab remote recipes (push/pull/sync/release)
+- justfile: rename gitea -> gitea-microlab; add full gitea-microlab/-starscream/-nexus-lab parity
+- Add/complete nightly dependency-update automation (Gitea): update deps, quality-gate, bump patch version, tag, push to Gitea + GitHub
+- Merge gitea-starscream/main
+### 🔄 CI
+- ci: grant contents/pull-requests write perms to deps-update workflow
+- ci(deps-update): guard against silent dependency downgrades
+- ci(deps-update): move downgrade guard into shared Nushell script
+- ci(deps): release only on real Cargo.toml dependency changes; lock-only updates commit without release
+### 🔧 Chores
+- chore(deps): nightly dependency upgrade
+- chore(deps): nightly dependency upgrade 2026-05-21
+- chore(deps): nightly dependency upgrade 2026-09-09
+- chore(deps): nightly dependency upgrade 2026-09-10
+- chore(deps): nightly dependency upgrade 2026-09-12
+- chore(deps): nightly dependency upgrade 2026-09-17
+- chore(deps): nightly dependency upgrade 2026-09-23
+- chore(deps): nightly dependency upgrade 2026-09-26
+- chore(deps): nightly dependency upgrade 2026-10-01
+- chore(deps): nightly dependency upgrade 2026-10-03
+- chore(deps): nightly dependency upgrade 2026-10-04
+- chore(just): add force-push recipes (per-remote, tags, push-all-force-with-tags)
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.0.2...v1.0.3
 ## 1.0.2 - 2026-08-05
 ### 📚 Documentation
 - docs: add crates.io downloads badge to README
@@ -10,12 +40,31 @@ All notable changes to this project will be documented in this file.
 - Merge pull request #3 from SomethingSomehow/main
 ### 🔄 Updated
 - update ratatui to 0.30
+### 🔧 Chores
+- chore: bump version to 1.0.2
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.0.1...v1.0.2
 ## 1.0.1 - 2026-07-16
 ### 🔧 Chores
 - chore: bump version to 1.0.1
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.0.0...v1.0.1
 ## 1.0.0 - 2026-07-16
+### 🐛 Bug Fixes
+- fix: render a 100% pie slice as a filled disc instead of a line (#2)
+### 🔧 Chores
+- chore(deps): nightly dependency upgrade 2026-04-27
+- chore: bump version to 1.0.0
+### 🧪 Testing
+- test: add matches_test! macro and consolidate legend enum tests
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.3...v1.0.0
+## 0.3.3 - 2026-04-26
+### 📦 Other Changes
+- Simplify deps-update workflow to push directly to main
+### 🔄 Updated
+- Update README installation instructions and bump_version script
+### 🔧 Chores
+- chore: bump version to 0.3.3
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.2...v0.3.3
+## 0.3.2 - 2026-04-23
 ### ♻️ Refactor
 - refactor: migrate shell scripts to Nushell
 - refactor: inline VHS generation into justfile, remove generate_all.sh
@@ -23,25 +72,17 @@ All notable changes to this project will be documented in this file.
 - feat: add nightly dependency upgrade workflow
 ### 🐛 Bug Fixes
 - fix: add Stylize trait import to all examples for ratatui 0.29 compat
-- fix: render a 100% pie slice as a filled disc instead of a line (#2)
 ### 📦 Other Changes
 - Make title_vertical_position a no-op for ratatui 0.30
 - Remove contribution and Gitea setup docs, update justfile tasks
 - Reorder Stylize import and allow_unused_imports in examples
-- Simplify deps-update workflow to push directly to main
 ### 🔄 Updated
 - Update README with author credit and remove extra sections
 - Update dependencies and fix Gitea PR head filter format
-- Update README installation instructions and bump_version script
 ### 🔧 Chores
 - chore: update rules and widen dep-update commit scope
 - chore: bump version to 0.3.2
-- chore: bump version to 0.3.3
-- chore(deps): nightly dependency upgrade 2026-04-27
-- chore: bump version to 1.0.0
-### 🧪 Testing
-- test: add matches_test! macro and consolidate legend enum tests
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.1...v1.0.0
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.3.1...v0.3.2
 ## 0.3.1 - 2026-02-26
 ### 📦 Other Changes
 - added zed rules
