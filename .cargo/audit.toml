@@ -1,0 +1,4 @@
+# cargo-audit configuration. Vulnerabilities always fail; unsound/unmaintained
+# are reported as warnings.
+[advisories]
+ignore = []   # add "RUSTSEC-YYYY-NNNN" with a justification comment

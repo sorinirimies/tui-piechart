@@ -623,3 +623,7 @@ view-changelog:
 # Check publish readiness
 check-publish: check-nu
     nu scripts/check_publish.nu
+
+# Security: dependency vulnerability scan (needs `cargo install cargo-audit`)
+audit:
+    cargo audit
