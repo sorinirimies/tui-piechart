@@ -105,6 +105,7 @@ pub mod title;
 // Re-export commonly used types from submodules for convenience
 pub use legend::{LegendAlignment, LegendLayout, LegendPosition};
 pub use title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle};
+pub use tui_nuances::{Theme, ThemeProvider, ThemeSwitcher, Themed};
 
 /// Rendering resolution mode for pie charts.
 ///
@@ -184,6 +185,18 @@ impl<'a> PieSlice<'a> {
         }
     }
 
+    /// Creates a slice colored from the theme palette (`theme.color(index)`).
+    ///
+    /// ```
+    /// use tui_piechart::{PieSlice, Theme};
+    /// let s = PieSlice::themed("Rust", 45.0, &Theme::nord(), 0);
+    /// assert_eq!(s.color(), Theme::nord().color(0));
+    /// ```
+    #[must_use]
+    pub fn themed(label: &'a str, value: f64, theme: &Theme, index: usize) -> Self {
+        Self::new(label, value, theme.color(index))
+    }
+
     /// Returns the label of this slice.
     #[must_use]
     pub const fn label(&self) -> &'a str {
@@ -200,6 +213,12 @@ impl<'a> PieSlice<'a> {
     #[must_use]
     pub const fn color(&self) -> Color {
         self.color
+    }
+}
+
+impl Themed for PieChart<'_> {
+    fn apply_theme(self, theme: &Theme) -> Self {
+        self.theme(theme)
     }
 }
 
@@ -229,6 +248,8 @@ pub struct PieChart<'a> {
     block: Option<Block<'a>>,
     /// Base style for the entire widget
     style: Style,
+    /// Theme-derived base style; lower precedence than `style`
+    theme_style: Style,
     /// Whether to show the legend
     show_legend: bool,
     /// Whether to show percentages on slices
@@ -263,6 +284,7 @@ impl Default for PieChart<'_> {
             slices: Vec::new(),
             block: None,
             style: Style::default(),
+            theme_style: Style::default(),
             show_legend: true,
             show_percentages: true,
             pie_char: symbols::PIE_CHAR,
@@ -350,6 +372,21 @@ impl<'a> PieChart<'a> {
     #[must_use]
     pub fn style<S: Into<Style>>(mut self, style: S) -> Self {
         self.style = style.into();
+        self
+    }
+
+    /// Applies a shared [`Theme`] (foreground/background of the widget).
+    ///
+    /// Precedence: fields set explicitly with [`style`](Self::style) always win
+    /// over the theme, regardless of call order. Without a theme the look is unchanged.
+    ///
+    /// ```
+    /// use tui_piechart::{PieChart, Theme};
+    /// let chart = PieChart::default().theme(&Theme::nord());
+    /// ```
+    #[must_use]
+    pub fn theme(mut self, theme: &Theme) -> Self {
+        self.theme_style = theme.style();
         self
     }
 
@@ -589,7 +626,7 @@ impl Widget for PieChart<'_> {
 
 impl Widget for &PieChart<'_> {
     fn render(self, area: Rect, buf: &mut Buffer) {
-        buf.set_style(area, self.style);
+        buf.set_style(area, self.theme_style.patch(self.style));
         let inner = if let Some(ref block) = self.block {
             let inner_area = block.inner(area);
             block.render(area, buf);

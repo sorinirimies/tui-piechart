@@ -5,6 +5,7 @@
 //!
 //! **Controls:**
 //! - ↑/↓ or k/j - Navigate between different charts
+//! - t/T - Next/previous shared theme
 //! - q/Esc - Quit
 //! - All charts animate smoothly at ~60 FPS
 //!
@@ -22,9 +23,18 @@ use ratatui::{
     DefaultTerminal, Frame,
 };
 use std::time::{Duration, Instant};
-use tui_piechart::{symbols, PieChart, PieSlice};
+use tui_piechart::{symbols, PieChart, PieSlice, Theme};
+
+fn recolor<'a>(slices: Vec<PieSlice<'a>>, theme: &Theme) -> Vec<PieSlice<'a>> {
+    slices
+        .iter()
+        .enumerate()
+        .map(|(i, s)| PieSlice::themed(s.label(), s.value(), theme, i))
+        .collect()
+}
 
 struct App {
+    themes: tui_piechart::ThemeSwitcher,
     selected: usize,
     animation_time: f64,
     last_tick: Instant,
@@ -33,6 +43,7 @@ struct App {
 impl Default for App {
     fn default() -> Self {
         Self {
+            themes: tui_piechart::ThemeSwitcher::new(),
             selected: 0,
             animation_time: 0.0,
             last_tick: Instant::now(),
@@ -74,6 +85,12 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                             app.selected += 1;
                         }
                     }
+                    KeyCode::Char('t') => {
+                        app.themes.next();
+                    }
+                    KeyCode::Char('T') => {
+                        app.themes.prev();
+                    }
                     _ => {}
                 }
             }
@@ -90,6 +107,8 @@ fn render(frame: &mut Frame, app: &App) {
     ])
     .split(frame.area());
 
+    let theme = app.themes.current();
+    frame.render_widget(Block::new().style(theme.style()), frame.area());
     // Header
     render_header(frame, main_layout[0]);
 
@@ -104,10 +123,34 @@ fn render(frame: &mut Frame, app: &App) {
         Layout::horizontal([Constraint::Percentage(50), Constraint::Percentage(50)]).split(rows[1]);
 
     // Render 4 different pie chart examples with animation
-    render_programming_languages(frame, top_row[0], app.selected == 0, app.animation_time);
-    render_market_share(frame, top_row[1], app.selected == 1, app.animation_time);
-    render_time_allocation(frame, bottom_row[0], app.selected == 2, app.animation_time);
-    render_budget_distribution(frame, bottom_row[1], app.selected == 3, app.animation_time);
+    render_programming_languages(
+        frame,
+        top_row[0],
+        app.selected == 0,
+        app.animation_time,
+        theme,
+    );
+    render_market_share(
+        frame,
+        top_row[1],
+        app.selected == 1,
+        app.animation_time,
+        theme,
+    );
+    render_time_allocation(
+        frame,
+        bottom_row[0],
+        app.selected == 2,
+        app.animation_time,
+        theme,
+    );
+    render_budget_distribution(
+        frame,
+        bottom_row[1],
+        app.selected == 3,
+        app.animation_time,
+        theme,
+    );
 
     // Footer
     render_footer(frame, main_layout[2]);
@@ -135,6 +178,8 @@ fn render_footer(frame: &mut Frame, area: Rect) {
     let text = Line::from(vec![
         Span::styled("↑/↓", Style::default().fg(Color::Cyan).bold()),
         Span::raw(" Navigate  "),
+        Span::styled("t/T", Style::default().fg(Color::Cyan).bold()),
+        Span::raw(" Theme  "),
         Span::styled("q", Style::default().fg(Color::Cyan).bold()),
         Span::raw(" Quit"),
     ]);
@@ -143,7 +188,13 @@ fn render_footer(frame: &mut Frame, area: Rect) {
     frame.render_widget(paragraph.block(block), area);
 }
 
-fn render_programming_languages(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+fn render_programming_languages(
+    frame: &mut Frame,
+    area: Rect,
+    is_selected: bool,
+    time: f64,
+    theme: &Theme,
+) {
     // Animate values with sine waves at different frequencies
     let rust_val = 35.0 + 15.0 * (time * 0.5).sin();
     let go_val = 25.0 + 10.0 * (time * 0.7 + 1.0).sin();
@@ -167,7 +218,8 @@ fn render_programming_languages(frame: &mut Frame, area: Rect, is_selected: bool
         })
         .padding(Padding::new(1, 1, 0, 0));
 
-    let piechart = PieChart::new(slices)
+    let piechart = PieChart::new(recolor(slices, theme))
+        .theme(theme)
         .block(block)
         .show_legend(true)
         .show_percentages(true)
@@ -176,7 +228,7 @@ fn render_programming_languages(frame: &mut Frame, area: Rect, is_selected: bool
     frame.render_widget(piechart, area);
 }
 
-fn render_market_share(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+fn render_market_share(frame: &mut Frame, area: Rect, is_selected: bool, time: f64, theme: &Theme) {
     // Animate with different phase offsets
     let prod_a = 30.0 + 15.0 * (time * 0.6 + 2.0).sin();
     let prod_b = 30.0 + 15.0 * (time * 0.8 + 4.0).sin();
@@ -200,7 +252,8 @@ fn render_market_share(frame: &mut Frame, area: Rect, is_selected: bool, time: f
         })
         .padding(Padding::new(1, 1, 0, 0));
 
-    let piechart = PieChart::new(slices)
+    let piechart = PieChart::new(recolor(slices, theme))
+        .theme(theme)
         .block(block)
         .show_legend(true)
         .show_percentages(true)
@@ -209,7 +262,13 @@ fn render_market_share(frame: &mut Frame, area: Rect, is_selected: bool, time: f
     frame.render_widget(piechart, area);
 }
 
-fn render_time_allocation(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+fn render_time_allocation(
+    frame: &mut Frame,
+    area: Rect,
+    is_selected: bool,
+    time: f64,
+    theme: &Theme,
+) {
     // Slower animation for time allocation
     let work = 45.0 + 15.0 * (time * 0.4).sin();
     let sleep = 25.0 + 10.0 * (time * 0.5 + 3.0).sin();
@@ -233,7 +292,8 @@ fn render_time_allocation(frame: &mut Frame, area: Rect, is_selected: bool, time
         })
         .padding(Padding::new(1, 1, 0, 0));
 
-    let piechart = PieChart::new(slices)
+    let piechart = PieChart::new(recolor(slices, theme))
+        .theme(theme)
         .block(block)
         .show_legend(true)
         .show_percentages(true)
@@ -242,7 +302,13 @@ fn render_time_allocation(frame: &mut Frame, area: Rect, is_selected: bool, time
     frame.render_widget(piechart, area);
 }
 
-fn render_budget_distribution(frame: &mut Frame, area: Rect, is_selected: bool, time: f64) {
+fn render_budget_distribution(
+    frame: &mut Frame,
+    area: Rect,
+    is_selected: bool,
+    time: f64,
+    theme: &Theme,
+) {
     // Four values with different animation speeds
     let housing = 30.0 + 10.0 * (time * 0.55 + 1.5).sin();
     let food = 20.0 + 8.0 * (time * 0.65 + 2.5).sin();
@@ -268,7 +334,8 @@ fn render_budget_distribution(frame: &mut Frame, area: Rect, is_selected: bool, 
         })
         .padding(Padding::new(1, 1, 0, 0));
 
-    let piechart = PieChart::new(slices)
+    let piechart = PieChart::new(recolor(slices, theme))
+        .theme(theme)
         .block(block)
         .show_legend(true)
         .show_percentages(true)

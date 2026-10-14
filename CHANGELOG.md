@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Features
+
+- Shared theming via tui-nuances (`PieChart::theme`, `PieSlice::themed`, `BorderStyle::themed_block`, `Themed`)
+
 ## 1.0.3 - 2026-10-10
 ### 🐛 Bug Fixes
 - fix(deps): revert accidental ratatui 0.30 -> 0.29 downgrade

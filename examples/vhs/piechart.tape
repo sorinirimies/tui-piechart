@@ -38,6 +38,15 @@ Up
 Up
 Sleep 0.5s
 
+# Cycle shared themes
+Type "t"
+Sleep 1s
+Type "t"
+Sleep 1s
+Type "T"
+Type "T"
+Sleep 0.5s
+
 # Switch to API Showcase
 Tab
 Sleep 2s

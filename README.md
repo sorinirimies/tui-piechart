@@ -502,6 +502,25 @@ let piechart = PieChart::new(slices)
     .legend_marker("→"); // Any string
 ```
 
+## Theming
+
+Shares one `Theme` with other TUI components via [tui-nuances](https://github.com/sorinirimies/tui-nuances) (re-exported as `tui_piechart::Theme`). Fully optional: without a theme the look is unchanged.
+
+```rust
+use tui_piechart::{border_style::BorderStyle, PieChart, PieSlice, Theme};
+
+let theme = Theme::by_name("nord").unwrap_or_default();
+let slices = vec![
+    PieSlice::themed("Rust", 45.0, &theme, 0), // palette color 0
+    PieSlice::themed("Go", 55.0, &theme, 1),
+];
+let chart = PieChart::new(slices)
+    .block(BorderStyle::Rounded.themed_block(&theme, true))
+    .theme(&theme); // widget fg/bg
+```
+
+Precedence: explicit `.style(..)` and explicit slice colors always win over the theme, in any call order. `PieChart` also implements `tui_nuances::Themed`, so `chart.themed(&app_theme)` works with any `ThemeProvider` (or `impl From<&AppTheme> for Theme`). Examples switch themes with `t`/`T`.
+
 ## Predefined Symbols
 
 The `symbols` module provides carefully selected characters that work well in most terminals:
