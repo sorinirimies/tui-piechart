@@ -11,9 +11,9 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "cargo run --example legend_alignment"
+Type "clear && cargo run --release --example legend_alignment"
 Enter
-Sleep 2s
+Sleep 5s
 Show
 Sleep 1s
 

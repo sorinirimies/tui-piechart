@@ -11,10 +11,16 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "cargo run --example piechart"
+Type "clear && cargo run --release --example piechart"
 Enter
-Sleep 2s
+Sleep 5s
 Show
+Sleep 1s
+
+# Switch theme
+Type "t"
+Sleep 1s
+Type "t"
 Sleep 1s
 
 # Show the first pie chart (Programming Languages)

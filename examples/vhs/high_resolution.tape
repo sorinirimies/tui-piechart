@@ -11,9 +11,9 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "cargo run --example high_resolution"
+Type "clear && cargo run --release --example high_resolution"
 Enter
-Sleep 2s
+Sleep 5s
 Show
 
 # Start in Standard resolution mode - let animation play

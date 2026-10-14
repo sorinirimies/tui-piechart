@@ -11,9 +11,9 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "cargo run --example symbols_triangles_hexagons"
+Type "clear && cargo run --release --example symbols_triangles_hexagons"
 Enter
-Sleep 2s
+Sleep 5s
 Show
 Sleep 1.5s
 
