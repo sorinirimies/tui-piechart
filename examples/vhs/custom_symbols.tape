@@ -11,7 +11,7 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "clear && cargo run --release --example custom_symbols"
+Type "clear && cargo run --release --features theme --example custom_symbols"
 Enter
 Sleep 5s
 Show

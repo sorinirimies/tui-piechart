@@ -5,10 +5,10 @@
 def main [] {
     let root = ($env.FILE_PWD | path dirname)
     cd $root
-    let build = (do { cargo build --release --examples } | complete)
+    let build = (do { cargo build --release --features theme --examples } | complete)
     if $build.exit_code != 0 {
         print -e $build.stderr
-        error make { msg: "cargo build --release --examples failed" }
+        error make { msg: "cargo build --release --features theme --examples failed" }
     }
     mkdir examples/vhs/output
     for tape in (glob examples/vhs/*.tape | sort) {

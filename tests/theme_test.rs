@@ -1,3 +1,4 @@
+#![cfg(feature = "theme")]
 use ratatui::{
     buffer::Buffer,
     layout::Rect,

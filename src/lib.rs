@@ -105,6 +105,7 @@ pub mod title;
 // Re-export commonly used types from submodules for convenience
 pub use legend::{LegendAlignment, LegendLayout, LegendPosition};
 pub use title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle};
+#[cfg(feature = "theme")]
 pub use tui_nuances::{Theme, ThemeProvider, ThemeSwitcher, Themed};
 
 /// Rendering resolution mode for pie charts.
@@ -192,6 +193,7 @@ impl<'a> PieSlice<'a> {
     /// let s = PieSlice::themed("Rust", 45.0, &Theme::nord(), 0);
     /// assert_eq!(s.color(), Theme::nord().color(0));
     /// ```
+    #[cfg(feature = "theme")]
     #[must_use]
     pub fn themed(label: &'a str, value: f64, theme: &Theme, index: usize) -> Self {
         Self::new(label, value, theme.color(index))
@@ -216,6 +218,7 @@ impl<'a> PieSlice<'a> {
     }
 }
 
+#[cfg(feature = "theme")]
 impl Themed for PieChart<'_> {
     fn apply_theme(self, theme: &Theme) -> Self {
         self.theme(theme)
@@ -384,6 +387,7 @@ impl<'a> PieChart<'a> {
     /// use tui_piechart::{PieChart, Theme};
     /// let chart = PieChart::default().theme(&Theme::nord());
     /// ```
+    #[cfg(feature = "theme")]
     #[must_use]
     pub fn theme(mut self, theme: &Theme) -> Self {
         self.theme_style = theme.style();

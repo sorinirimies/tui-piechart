@@ -11,7 +11,7 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "clear && cargo run --release --example legend_markers"
+Type "clear && cargo run --release --features theme --example legend_markers"
 Enter
 Sleep 5s
 Show

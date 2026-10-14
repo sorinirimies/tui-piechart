@@ -22,6 +22,7 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 - 📦 Optional block wrapper with multiple border styles
 - ✨ Custom symbols for pie chart and legend
 - 🔍 High resolution mode using braille patterns (8x resolution)
+- 🌈 Optional shared theming via the `theme` feature (tui-nuances)
 - ⚡ Zero-cost abstractions
 
 ## Installation
@@ -504,7 +505,14 @@ let piechart = PieChart::new(slices)
 
 ## Theming
 
-Shares one `Theme` with other TUI components via [tui-nuances](https://github.com/sorinirimies/tui-nuances) (re-exported as `tui_piechart::Theme`). Fully optional: without a theme the look is unchanged.
+Theming is an optional Cargo feature (off by default; no extra dependency otherwise). Enable it:
+
+```toml
+[dependencies]
+tui-piechart = { version = "1.0", features = ["theme"] }
+```
+
+Shares one `Theme` with other TUI components via [tui-nuances](https://github.com/sorinirimies/tui-nuances) (re-exported as `tui_piechart::Theme`). Without a theme the look is unchanged.
 
 ```rust
 use tui_piechart::{border_style::BorderStyle, PieChart, PieSlice, Theme};

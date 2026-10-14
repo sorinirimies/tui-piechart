@@ -85,6 +85,8 @@ jobs:
         run: cargo generate-lockfile
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets
+      - name: cargo test --locked (default features)
+        run: cargo test --locked
 
   # ── Nu script tests ───────────────────────────────────────────────────────
   test-nu:

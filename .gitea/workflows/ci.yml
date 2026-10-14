@@ -50,6 +50,10 @@ jobs:
         uses: Swatinem/rust-cache@v2
       - name: Run clippy
         run: cargo clippy -- -D warnings -A deprecated
+      - name: cargo clippy --all-features
+        run: cargo clippy --all-features -- -D warnings -A deprecated
+      - name: cargo build --no-default-features
+        run: cargo build --no-default-features
 
   doc:
     # run docs generation on nightly rather than stable. This enables features like
@@ -85,6 +89,8 @@ jobs:
         run: cargo generate-lockfile
       - name: cargo test --locked
         run: cargo test --locked --all-features --all-targets
+      - name: cargo test --locked (default features)
+        run: cargo test --locked
 
   # ── Nu script tests ─────────────────────────────────────────────────────────
   test-nu:

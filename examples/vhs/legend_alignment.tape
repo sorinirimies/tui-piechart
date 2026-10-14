@@ -11,7 +11,7 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "clear && cargo run --release --example legend_alignment"
+Type "clear && cargo run --release --features theme --example legend_alignment"
 Enter
 Sleep 5s
 Show

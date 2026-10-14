@@ -11,7 +11,7 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "clear && cargo run --release --example title_styles"
+Type "clear && cargo run --release --features theme --example title_styles"
 Enter
 Sleep 5s
 Show

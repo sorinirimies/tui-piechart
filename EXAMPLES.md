@@ -10,7 +10,7 @@ Each example displays **4 pie charts** in a **2x2 grid layout**, allowing you to
 
 **File:** `examples/piechart.rs`
 
-**Run:** `cargo run --example piechart`
+**Run:** `cargo run --features theme --example piechart`
 
 **Features:**
 - 4 different pie chart examples showcasing various use cases

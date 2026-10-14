@@ -20,8 +20,13 @@ exclude = [
 ]
 
 [dependencies]
-tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances" }
+tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances", optional = true }
 ratatui = { version = "0.30", default-features = false }
+
+[features]
+default = []
+# Shared theming via tui-nuances (Theme, Themed, .theme() builders)
+theme = ["dep:tui-nuances"]
 
 [dev-dependencies]
 color-eyre = "0.6"
@@ -35,3 +40,4 @@ path = "src/lib.rs"
 [[example]]
 name = "piechart"
 path = "examples/piechart_basic.rs"
+required-features = ["theme"]

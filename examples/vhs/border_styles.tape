@@ -11,7 +11,7 @@ Set FontSize 16
 Set Padding 20
 
 Hide
-Type "clear && cargo run --release --example border_styles"
+Type "clear && cargo run --release --features theme --example border_styles"
 Enter
 Sleep 5s
 Show

@@ -84,6 +84,7 @@ pub enum BorderStyle {
 
 impl BorderStyle {
     /// Like [`block`](Self::block) with border colors from a shared theme.
+    #[cfg(feature = "theme")]
     #[must_use]
     pub fn themed_block(self, theme: &tui_nuances::Theme, focused: bool) -> Block<'static> {
         self.block().border_style(theme.border_style(focused))
