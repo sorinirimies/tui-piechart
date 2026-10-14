@@ -17,10 +17,12 @@ exclude = [
     ".github/",
     "GITEA_SETUP.md",
     "cliff.toml",
+    "fuzz/",
+    "deny.toml",
 ]
 
 [dependencies]
-tui-nuances = { version = "0.1", git = "https://github.com/sorinirimies/tui-nuances", optional = true }
+tui-nuances = { version = "0.1.4", git = "https://github.com/sorinirimies/tui-nuances", optional = true }
 ratatui = { version = "0.30", default-features = false }
 
 [features]

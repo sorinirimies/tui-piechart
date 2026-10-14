@@ -22,3 +22,8 @@ target
 # Zed editor files (except rules.md)
 .zed/
 !.zed/rules.md
+
+# cargo-fuzz
+fuzz/corpus/
+fuzz/artifacts/
+fuzz/target/

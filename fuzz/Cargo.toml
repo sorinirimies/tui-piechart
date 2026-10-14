@@ -1,0 +1,47 @@
+[package]
+name = "tui-piechart-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+ratatui = { version = "0.30", default-features = false }
+tui-piechart = { path = ".." }
+
+# Not part of the main crate (needs nightly).
+[workspace]
+
+[[bin]]
+name = "render_pie"
+path = "fuzz_targets/render_pie.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "render_legend"
+path = "fuzz_targets/render_legend.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "render_block"
+path = "fuzz_targets/render_block.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "builders"
+path = "fuzz_targets/builders.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "title_style"
+path = "fuzz_targets/title_style.rs"
+test = false
+doc = false

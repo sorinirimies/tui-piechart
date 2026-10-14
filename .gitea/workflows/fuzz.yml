@@ -1,0 +1,38 @@
+name: Fuzz
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  push:
+    branches: [main, master]
+    paths: ["fuzz/**", "src/**", "Cargo.toml", "Cargo.lock"]
+  pull_request:
+    paths: ["fuzz/**", "src/**", "Cargo.toml", "Cargo.lock"]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  fuzz:
+    name: cargo fuzz (smoke)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust nightly
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+      - name: Install cargo-fuzz
+        run: cargo install cargo-fuzz --locked
+      - name: Fuzz each target for 60s
+        run: |
+          for t in $(cargo +nightly fuzz list); do
+            cargo +nightly fuzz run "$t" -- -max_total_time=60
+          done
+      - name: Upload crashes
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: fuzz-artifacts
+          path: fuzz/artifacts/

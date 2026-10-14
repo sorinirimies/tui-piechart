@@ -627,3 +627,15 @@ check-publish: check-nu
 # Security: dependency vulnerability scan (needs `cargo install cargo-audit`)
 audit:
     cargo audit
+
+# Dependency policy: licenses/bans/sources/advisories (needs `cargo install cargo-deny --locked`)
+deny:
+    cargo deny check
+
+# Fuzz one target (needs nightly + `cargo install cargo-fuzz`), e.g. `just fuzz render_pie`
+fuzz target="render_pie" secs="60":
+    cargo +nightly fuzz run {{target}} -- -max_total_time={{secs}}
+
+# List fuzz targets
+fuzz-list:
+    cargo +nightly fuzz list
