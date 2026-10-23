@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.1.1 - 2026-10-23
+### 🔧 Chores
+- chore(justfile): skip unconfigured remotes in *-all recipes
+- chore(justfile): push/pull current branch instead of hardcoded main
+- chore: update deps, fix clippy lints, add auto-merge workflow
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.1.0...v1.1.1
 ## 1.1.0 - 2026-10-14
 ### ✨ Features
 - feat: shared theming via tui-nuances
@@ -43,6 +49,7 @@ All notable changes to this project will be documented in this file.
 - chore: depend on tui-nuances 0.1.5
 - chore: depend on tui-nuances 0.1.6
 - chore: depend on tui-nuances 0.1.6 from crates.io
+- chore: bump version to 1.1.0
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.0.2...v1.1.0
 ## 1.0.2 - 2026-08-05
 ### 📚 Documentation
