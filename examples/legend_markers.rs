@@ -184,10 +184,10 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                         app.marker_index -= 1;
                     }
                 }
-                KeyCode::Down | KeyCode::Char('j') => {
-                    if app.marker_index < MARKER_STYLES.len() - 1 {
-                        app.marker_index += 1;
-                    }
+                KeyCode::Down | KeyCode::Char('j')
+                    if app.marker_index < MARKER_STYLES.len() - 1 =>
+                {
+                    app.marker_index += 1;
                 }
                 _ => {}
             }

@@ -56,10 +56,8 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                         app.selected -= 1;
                     }
                 }
-                KeyCode::Down | KeyCode::Char('j') => {
-                    if app.selected < app.total_styles - 1 {
-                        app.selected += 1;
-                    }
+                KeyCode::Down | KeyCode::Char('j') if app.selected < app.total_styles - 1 => {
+                    app.selected += 1;
                 }
                 _ => {}
             }

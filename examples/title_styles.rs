@@ -163,10 +163,8 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                         app.selected_style = 0;
                     }
                 }
-                KeyCode::End => {
-                    if app.mode == DemoMode::Styles {
-                        app.selected_style = app.styles.len() - 1;
-                    }
+                KeyCode::End if app.mode == DemoMode::Styles => {
+                    app.selected_style = app.styles.len() - 1;
                 }
                 _ => {}
             }

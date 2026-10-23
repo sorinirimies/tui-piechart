@@ -301,14 +301,14 @@ mod tests {
         ];
 
         for set in &sets {
-            assert!(!set.top_left.is_empty());
-            assert!(!set.top_right.is_empty());
-            assert!(!set.bottom_left.is_empty());
-            assert!(!set.bottom_right.is_empty());
-            assert!(!set.vertical_left.is_empty());
-            assert!(!set.vertical_right.is_empty());
-            assert!(!set.horizontal_top.is_empty());
-            assert!(!set.horizontal_bottom.is_empty());
+            assert_ne!(set.top_left, "");
+            assert_ne!(set.top_right, "");
+            assert_ne!(set.bottom_left, "");
+            assert_ne!(set.bottom_right, "");
+            assert_ne!(set.vertical_left, "");
+            assert_ne!(set.vertical_right, "");
+            assert_ne!(set.horizontal_top, "");
+            assert_ne!(set.horizontal_bottom, "");
         }
     }
 

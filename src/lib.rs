@@ -1261,7 +1261,7 @@ mod tests {
     #[test]
     fn piechart_default() {
         let piechart = PieChart::default();
-        assert!(piechart.slices.is_empty());
+        assert_eq!(piechart.slices, [] as [PieSlice<'_>; 0]);
         assert!(piechart.show_legend);
         assert!(piechart.show_percentages);
     }

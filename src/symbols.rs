@@ -288,7 +288,7 @@ mod tests {
         ];
 
         for marker in markers {
-            assert!(!marker.is_empty());
+            assert_ne!(marker, "");
             assert!(marker.len() <= 3); // Most are single char, some are multi-byte
         }
     }

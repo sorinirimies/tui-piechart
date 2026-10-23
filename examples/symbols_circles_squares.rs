@@ -54,10 +54,10 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                         app.selected -= 1;
                     }
                 }
-                KeyCode::Right | KeyCode::Char('l') => {
-                    if app.selected % 2 == 0 && app.selected < 3 {
-                        app.selected += 1;
-                    }
+                KeyCode::Right | KeyCode::Char('l')
+                    if app.selected % 2 == 0 && app.selected < 3 =>
+                {
+                    app.selected += 1;
                 }
                 _ => {}
             }
