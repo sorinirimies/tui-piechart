@@ -56,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.validate.outputs.tag }}
 
@@ -84,7 +84,7 @@ jobs:
     needs: [validate, test]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ needs.validate.outputs.tag }}
           fetch-depth: 0
@@ -135,7 +135,7 @@ jobs:
         if: env.HAS_TOKEN != 'true'
         run: echo "⏭️  CRATES_IO_TOKEN is not configured — skipping crates.io publish."
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         if: env.HAS_TOKEN == 'true'
         with:
           ref: ${{ needs.validate.outputs.tag }}

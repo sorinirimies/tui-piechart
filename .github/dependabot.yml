@@ -1,0 +1,20 @@
+# Dependabot — keep GitHub Actions up to date
+# Cargo dependency upgrades are handled by the Nightly Dependency Update workflow
+# (`.github/workflows/deps-update.yml`), so only the github-actions ecosystem is
+# configured here.
+
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    labels:
+      - dependencies
+      - github-actions
+    commit-message:
+      prefix: "ci(deps):"
+    open-pull-requests-limit: 5
