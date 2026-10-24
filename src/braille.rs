@@ -1,4 +1,4 @@
-//! Internal braille dot canvas shared by the radial widgets (gauges, radial bars).
+//! Internal braille dot canvas used by the high-resolution and styled pie renderers.
 //!
 //! One terminal cell holds a 2×4 dot grid, so a cell is roughly square in dots.
 //! Angles are expressed as *turns*: `0.0` is 12 o'clock, increasing clockwise.
