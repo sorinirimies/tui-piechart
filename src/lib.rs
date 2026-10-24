@@ -96,6 +96,8 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Widget};
 
 pub mod border_style;
+mod braille;
+pub mod gauge;
 pub mod legend;
 #[macro_use]
 pub mod macros;
@@ -103,6 +105,7 @@ pub mod symbols;
 pub mod title;
 
 // Re-export commonly used types from submodules for convenience
+pub use gauge::{GaugeChart, GaugeStyle};
 pub use legend::{LegendAlignment, LegendLayout, LegendPosition};
 pub use title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle};
 #[cfg(feature = "theme")]

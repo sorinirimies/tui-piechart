@@ -23,6 +23,7 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 - ✨ Custom symbols for pie chart and legend
 - 🔍 High resolution mode using braille patterns (8x resolution)
 - 🌈 Optional shared theming via the `theme` feature (tui-nuances)
+- 🎛️ `GaugeChart` with 15 looks: arc, dial, meter, reticle, ring, LED, battery, thermometer, signal and more
 - ⚡ Zero-cost abstractions
 
 ## Installation
@@ -143,6 +144,13 @@ The library is organized into focused modules:
 - **`border_style`** - Predefined border styles for block wrappers
   - 11 border style variants (Standard, Rounded, Dashed, Thick, etc.)
   
+- **`gauge`** - `GaugeChart` + `GaugeStyle` (15 styles)
+  - Radial (braille): `Arc`, `Segmented`, `Dial`, `Meter`, `Reticle`, `Ring`
+  - Linear: `Bar`, `Chevron`, `Smooth`, `Dots`, `Led`, `Battery`
+  - Vertical: `Level`, `Thermometer`, `Signal`
+  - Optional green/yellow/red zones, custom range, label and readout
+  - `cargo run --example gauges`
+
 - **`symbols`** - Predefined Unicode symbols for pie charts and legends
   - Circle, square, star, heart, triangle, and many more
 

@@ -55,7 +55,7 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
                     }
                 }
                 KeyCode::Right | KeyCode::Char('l')
-                    if app.selected % 2 == 0 && app.selected < 3 =>
+                    if app.selected.is_multiple_of(2) && app.selected < 3 =>
                 {
                     app.selected += 1;
                 }

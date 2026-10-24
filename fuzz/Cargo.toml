@@ -45,3 +45,9 @@ name = "title_style"
 path = "fuzz_targets/title_style.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "gauge"
+path = "fuzz_targets/gauge.rs"
+test = false
+doc = false
