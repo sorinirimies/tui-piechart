@@ -153,6 +153,12 @@ The library is organized into focused modules:
   - Optional green/yellow/red zones, custom range, label and readout
   - `cargo run --example gauges`
 
+![Gauges](examples/vhs/output/gauges.gif)
+
+![Pie styles](examples/vhs/output/pie_styles.gif)
+
+![Charts](examples/vhs/output/charts.gif)
+
 - **`pie_style`** - `PieStyle` (`Solid`, `Segmented`, `Hud`, `Rose`); `PieChart` also has
   `.hole()`, `.start_angle()`, `.gap()`, `.explode()` and `.center()`
   - `cargo run --example pie_styles`
