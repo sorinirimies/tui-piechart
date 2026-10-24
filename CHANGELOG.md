@@ -2,11 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.2.0 - 2026-10-24
+### ✨ Features
+- feat: GaugeChart with 15 styles (radial braille, linear, vertical), example and fuzz target
+- feat(pie): donut hole, start angle, gap, explode, center text; Segmented/Hud/Rose styles
+- feat: RadialBar, RingStack, Funnel, RadarChart, Treemap, Waterfall; charts example; widgets fuzz target
+### 📦 Other Changes
+- fuzz: cover new pie options
+### 🔄 CI
+- ci: add dependabot, bump GitHub actions (upload-artifact v3 is deprecated)
+- ci: port tokenburn's multi-job nightly dep update; set real MSRV 1.88
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.1.1...v1.2.0
 ## 1.1.1 - 2026-10-23
 ### 🔧 Chores
 - chore(justfile): skip unconfigured remotes in *-all recipes
 - chore(justfile): push/pull current branch instead of hardcoded main
 - chore: update deps, fix clippy lints, add auto-merge workflow
+- chore: bump version to 1.1.1
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.1.0...v1.1.1
 ## 1.1.0 - 2026-10-14
 ### ✨ Features
