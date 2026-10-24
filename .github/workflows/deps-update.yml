@@ -1,71 +1,310 @@
-name: Nightly Dependency Upgrade
+name: Nightly Dependency Update
+
+# Fully automatic, no human in the loop. Every night, against the CURRENT tip of main:
+#   update   `cargo update` (compatible bumps only); continue only if Cargo.lock changed
+#   verify   fmt + clippy + tests on Linux, and tests on macOS and Windows
+#   msrv     the declared minimum Rust version still builds
+#   release  commit + push to main. ONLY if a Cargo.toml dependency requirement changed:
+#            also bump the patch version, tag vX.Y.Z and start release.yml.
+#            A lockfile-only change is merged WITHOUT a version bump.
+#
+# This host runs on its own: there is deliberately NO mirroring to Gitea. Gitea has
+# its own nightly (.gitea/workflows/deps-update.yml). If the two histories ever
+# diverge, force-push whichever one you want to keep.
+#
+# Secrets (all optional): GH_PAT — a PAT lets the tag push itself trigger release.yml
+# and bypass branch protection; without it the release is dispatched explicitly.
 
 on:
   schedule:
-    # Runs at 02:00 UTC every day (03:00 CET)
-    - cron: "0 2 * * *"
+    - cron: "0 2 * * *" # 02:00 UTC (Gitea runs at 02:30)
   workflow_dispatch:
+    inputs:
+      release:
+        description: "Bump the patch version, tag and release when dependencies changed"
+        type: boolean
+        default: true
 
 env:
   CARGO_TERM_COLOR: always
-
-concurrency:
-  group: deps-update
-  cancel-in-progress: true
 
 permissions:
   contents: write
   actions: write
 
+# Never cancel mid-run: a half-finished push/tag would leave main inconsistent.
+concurrency:
+  group: deps-update
+  cancel-in-progress: false
+
 jobs:
-  upgrade-deps:
-    name: Upgrade Dependencies
+  # ── 1. Update ───────────────────────────────────────────────────────────────
+  update:
+    name: Update Cargo.lock
     runs-on: ubuntu-latest
-
+    outputs:
+      changed: ${{ steps.check.outputs.changed }}
+      release: ${{ steps.reqs.outputs.release }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
-          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
-          fetch-depth: 0
+          ref: main
 
-      # ── Rust toolchain ────────────────────────────────────────────────────────
-      - name: Install Rust stable (rustfmt + clippy)
-        uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "0.111.0"
+
+      # Record what ships BEFORE updating, to compare with afterwards (see "Check for changes").
+      - name: Snapshot what ships (before)
+        run: |
+          T="${RUNNER_TEMP:-/tmp}"
+          cargo tree --all-features --edges normal,build --target all --prefix none --format '{p}' | sed 's/ (\/.*//' | sort -u > "$T/shipped-before.txt"
+          wc -l < "$T/shipped-before.txt"
+
+      # A patch release is cut ONLY when `cargo upgrade` really changed a dependency
+      # requirement in a Cargo.toml (compared as data: cargo-edit also reformats
+      # manifests, which must not count). A lockfile-only change is still merged,
+      # but without a version bump, tag or release.
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-edit
+
+      - name: Snapshot dependency requirements (before)
+        run: cargo metadata --no-deps --format-version 1 | jq -S -c '[.packages[].dependencies[] | {name,req,kind,features,optional,target,uses_default_features}] | sort_by(.name,.kind,.target)' > "$RUNNER_TEMP/reqs-before.json"
+
+      - name: Run cargo upgrade + cargo update
+        run: |
+          cargo upgrade
+          cargo update
+
+      # Only a REAL upgrade counts, and it must ship. `cargo update` can also change the
+      # lockfile for reasons that are not worth a release: crates only tests use, a
+      # downgrade (a yanked release, a resolver surprise), checksum-only edits. So the
+      # packages of the normal + build dependency graph (all features, all targets) are
+      # compared before and after, and a release needs at least one package at a HIGHER
+      # version and none at a lower one (scripts/ci/lock_changes.nu has the rules).
+      - name: Check for changes
+        id: check
+        run: |
+          T="${RUNNER_TEMP:-/tmp}"
+          cargo tree --all-features --edges normal,build --target all --prefix none --format '{p}' | sed 's/ (\/.*//' | sort -u > "$T/shipped-after.txt"
+          if git diff --quiet -- Cargo.lock; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No dependency changes detected."
+          else
+            echo "Cargo.lock changed; checking that something that ships was really upgraded:"
+            nu scripts/ci/lock_changes.nu "$T/shipped-before.txt" "$T/shipped-after.txt" --output "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check for dependency requirement changes
+        id: reqs
+        run: |
+          cargo metadata --no-deps --format-version 1 | jq -S -c '[.packages[].dependencies[] | {name,req,kind,features,optional,target,uses_default_features}] | sort_by(.name,.kind,.target)' > "$RUNNER_TEMP/reqs-after.json"
+          if cmp -s "$RUNNER_TEMP/reqs-before.json" "$RUNNER_TEMP/reqs-after.json"; then
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            # Lock-only: drop cosmetic manifest reformatting from cargo-edit.
+            git ls-files -m -- '*Cargo.toml' | xargs -r git checkout --
+          else
+            echo "release=true" >> "$GITHUB_OUTPUT"
+            echo "Cargo.toml dependency requirements changed -> patch release."
+          fi
+
+      - name: Bundle the updated lockfile and manifests
+        if: steps.check.outputs.changed == 'true'
+        run: tar cf deps.tar Cargo.lock $(git ls-files -m -- '*Cargo.toml')
+
+      - name: Upload updated dependencies
+        if: steps.check.outputs.changed == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: cargo-lock
+          path: deps.tar
+          retention-days: 1
+
+  # ── 2. Verify on every platform ─────────────────────────────────────────────
+  verify:
+    name: verify (${{ matrix.os }})
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: cargo-lock
+
+      - name: Apply the updated lockfile and manifests
+        shell: bash
+        run: tar xf deps.tar
+
+      - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
 
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@v2
 
-      # ── cargo-edit (provides `cargo upgrade`) ────────────────────────────────
-      - name: Install cargo-edit
-        run: cargo install cargo-edit --locked
+      - name: Check formatting
+        if: runner.os == 'Linux'
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        if: runner.os == 'Linux'
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings -A deprecated
+
+      - name: Tests
+        run: cargo test --locked --all-features --all-targets
+
+  # ── 3. MSRV ─────────────────────────────────────────────────────────────────
+  # A bump that needs a newer compiler than the declared `rust-version` must not be released.
+  msrv:
+    name: msrv
+    needs: update
+    if: needs.update.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: cargo-lock
+
+      - name: Apply the updated lockfile and manifests
+        shell: bash
+        run: tar xf deps.tar
+
+      - name: Read the declared MSRV
+        id: msrv
+        run: echo "version=$(grep -m1 '^rust-version' Cargo.toml | sed -E 's/.*"(.*)".*/\1/')" >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo check (MSRV)
+        run: cargo check --locked --all-targets
+
+  # ── 4. Commit, bump, tag, push, release ─────────────────────────────────────
+  release:
+    name: Commit lockfile, tag and release when needed
+    needs: [update, verify, msrv]
+    if: needs.update.outputs.changed == 'true' && (github.event_name == 'schedule' || inputs.release)
+    runs-on: ubuntu-latest
+    env:
+      HAS_PAT: ${{ secrets.GH_PAT != '' }}
+    steps:
+      # Re-sync to the REAL tip of main: it may have moved while the checks ran.
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          token: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: cargo-lock
+
+      - name: Apply the updated lockfile and manifests
+        shell: bash
+        run: tar xf deps.tar
+
+      # Fails (safely) if main's manifests changed in the meantime and the
+      # verified lockfile no longer matches them.
+      - name: Verify the lockfile still matches the manifests
+        run: cargo metadata --locked --format-version 1 > /dev/null
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      # `nu` is the crate name; install-action has no "nushell" tool (it fell back to
+      # a binstall of a crate called `nushell`, which does not exist). Use the setup
+      # action for nushell and install-action for git-cliff. Both are best-effort:
+      # the next step falls back to `cargo install` if either is unavailable.
+      - name: Install nushell
+        if: needs.update.outputs.release == 'true'
+        continue-on-error: true
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "0.111.0"
 
       - name: Install git-cliff
-        run: cargo install git-cliff --locked
+        if: needs.update.outputs.release == 'true'
+        continue-on-error: true
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
 
-      # ── Nushell (shared upgrade script runs on both GitHub and Gitea) ────────
-      - name: Install Nushell (prebuilt binary)
+      - name: Ensure nu + git-cliff are installed
+        if: needs.update.outputs.release == 'true'
         run: |
-          V=0.116.1
-          curl -fsSL "https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /tmp
-          sudo install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" /usr/local/bin/nu || { mkdir -p "$HOME/.cargo/bin" && install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" "$HOME/.cargo/bin/nu"; }
-          nu --version
+          command -v nu >/dev/null || {
+            V=0.116.1
+            curl -fsSL https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
+            sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || { mkdir -p $HOME/.cargo/bin; install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu; }
+            nu --version
+          }
+          command -v git-cliff >/dev/null || cargo install git-cliff --locked
 
-      # ── Upgrade, quality-gate, downgrade-guard, commit + push ────────────────
-      # See scripts/upgrade_deps.nu for the full logic (shared with Gitea).
-      - name: Run nightly dependency upgrade
-        id: upgrade
+      - name: Commit dependency update
         run: |
-          nu scripts/upgrade_deps.nu \
-            --bot-name "github-actions[bot]" \
-            --bot-email "github-actions[bot]@users.noreply.github.com"
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Cargo.lock $(git ls-files -m -- '*Cargo.toml')
+          git commit -m "chore(deps): nightly cargo update $(date -u '+%Y-%m-%d')"
 
-      # Pushes authored by GITHUB_TOKEN don't trigger other workflows, so
-      # dispatch release.yml explicitly when the script cut a release.
-      - name: Trigger release workflow
-        if: steps.upgrade.outputs.release_tag != ''
-        run: gh workflow run release.yml --repo "${{ github.repository }}" -f tag="${{ steps.upgrade.outputs.release_tag }}"
+      - name: Compute next patch version
+        if: needs.update.outputs.release == 'true'
+        id: version
+        run: |
+          current=$(nu scripts/version.nu)
+          IFS='.' read -r major minor patch <<< "$current"
+          next="$major.$minor.$((patch + 1))"
+          # Never collide with an existing tag.
+          while git rev-parse -q --verify "refs/tags/v$next" >/dev/null; do
+            patch=$((patch + 1))
+            next="$major.$minor.$((patch + 1))"
+          done
+          echo "next=$next" >> "$GITHUB_OUTPUT"
+          echo "Releasing $current -> $next"
+
+      - name: Bump version, changelog, commit and tag
+        if: needs.update.outputs.release == 'true'
+        run: nu scripts/bump_version.nu --yes ${{ steps.version.outputs.next }}
+
+      # Fail loudly (no `|| true`): a failed push must show as a failed run.
+      - name: Push to main
+        run: |
+          git push origin HEAD:main
+          if [ "${{ needs.update.outputs.release }}" = "true" ]; then
+            git push origin "v${{ steps.version.outputs.next }}"
+          fi
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || secrets.GITHUB_TOKEN }}
+
+      # Pushes authored by GITHUB_TOKEN do NOT trigger other workflows (GitHub's
+      # anti-recursion guard), so without a PAT dispatch release.yml explicitly.
+      # With a PAT the tag push already started it — dispatching again would
+      # only produce a duplicate run.
+      - name: Trigger release workflow for the new tag
+        if: needs.update.outputs.release == 'true' && env.HAS_PAT != 'true'
+        run: gh workflow run release.yml --repo "${{ github.repository }}" -f tag="v${{ steps.version.outputs.next }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
