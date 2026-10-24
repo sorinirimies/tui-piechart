@@ -84,6 +84,12 @@ pub struct ChartIn {
     pub border: Option<u8>,
     pub title: Option<(String, u8, u8)>,
     pub size: Size,
+    pub pie_style: u8,
+    pub hole: f64,
+    pub start: f64,
+    pub gap: f64,
+    pub explode: f64,
+    pub center: Option<String>,
 }
 
 /// Build + render a chart; borrows from `input`.
@@ -103,6 +109,15 @@ pub fn run_chart(input: &ChartIn) {
         .legend_position(lpos(input.pos))
         .legend_layout(llayout(input.layout))
         .legend_alignment(lalign(input.align));
+    c = c
+        .pie_style(PieStyle::ALL[input.pie_style as usize % PieStyle::ALL.len()])
+        .hole(input.hole)
+        .start_angle(input.start)
+        .gap(input.gap)
+        .explode(input.explode);
+    if let Some(t) = &input.center {
+        c = c.center(t.as_str());
+    }
     if let Some(h) = input.high_res {
         c = c.high_resolution(h);
     }
