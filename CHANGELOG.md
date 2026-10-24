@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.3.0 - 2026-10-24
+### 📚 Documentation
+- docs: VHS tapes and demo GIFs for gauges, pie styles and new charts
+### 📦 Other Changes
+- refactor!: move gauge, radial, funnel, radar, treemap and waterfall widgets to tui-chart; piechart keeps pie options and styles
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.2.0...v1.3.0
 ## 1.2.0 - 2026-10-24
 ### ✨ Features
 - feat: GaugeChart with 15 styles (radial braille, linear, vertical), example and fuzz target
@@ -12,6 +18,8 @@ All notable changes to this project will be documented in this file.
 ### 🔄 CI
 - ci: add dependabot, bump GitHub actions (upload-artifact v3 is deprecated)
 - ci: port tokenburn's multi-job nightly dep update; set real MSRV 1.88
+### 🔧 Chores
+- chore: bump version to 1.2.0
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.1.1...v1.2.0
 ## 1.1.1 - 2026-10-23
 ### 🔧 Chores
