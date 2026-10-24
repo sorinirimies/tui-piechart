@@ -10,6 +10,9 @@
 //! - 📊 Legend support
 //! - 📦 Optional block wrapper
 //! - ✨ Custom symbols for pie chart and legend
+//! - 🎛️ [`GaugeChart`] with 15 styles, plus [`RadialBar`], [`RingStack`], [`Funnel`],
+//!   [`RadarChart`], [`Treemap`] and [`Waterfall`]
+//! - 🍩 Donut / segmented / HUD / rose pies via [`PieStyle`]
 //! - ⚡ Zero-cost abstractions
 //!
 //! ## Examples
@@ -97,21 +100,32 @@ use ratatui::widgets::{Block, Widget};
 
 pub mod border_style;
 mod braille;
+pub mod funnel;
 pub mod gauge;
 pub mod legend;
 pub mod pie_style;
+pub mod radar;
+pub mod radial;
+pub mod treemap;
+mod util;
+pub mod waterfall;
 #[macro_use]
 pub mod macros;
 pub mod symbols;
 pub mod title;
 
 // Re-export commonly used types from submodules for convenience
+pub use funnel::{Funnel, FunnelStage, FunnelStyle};
 pub use gauge::{GaugeChart, GaugeStyle};
 pub use legend::{LegendAlignment, LegendLayout, LegendPosition};
 pub use pie_style::PieStyle;
+pub use radar::{RadarChart, RadarSeries};
+pub use radial::{RadialBar, RadialRing, RadialSweep, RingStack};
 pub use title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle};
+pub use treemap::{Treemap, TreemapItem};
 #[cfg(feature = "theme")]
 pub use tui_nuances::{Theme, ThemeProvider, ThemeSwitcher, Themed};
+pub use waterfall::{Waterfall, WaterfallStep};
 
 /// Rendering resolution mode for pie charts.
 ///

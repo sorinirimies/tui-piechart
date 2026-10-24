@@ -51,3 +51,9 @@ name = "gauge"
 path = "fuzz_targets/gauge.rs"
 test = false
 doc = false
+
+[[bin]]
+name = "widgets"
+path = "fuzz_targets/widgets.rs"
+test = false
+doc = false

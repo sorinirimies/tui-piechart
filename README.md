@@ -24,6 +24,8 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 - 🔍 High resolution mode using braille patterns (8x resolution)
 - 🌈 Optional shared theming via the `theme` feature (tui-nuances)
 - 🎛️ `GaugeChart` with 15 looks: arc, dial, meter, reticle, ring, LED, battery, thermometer, signal and more
+- 🍩 Donut hole, start angle, gaps, explode and `Segmented` / `Hud` / `Rose` pie styles
+- 📈 More charts: `RadialBar`, `RingStack`, `Funnel`, `RadarChart`, `Treemap`, `Waterfall`
 - ⚡ Zero-cost abstractions
 
 ## Installation
@@ -150,6 +152,17 @@ The library is organized into focused modules:
   - Vertical: `Level`, `Thermometer`, `Signal`
   - Optional green/yellow/red zones, custom range, label and readout
   - `cargo run --example gauges`
+
+- **`pie_style`** - `PieStyle` (`Solid`, `Segmented`, `Hud`, `Rose`); `PieChart` also has
+  `.hole()`, `.start_angle()`, `.gap()`, `.explode()` and `.center()`
+  - `cargo run --example pie_styles`
+
+- **More charts** (`cargo run --example charts`)
+  - `RadialBar` / `RingStack` - concentric progress rings
+  - `Funnel` - conversion funnel (bars or trapezoid)
+  - `RadarChart` - several series over shared axes
+  - `Treemap` - squarified rectangles sized by value
+  - `Waterfall` - running totals with up / down / total bars
 
 - **`symbols`** - Predefined Unicode symbols for pie charts and legends
   - Circle, square, star, heart, triangle, and many more
