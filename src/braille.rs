@@ -81,10 +81,21 @@ impl Braille {
     /// (`0..=1`) and returns the color/priority, or `None` to leave the dot empty.
     pub(crate) fn ring(
         &mut self,
+        center: (f64, f64),
+        radii: (f64, f64),
+        sweep: (f64, f64),
+        mut paint: impl FnMut(f64) -> Option<(Color, u8)>,
+    ) {
+        self.ring_dist(center, radii, sweep, |pos, _| paint(pos));
+    }
+
+    /// Like [`Self::ring`], but `paint` also receives the dot's distance from the center.
+    pub(crate) fn ring_dist(
+        &mut self,
         (cx, cy): (f64, f64),
         (r_in, r_out): (f64, f64),
         (start, len): (f64, f64),
-        mut paint: impl FnMut(f64) -> Option<(Color, u8)>,
+        mut paint: impl FnMut(f64, f64) -> Option<(Color, u8)>,
     ) {
         if r_out <= 0.0 || len <= 0.0 {
             return;
@@ -106,7 +117,7 @@ impl Braille {
                 if t > len {
                     continue;
                 }
-                if let Some((c, p)) = paint(t / len) {
+                if let Some((c, p)) = paint(t / len, d) {
                     self.plot(px as f64, py as f64, c, p);
                 }
             }

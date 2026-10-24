@@ -99,6 +99,7 @@ pub mod border_style;
 mod braille;
 pub mod gauge;
 pub mod legend;
+pub mod pie_style;
 #[macro_use]
 pub mod macros;
 pub mod symbols;
@@ -107,6 +108,7 @@ pub mod title;
 // Re-export commonly used types from submodules for convenience
 pub use gauge::{GaugeChart, GaugeStyle};
 pub use legend::{LegendAlignment, LegendLayout, LegendPosition};
+pub use pie_style::PieStyle;
 pub use title::{BlockExt, TitleAlignment, TitlePosition, TitleStyle};
 #[cfg(feature = "theme")]
 pub use tui_nuances::{Theme, ThemeProvider, ThemeSwitcher, Themed};
@@ -272,6 +274,18 @@ pub struct PieChart<'a> {
     legend_layout: LegendLayout,
     /// Alignment of legend items
     legend_alignment: LegendAlignment,
+    /// Look of the pie (solid, segmented ring, HUD, rose)
+    pie_style: PieStyle,
+    /// Hole radius as a fraction of the radius (`0` = pie, `>0` = donut)
+    hole: f64,
+    /// Start angle in turns (`0` = 12 o'clock, clockwise)
+    start: f64,
+    /// Gap between slices in braille dots (canvas styles only)
+    gap: f64,
+    /// Outward shift of every slice in braille dots (canvas styles only)
+    explode: f64,
+    /// Text shown in the donut hole
+    center: Option<&'a str>,
 }
 
 impl Default for PieChart<'_> {
@@ -299,6 +313,12 @@ impl Default for PieChart<'_> {
             legend_position: LegendPosition::default(),
             legend_layout: LegendLayout::default(),
             legend_alignment: LegendAlignment::default(),
+            pie_style: PieStyle::default(),
+            hole: 0.0,
+            start: 0.0,
+            gap: 0.0,
+            explode: 0.0,
+            center: None,
         }
     }
 }
@@ -590,6 +610,83 @@ impl<'a> PieChart<'a> {
         self
     }
 
+    /// Draws a donut: the inner `hole` fraction (`0.0..=0.95`) of the radius stays empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::PieChart;
+    ///
+    /// let donut = PieChart::default().hole(0.55).center("42 items");
+    /// ```
+    #[must_use]
+    pub fn hole(mut self, hole: f64) -> Self {
+        self.hole = if hole.is_finite() {
+            hole.clamp(0.0, 0.95)
+        } else {
+            0.0
+        };
+        self
+    }
+
+    /// Sets where the first slice starts, in degrees clockwise from 12 o'clock.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use tui_piechart::PieChart;
+    ///
+    /// let chart = PieChart::default().start_angle(90.0);
+    /// ```
+    #[must_use]
+    pub fn start_angle(mut self, degrees: f64) -> Self {
+        self.start = if degrees.is_finite() {
+            (degrees / 360.0).rem_euclid(1.0)
+        } else {
+            0.0
+        };
+        self
+    }
+
+    /// Leaves a gap of `dots` braille dots between slices (`0` = flush).
+    ///
+    /// Gaps, [`Self::explode`] and the non-solid [`PieStyle`]s are drawn with
+    /// braille dots, whatever the [`Resolution`].
+    #[must_use]
+    pub fn gap(mut self, dots: f64) -> Self {
+        self.gap = if dots.is_finite() {
+            dots.clamp(0.0, 8.0)
+        } else {
+            0.0
+        };
+        self
+    }
+
+    /// Pushes every slice outward by `dots` braille dots (an exploded pie).
+    #[must_use]
+    pub fn explode(mut self, dots: f64) -> Self {
+        self.explode = if dots.is_finite() {
+            dots.clamp(0.0, 8.0)
+        } else {
+            0.0
+        };
+        self
+    }
+
+    /// Chooses how slices are drawn: solid, segmented ring, HUD band or rose.
+    #[must_use]
+    pub const fn pie_style(mut self, style: PieStyle) -> Self {
+        self.pie_style = style;
+        self
+    }
+
+    /// Text shown in the middle of a donut (needs a [`Self::hole`]).
+    #[must_use]
+    pub const fn center(mut self, text: &'a str) -> Self {
+        self.center = Some(text);
+        self
+    }
+
     fn total_value(&self) -> f64 {
         self.slices.iter().map(|s| s.value).sum()
     }
@@ -682,6 +779,11 @@ impl PieChart<'_> {
             return;
         }
 
+        if self.needs_canvas() {
+            self.render_piechart_canvas(area, buf);
+            return;
+        }
+
         match self.resolution {
             Resolution::Standard => {
                 // Continue with standard rendering below
@@ -704,7 +806,7 @@ impl PieChart<'_> {
         let radius = center_x.min(center_y * 2).saturating_sub(1);
 
         // Draw the pie chart
-        let mut cumulative_percent = 0.0;
+        let mut cumulative_percent = self.start * 100.0;
         for slice in &self.slices {
             let percent = self.percentage(slice);
             self.render_slice(
@@ -719,6 +821,8 @@ impl PieChart<'_> {
             );
             cumulative_percent += percent;
         }
+
+        self.draw_center(pie_area, buf);
 
         // Draw legend if enabled
         if let Some(legend_area) = legend_area_opt {
@@ -789,7 +893,7 @@ impl PieChart<'_> {
 
                 // Check if point is within radius
                 #[allow(clippy::cast_precision_loss)]
-                if distance <= f64::from(radius) {
+                if distance <= f64::from(radius) && distance >= self.hole * f64::from(radius) {
                     // Calculate angle from center (0 = right, PI/2 = up, PI = left, 3PI/2 = down)
                     let angle = adjusted_dy.atan2(adjusted_dx);
 
@@ -1143,7 +1247,7 @@ impl PieChart<'_> {
             vec![vec![None; width_dots as usize]; height_dots as usize];
 
         // Calculate slice assignments for each dot
-        let mut cumulative_percent = 0.0;
+        let mut cumulative_percent = self.start * 100.0;
         for (slice_idx, slice) in self.slices.iter().enumerate() {
             let percent = self.percentage(slice);
             let (start_angle, end_angle, is_full_circle) =
@@ -1158,7 +1262,7 @@ impl PieChart<'_> {
                     // They're already equally spaced in physical screen space
                     let distance = (rel_x * rel_x + rel_y * rel_y).sqrt();
 
-                    if distance <= f64::from(radius) {
+                    if distance <= f64::from(radius) && distance >= self.hole * f64::from(radius) {
                         let angle = rel_y.atan2(rel_x);
                         if is_full_circle || Self::is_angle_in_slice(angle, start_angle, end_angle)
                         {
@@ -1229,6 +1333,8 @@ impl PieChart<'_> {
                 }
             }
         }
+
+        self.draw_center(pie_area, buf);
 
         // Draw legend if enabled
         if let Some(legend_area) = legend_area_opt {
