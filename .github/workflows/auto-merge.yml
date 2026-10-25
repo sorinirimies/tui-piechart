@@ -2,8 +2,8 @@
 # Auto-merge — automatically approve and merge Dependabot PRs
 # ──────────────────────────────────────────────────────────────────────────────
 # Dependabot is configured for GitHub Actions only (see .github/dependabot.yml).
-# Cargo dependency upgrades are handled by the Nightly Dependency Update
-# workflow (.github/workflows/deps-update.yml), which commits straight to main.
+# Cargo dependency upgrades are handled by the Nightly Dependency Upgrade
+# workflow on Gitea.
 #
 # If CI passes, patch and minor Action bumps are approved and merged
 # automatically so they don't pile up.  Major bumps require manual review.
