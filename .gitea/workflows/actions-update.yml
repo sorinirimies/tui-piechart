@@ -1,0 +1,68 @@
+name: Nightly Actions Update
+
+# Gitea has no Dependabot. Bump `uses: owner/repo@vN` in .gitea/workflows to the latest
+# major release published on GitHub and push straight to main (CI then validates it).
+# actions/checkout and actions/*-artifact stay pinned: act_runner lacks the newer node/artifact backends.
+
+on:
+  schedule:
+    - cron: "45 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actions-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update workflow actions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bump action versions
+        run: |
+          SKIP='^actions/(upload-artifact|download-artifact|checkout)$'
+          changed=0
+          for repo in $(grep -rhoE 'uses: *[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+@v[0-9]+' .gitea/workflows | sed -E 's/uses: *//; s/@.*//' | sort -u); do
+            echo "$repo" | grep -Eq "$SKIP" && continue
+            tag=$(curl -sf "https://api.github.com/repos/$repo/releases/latest" | sed -nE 's/.*"tag_name": *"([^"]+)".*/\1/p' | head -1)
+            major=$(echo "$tag" | sed -nE 's/^(v[0-9]+).*/\1/p')
+            [ -z "$major" ] && { echo "$repo: no release tag, skipped"; continue; }
+            cur=$(grep -rhoE "$repo@v[0-9]+" .gitea/workflows | sed 's/.*@//' | sort -u | tr '\n' ' ')
+            for c in $cur; do
+              if [ "${c#v}" -lt "${major#v}" ]; then
+                echo "$repo: $c -> $major"
+                grep -rlE "$repo@$c\b" .gitea/workflows | xargs sed -i "s#$repo@$c\b#$repo@$major#g"
+                changed=1
+              fi
+            done
+          done
+          echo "changed=$changed" >> "$GITHUB_ENV"
+
+      - name: Commit and push
+        if: env.changed == '1'
+        run: |
+          git config user.name  "gitea-actions[bot]"
+          git config user.email "gitea-actions[bot]@noreply.gitea"
+          git add .gitea/workflows
+          git commit -m "ci(deps): bump workflow actions"
+          git pull --rebase origin main
+          git push origin main
+
+      - name: Push to GitHub mirror
+        if: env.changed == '1' && env.GITHUB_REMOTE_URL != ''
+        env:
+          GITHUB_REMOTE_URL: ${{ secrets.GITHUB_REMOTE_URL }}
+        run: |
+          git remote add github-ci "$GITHUB_REMOTE_URL"
+          git push github-ci main
+
+      - name: Nothing to update
+        if: env.changed != '1'
+        run: echo "✅ All workflow actions are up to date."
