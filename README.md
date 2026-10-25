@@ -9,6 +9,9 @@
 
 A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui) TUI applications.
 
+## Preview - Pie Styles
+![Pie styles](examples/vhs/output/pie_styles.gif)
+
 ## Preview - High Resolution Mode
 ![High Resolution Mode](examples/vhs/output/high_resolution.gif)
 
@@ -146,8 +149,6 @@ The library is organized into focused modules:
 - **`border_style`** - Predefined border styles for block wrappers
   - 11 border style variants (Standard, Rounded, Dashed, Thick, etc.)
   
-![Pie styles](examples/vhs/output/pie_styles.gif)
-
 - **`pie_style`** - `PieStyle` (`Solid`, `Segmented`, `Hud`, `Rose`); `PieChart` also has
   `.hole()`, `.start_angle()`, `.gap()`, `.explode()` and `.center()`
   - `cargo run --example pie_styles`
