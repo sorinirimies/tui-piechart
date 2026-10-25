@@ -1,0 +1,47 @@
+name: Automerge
+
+# A pull request is squash-merged when the CI built it successfully.
+# Opt out with the label `no-automerge`; drafts are never merged. Dependabot major bumps
+# ("from 3.x to 4.x") are left for manual review.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    # Only the CI of a pull request in this repository (not of a fork, not of a push).
+    if: >-
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge the pull request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PRS: ${{ toJSON(github.event.workflow_run.pull_requests.*.number) }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          for n in $(echo "$PRS" | jq -r '.[]'); do
+            info=$(gh pr view "$n" --repo "$GITHUB_REPOSITORY" --json isDraft,labels,state,headRefOid,title,author)
+            if [ "$(echo "$info" | jq -r .state)" != OPEN ] \
+              || [ "$(echo "$info" | jq -r .isDraft)" = true ] \
+              || [ "$(echo "$info" | jq -r '[.labels[].name] | index("no-automerge")')" != null ]; then
+              echo "#$n: skipped"; continue
+            fi
+            # Dependabot major version bumps need a human.
+            if [ "$(echo "$info" | jq -r .author.login)" = "app/dependabot" ] \
+              && echo "$info" | jq -e '.title | capture("from (?<a>[0-9]+)[^ ]* to (?<b>[0-9]+)") | .a != .b' >/dev/null 2>&1; then
+              echo "#$n: major bump, manual review"; continue
+            fi
+            # A newer push has its own CI run, do not merge what was not built.
+            if [ "$(echo "$info" | jq -r .headRefOid)" != "$SHA" ]; then
+              echo "#$n: head moved on"; continue
+            fi
+            gh pr merge "$n" --repo "$GITHUB_REPOSITORY" --squash --delete-branch --match-head-commit "$SHA"
+          done
