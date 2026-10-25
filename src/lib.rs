@@ -347,6 +347,15 @@ impl<'a> PieChart<'a> {
         }
     }
 
+    /// The slices, in drawing order.
+    ///
+    /// Together with [`areas`](Self::areas) this lets other crates build hit
+    /// testing (hover / click) on top of a rendered chart.
+    #[must_use]
+    pub fn slice_list(&self) -> &[PieSlice<'a>] {
+        &self.slices
+    }
+
     /// Sets the slices of the pie chart.
     ///
     /// # Examples
@@ -1046,6 +1055,25 @@ impl PieChart<'_> {
     }
 
     #[allow(clippy::too_many_lines)]
+    /// Where the pie and the legend are drawn inside `area` (inside the block,
+    /// if there is one): `(pie_area, legend_area)`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use ratatui::{layout::Rect, style::Color};
+    /// use tui_piechart::{PieChart, PieSlice};
+    ///
+    /// let chart = PieChart::new(vec![PieSlice::new("a", 1.0, Color::Red)]);
+    /// let (pie, legend) = chart.areas(Rect::new(0, 0, 60, 20));
+    /// assert!(!pie.is_empty() && legend.is_some());
+    /// ```
+    #[must_use]
+    pub fn areas(&self, area: Rect) -> (Rect, Option<Rect>) {
+        let inner = self.block.as_ref().map_or(area, |b| b.inner(area));
+        self.calculate_layout(inner)
+    }
+
     fn calculate_layout(&self, area: Rect) -> (Rect, Option<Rect>) {
         if !self.show_legend || area.width < 20 || area.height < 10 {
             return (area, None);

@@ -24,6 +24,7 @@ A customizable pie chart widget for [Ratatui](https://github.com/ratatui/ratatui
 - 🔍 High resolution mode using braille patterns (8x resolution)
 - 🌈 Optional shared theming via the `theme` feature (tui-nuances)
 - 🍩 Donut hole, start angle, gaps, explode and `Segmented` / `Hud` / `Rose` pie styles
+- 🖱️ Hover / click support: `PieChart::areas` and `slice_list` expose the geometry; [`tui-chart`](https://crates.io/crates/tui-chart)'s `Pie` wrapper adds tooltips and legend toggling
 - 📈 More chart types (gauges, radial bars, radar, treemap, funnel, waterfall, instruments) live in [`tui-chart`](https://github.com/sorinirimies/tui-chart)
 - ⚡ Zero-cost abstractions
 
