@@ -88,7 +88,7 @@ pub use crate::border_style::BorderStyle;
 ///
 /// # Format
 ///
-/// ```ignore
+/// ```text
 /// pie_symbols! {
 ///     SUFFIX_NAME: 'symbol', "description",
 /// }
@@ -112,7 +112,7 @@ macro_rules! pie_symbols {
 ///
 /// # Format
 ///
-/// ```ignore
+/// ```text
 /// legend_symbols! {
 ///     SUFFIX_NAME: "symbol", "description",
 /// }

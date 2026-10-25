@@ -32,7 +32,6 @@
 //!     Bottom,
 //! }
 //!
-//! #[cfg(test)]
 //! mod tests {
 //!     use super::*;
 //!
@@ -43,6 +42,7 @@
 //!         debug_test: (test_debug, MyPosition::Bottom, "Bottom"),
 //!     }
 //! }
+//! # fn main() {}
 //! ```
 //!
 //! ## Testing Multiple Debug Formats
@@ -56,7 +56,6 @@
 //! #     Center,
 //! #     End,
 //! # }
-//! #[cfg(test)]
 //! mod tests {
 //!     use super::*;
 //!
@@ -69,6 +68,7 @@
 //!         ]
 //!     }
 //! }
+//! # fn main() {}
 //! ```
 //!
 //! ## Simple Assertions
@@ -76,26 +76,28 @@
 //! ```
 //! # use tui_piechart::assert_test;
 //! # use tui_piechart::assert_eq_test;
-//! #[cfg(test)]
 //! mod tests {
+//!     use super::*;
 //!     assert_test!(test_is_empty, "".is_empty());
 //!     assert_eq_test!(test_addition, 2 + 2, 4);
 //! }
+//! # fn main() {}
 //! ```
 //!
 //! ## Render Tests
 //!
-//! ```ignore
+//! ```
 //! use tui_piechart::{render_test, render_with_size_test, render_empty_test};
 //! use tui_piechart::PieChart;
 //! use ratatui::layout::Rect;
 //!
-//! #[cfg(test)]
 //! mod tests {
+//!     use super::*;
 //!     render_test!(test_basic_render, PieChart::default(), Rect::new(0, 0, 40, 20));
 //!     render_with_size_test!(test_small_size, PieChart::default(), width: 20, height: 10);
 //!     render_empty_test!(test_empty_area, PieChart::default());
 //! }
+//! # fn main() {}
 //! ```
 //!
 //! # Benefits
@@ -113,8 +115,8 @@
 ///
 /// # Examples
 ///
-/// ```ignore
-/// #[cfg(test)]
+/// ```
+/// # use tui_piechart::{enum_tests};
 /// mod tests {
 ///     use super::*;
 ///
@@ -125,6 +127,7 @@
 ///         debug_test: (test_debug, MyEnum::OtherVariant, "OtherVariant"),
 ///     }
 /// }
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! enum_tests {
@@ -161,9 +164,11 @@ macro_rules! enum_tests {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{assert_test};
 /// assert_test!(test_addition, 2 + 2 == 4);
 /// assert_test!(test_string, "hello".len() == 5);
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! assert_test {
@@ -181,9 +186,11 @@ macro_rules! assert_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{assert_eq_test};
 /// assert_eq_test!(test_math, 2 + 2, 4);
 /// assert_eq_test!(test_default, MyType::default().value(), 0);
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! assert_eq_test {
@@ -202,12 +209,14 @@ macro_rules! assert_eq_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{matches_test};
 /// matches_test!(
 ///     test_resolution_braille,
 ///     PieChart::default().resolution(Resolution::Braille).resolution,
 ///     Resolution::Braille
 /// );
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! matches_test {
@@ -225,7 +234,8 @@ macro_rules! matches_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{debug_format_tests};
 /// debug_format_tests! {
 ///     enum_type: MyEnum,
 ///     tests: [
@@ -234,6 +244,7 @@ macro_rules! matches_test {
 ///         (test_third_debug, MyEnum::Third, "Third"),
 ///     ]
 /// }
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! debug_format_tests {
@@ -258,13 +269,15 @@ macro_rules! debug_format_tests {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{conversion_test};
 /// conversion_test!(
 ///     test_alignment_to_ratatui,
 ///     TitleAlignment::Start,
 ///     Alignment,
 ///     Alignment::Left
 /// );
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! conversion_test {
@@ -283,12 +296,14 @@ macro_rules! conversion_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{instantiate_variants_test};
 /// instantiate_variants_test!(
 ///     test_all_border_styles,
 ///     BorderStyle,
 ///     [Standard, Rounded, Dashed, CornerGapped]
 /// );
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! instantiate_variants_test {
@@ -306,11 +321,13 @@ macro_rules! instantiate_variants_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{no_panic_test};
 /// no_panic_test!(test_apply_bold, {
 ///     let result = TitleStyle::Bold.apply("Test");
 ///     assert!(!result.is_empty());
 /// });
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! no_panic_test {
@@ -326,13 +343,15 @@ macro_rules! no_panic_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{string_transform_test};
 /// string_transform_test!(
 ///     test_bold_preserves_length,
 ///     TitleStyle::Bold.apply("Test"),
 ///     original: "Test",
 ///     length_preserved: true
 /// );
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! string_transform_test {
@@ -360,7 +379,8 @@ macro_rules! string_transform_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{render_test};
 /// use ratatui::buffer::Buffer;
 /// use ratatui::layout::Rect;
 ///
@@ -369,6 +389,7 @@ macro_rules! string_transform_test {
 ///     PieChart::default(),
 ///     Rect::new(0, 0, 40, 20)
 /// );
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! render_test {
@@ -388,13 +409,15 @@ macro_rules! render_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{render_with_size_test};
 /// render_with_size_test!(
 ///     test_chart_small,
 ///     PieChart::default(),
 ///     width: 20,
 ///     height: 10
 /// );
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! render_with_size_test {
@@ -421,11 +444,13 @@ macro_rules! render_with_size_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{multi_render_test};
 /// multi_render_test!(test_pie_configurations, [
 ///     (PieChart::default(), Rect::new(0, 0, 20, 10)),
 ///     (PieChart::default().show_legend(false), Rect::new(0, 0, 30, 15)),
 /// ]);
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! multi_render_test {
@@ -445,8 +470,10 @@ macro_rules! multi_render_test {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
+/// # use tui_piechart::{render_empty_test};
 /// render_empty_test!(test_chart_empty, PieChart::default());
+/// # fn main() {}
 /// ```
 #[macro_export]
 macro_rules! render_empty_test {

@@ -14,6 +14,7 @@
 //!
 //! ```
 //! use tui_piechart::{assert_test, enum_tests};
+//! # fn main() {}
 //! ```
 //!
 //! # Available Macros
@@ -47,7 +48,6 @@
 //!     Bottom,
 //! }
 //!
-//! #[cfg(test)]
 //! mod tests {
 //!     use super::*;
 //!
@@ -58,6 +58,7 @@
 //!         debug_test: (test_debug, Position::Bottom, "Bottom"),
 //!     }
 //! }
+//! # fn main() {}
 //! ```
 //!
 //! ## Debug Format Testing
@@ -66,8 +67,8 @@
 //! # use tui_piechart::debug_format_tests;
 //! # #[derive(Debug)]
 //! # enum Alignment { Start, Center, End }
-//! #[cfg(test)]
 //! mod tests {
+//!     use super::*;
 //!     # use super::*;
 //!     debug_format_tests! {
 //!         enum_type: Alignment,
@@ -77,19 +78,21 @@
 //!         ]
 //!     }
 //! }
+//! # fn main() {}
 //! ```
 //!
 //! ## Render Testing
 //!
-//! ```ignore
+//! ```
 //! # use tui_piechart::{render_test, render_with_size_test};
 //! # use tui_piechart::PieChart;
 //! # use ratatui::layout::Rect;
-//! #[cfg(test)]
 //! mod tests {
+//!     use super::*;
 //!     render_test!(test_basic_render, PieChart::default(), Rect::new(0, 0, 40, 20));
 //!     render_with_size_test!(test_small, PieChart::default(), width: 20, height: 10);
 //! }
+//! # fn main() {}
 //! ```
 
 #[macro_use]
