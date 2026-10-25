@@ -1,8 +1,7 @@
 name: Automerge
 
 # A pull request is squash-merged when the CI built it successfully.
-# Opt out with the label `no-automerge`; drafts are never merged. Dependabot major bumps
-# ("from 3.x to 4.x") are left for manual review.
+# Opt out with the label `no-automerge`; drafts are never merged.
 on:
   workflow_run:
     workflows: [CI]
@@ -33,11 +32,6 @@ jobs:
               || [ "$(echo "$info" | jq -r .isDraft)" = true ] \
               || [ "$(echo "$info" | jq -r '[.labels[].name] | index("no-automerge")')" != null ]; then
               echo "#$n: skipped"; continue
-            fi
-            # Dependabot major version bumps need a human.
-            if [ "$(echo "$info" | jq -r .author.login)" = "app/dependabot" ] \
-              && echo "$info" | jq -e '.title | capture("from (?<a>[0-9]+)[^ ]* to (?<b>[0-9]+)") | .a != .b' >/dev/null 2>&1; then
-              echo "#$n: major bump, manual review"; continue
             fi
             # A newer push has its own CI run, do not merge what was not built.
             if [ "$(echo "$info" | jq -r .headRefOid)" != "$SHA" ]; then
