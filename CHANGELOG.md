@@ -2,11 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.4.0 - 2026-10-25
+### ✨ Features
+- feat: PieChart::areas and slice_list for hit testing; refresh pie_styles demo
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.3.0...v1.4.0
 ## 1.3.0 - 2026-10-24
 ### 📚 Documentation
 - docs: VHS tapes and demo GIFs for gauges, pie styles and new charts
 ### 📦 Other Changes
 - refactor!: move gauge, radial, funnel, radar, treemap and waterfall widgets to tui-chart; piechart keeps pie options and styles
+### 🔧 Chores
+- chore: bump version to 1.3.0
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.2.0...v1.3.0
 ## 1.2.0 - 2026-10-24
 ### ✨ Features
