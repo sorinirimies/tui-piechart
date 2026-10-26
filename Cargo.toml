@@ -22,7 +22,7 @@ exclude = [
 ]
 
 [dependencies]
-tui-nuances = { version = "0.1.7", optional = true }
+tui-nuances = { version = "0.1.9", optional = true }
 ratatui = { version = "0.30", default-features = false }
 
 [features]
