@@ -1632,9 +1632,9 @@ dependencies = [
 
 [[package]]
 name = "tui-nuances"
-version = "0.1.9"
+version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d7e70d3c50ce49a2389f0c5a4265b8fc4350e815df0895fced2035f76829ad4"
+checksum = "8c4a0e7ec99c630f79977ab650c1a0ef6cc8fccc6077ebee36fc8aa0d329724f"
 dependencies = [
  "ratatui",
 ]
