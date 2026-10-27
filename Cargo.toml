@@ -22,7 +22,11 @@ exclude = [
 ]
 
 [dependencies]
+<<<<<<< HEAD
 tui-nuances = { version = "0.1.9", optional = true }
+=======
+tui-nuances = { version = "0.1.10", optional = true }
+>>>>>>> d5fbadf (chore(deps): bump tui-nuances to 0.1.10)
 ratatui = { version = "0.30", default-features = false }
 
 [features]
