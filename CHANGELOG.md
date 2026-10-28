@@ -2,9 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
-## 1.4.1 - 2026-10-26
+## 1.4.2 - 2026-10-28
 ### ✨ Features
 - feat: enable the tui-nuances theme feature by default
+### 🐛 Bug Fixes
+- fix: resolve Cargo.toml merge markers
 ### 📚 Documentation
 - docs: make macro doctests runnable
 - docs: show pie styles preview first
@@ -21,7 +23,10 @@ All notable changes to this project will be documented in this file.
 ### 🔧 Chores
 - chore: bump tui-nuances to 0.1.7
 - chore(deps): nightly cargo update 2026-10-26
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.4.0...v1.4.1
+- chore: bump version to 1.4.1
+- chore(deps): bump tui-nuances to 0.1.10
+- chore(deps): nightly cargo update 2026-10-28
+**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v1.4.0...v1.4.2
 ## 1.4.0 - 2026-10-25
 ### ✨ Features
 - feat: PieChart::areas and slice_list for hit testing; refresh pie_styles demo
@@ -158,7 +163,6 @@ All notable changes to this project will be documented in this file.
 **Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/v0.2.9...v0.3.0
 ## 0.2.9 - 2026-02-20
 ### ➕ Added
-- Add legend marker showcase and unify title styles demo
 - Add checks and templates for git pull/push commands in justfile
 - Add Git pull commands for origin and gitea remotes
 ### 🐛 Bug Fixes
@@ -186,6 +190,7 @@ All notable changes to this project will be documented in this file.
 ### ♻️ Refactor
 - Refactor legend rendering into helper methods
 ### ➕ Added
+- Add legend marker showcase and unify title styles demo
 - Add legend alignment feature and update examples
 ### 🔧 Chores
 - chore: bump version to 0.2.4
