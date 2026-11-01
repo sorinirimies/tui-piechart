@@ -12,7 +12,6 @@ keywords = ["tui", "terminal", "ratatui", "piechart", "widget"]
 categories = ["command-line-interface", "visualization", "rendering", "gui", "graphics"]
 readme = "README.md"
 exclude = [
-    "AGENTS.md",
     "examples/vhs/output/*.gif",
     ".gitea/",
     ".github/",
