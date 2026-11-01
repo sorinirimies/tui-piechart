@@ -19,9 +19,8 @@ target
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-# Zed editor files (except rules.md)
+# Zed editor files
 .zed/
-!.zed/rules.md
 
 # cargo-fuzz
 fuzz/corpus/

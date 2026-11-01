@@ -151,7 +151,7 @@ configured widget. Call .build() to finalize.
 - The `just update-deps*` recipes and `scripts/upgrade_deps.nu` will automatically commit and push all staged changes (Cargo files + source fixes) if the quality gate passes.
 - The `just commit "message"` recipe stages all files (`git add .`) and commits — use it for quick single-purpose commits.
 - Always use conventional commit messages (see Commit Message Format above).
-- The `.zed/rules.md` file itself is tracked in git and should be committed whenever it changes.
+- `AGENTS.md` itself is tracked in git and should be committed whenever it changes.
 
 ## Pull Request Guidelines
 
