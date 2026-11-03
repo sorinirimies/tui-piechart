@@ -9,7 +9,8 @@
 #   3. cargo test --workspace
 #   4. cargo doc with warnings as errors (broken intra-doc links fail docs.rs)
 #   5. versions agree (Cargo.toml == EXTRA_MANIFESTS)
-#   6. nushell script tests
+#   6. no unused dependencies (cargo machete, installed when missing)
+#   7. nushell script tests
 # Project-specific steps (a wasm build, a web bundle, …) go in as extra run_step
 # calls — one place, so every caller gets them.
 #
@@ -50,6 +51,10 @@ def main [--skip-fmt, --skip-test, --skip-nu] {
         with-env { RUSTDOCFLAGS: "-D warnings" } { cargo doc --no-deps --all-features --quiet }
     }) and $ok
     $ok = (run_step "versions agree" { nu scripts/ci/check_versions.nu }) and $ok
+    $ok = (run_step "unused dependencies (cargo machete)" {
+        nu scripts/tools.nu ensure cargo-machete
+        cargo machete
+    }) and $ok
     if not $skip_nu {
         $ok = (run_step "nushell tests" { nu scripts/tests/run_all.nu }) and $ok
     }

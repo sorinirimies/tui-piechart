@@ -5,7 +5,7 @@
 use std/assert
 use runner.nu *
 use ../remotes.nu [REMOTES targets git_args]
-use ../tools.nu [TOOLS TARGETS missing]
+use ../tools.nu [TOOLS TARGETS missing install_args]
 use ../gitea_run.nu [dispatch_url]
 use ../ci/fuzz_all.nu [fuzz_args toolchains FALLBACK_DAYS]
 
@@ -28,6 +28,15 @@ def "test remotes: push carries tags and force only when asked" [] {
 def "test tools: only the missing ones are installed" [] {
     assert equal (missing ($TOOLS | columns)) []
     assert ("git-cliff" in (missing []))
+}
+
+def "test tools: install args use the crate name and the lockfile" [] {
+    assert equal (install_args cargo-machete) [install cargo-machete --locked]
+    assert equal (install_args some-tool) [install some-tool --locked]
+}
+
+def "test tools: the gate tools are known" [] {
+    assert ("cargo-machete" in ($TOOLS | columns))
 }
 
 def "test gitea_run: dispatch url" [] {

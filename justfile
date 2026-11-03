@@ -15,7 +15,7 @@ default:
 _check-git-cliff:
     @nu scripts/tools.nu check git-cliff
 
-# Install the development tools (git-cliff, cargo-audit/deny/fuzz/llvm-cov/outdated)
+# Install the development tools (git-cliff, cargo-audit/deny/fuzz/llvm-cov/outdated/machete)
 install-tools:
     nu scripts/tools.nu install
 
@@ -85,6 +85,10 @@ audit:
 # Security: licenses, advisories, bans, sources (cargo install cargo-deny)
 deny:
     cargo deny check
+
+# Dependencies nothing uses (cargo install cargo-machete; the gate runs it too)
+unused-deps:
+    cargo machete
 
 # Fuzz one target (e.g. just fuzz parse 60); needs nightly + cargo-fuzz
 fuzz target secs="60":
