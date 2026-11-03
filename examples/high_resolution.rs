@@ -18,11 +18,11 @@ use crossterm::event::{self, Event, KeyCode};
 #[allow(unused_imports)]
 use ratatui::style::Stylize;
 use ratatui::{
+    DefaultTerminal, Frame,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Padding, Paragraph},
-    DefaultTerminal, Frame,
 };
 use std::time::{Duration, Instant};
 use tui_piechart::{PieChart, PieSlice};
@@ -63,15 +63,15 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         terminal.draw(|frame| render(frame, app))?;
 
         // Non-blocking event polling with 16ms timeout (~60 FPS)
-        if event::poll(Duration::from_millis(16))? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => break,
-                    KeyCode::Char(' ') | KeyCode::Enter | KeyCode::Char('h') => {
-                        app.high_res = !app.high_res;
-                    }
-                    _ => {}
+        if event::poll(Duration::from_millis(16))?
+            && let Event::Key(key) = event::read()?
+        {
+            match key.code {
+                KeyCode::Char('q') | KeyCode::Esc => break,
+                KeyCode::Char(' ') | KeyCode::Enter | KeyCode::Char('h') => {
+                    app.high_res = !app.high_res;
                 }
+                _ => {}
             }
         }
     }

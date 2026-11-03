@@ -1,89 +1,86 @@
 #!/usr/bin/env nu
-# Run all Nu test suites in scripts/tests/.
+# ── tui-piechart · Run All Nushell Tests ────────────────────────────────────────
 #
-# Usage: nu scripts/tests/run_all.nu
+# Usage:
+#   nu scripts/tests/run_all.nu          # run every test_*.nu file
+#   nu scripts/tests/run_all.nu --filter version   # only files matching "version"
 
-def main [] {
+def main [--filter: string = ""] {
     let green  = (ansi green)
     let red    = (ansi red)
-    let cyan   = (ansi cyan)
     let bold   = (ansi --escape {attr: b})
+    let cyan   = (ansi cyan)
     let reset  = (ansi reset)
 
-    let tests_dir = ($env.CURRENT_FILE | path dirname)
+    print $"($bold)($cyan)── tui-piechart · Nushell Test Suite ──($reset)"
+    print ""
 
-    let suites = (
-        ls $tests_dir
-        | where { |f| ($f.name | path basename) =~ '^test_.*\.nu$' }
+    let test_dir = ($env.CURRENT_FILE | path dirname)
+
+    let files = (
+        ls $test_dir
+        | where { |it| ($it.name | path basename) =~ '^test_.*\.nu$' }
         | get name
         | sort
     )
 
-    let total_suites = ($suites | length)
+    let files = if $filter == "" {
+        $files
+    } else {
+        $files | where { |f| ($f | path basename) =~ $filter }
+    }
 
-    if $total_suites == 0 {
-        print $"($red)No test suites found in ($tests_dir)($reset)"
+    let total = ($files | length)
+
+    if $total == 0 {
+        print $"($red)No test files found.(ansi reset)"
         exit 1
     }
 
-    print $"($cyan)($bold)════════════════════════════════════════($reset)"
-    print $"($cyan)($bold)  tui-piechart — Nu Script Test Runner($reset)"
-    print $"($cyan)($bold)════════════════════════════════════════($reset)"
-    print $"Found ($total_suites) suite\(s\)"
+    print $"Found ($total) test file\(s\):"
+    for f in $files {
+        print $"  ($cyan)($f | path basename)($reset)"
+    }
     print ""
 
-    mut passed_suites  = 0
-    mut failed_suites  = 0
-    mut suite_results  = []
+    mut passed = 0
+    mut failed = 0
+    mut failures = []
 
-    for suite in $suites {
-        let name = ($suite | path basename)
+    for f in $files {
+        let name = ($f | path basename)
         print $"($bold)▶ ($name)($reset)"
+        let res = (do { nu $f } | complete)
 
-        let res = (do { nu $suite } | complete)
-
-        # Print the suite's output indented
-        for line in ($res.stdout | lines) {
-            print $"  ($line)"
+        # Forward the test file's stdout so the user sees per-test results.
+        if ($res.stdout | str trim) != "" {
+            print $res.stdout
         }
 
         if $res.exit_code == 0 {
-            $passed_suites = $passed_suites + 1
-            $suite_results = ($suite_results | append { suite: $name, status: "passed" })
+            $passed = $passed + 1
         } else {
-            # Also print stderr if present
-            if not ($res.stderr | is-empty) {
-                for line in ($res.stderr | lines) {
-                    print $"  ($red)($line)($reset)"
-                }
+            $failed = $failed + 1
+            $failures = ($failures | append $name)
+            if ($res.stderr | str trim) != "" {
+                print $res.stderr
             }
-            $failed_suites = $failed_suites + 1
-            $suite_results = ($suite_results | append { suite: $name, status: "failed" })
         }
-
         print ""
     }
 
-    # ── Summary table ─────────────────────────────────────────────────────────
-    print $"($cyan)($bold)════════════════════════════════════════($reset)"
-    print $"($bold)Summary($reset)"
-    print $"($cyan)($bold)════════════════════════════════════════($reset)"
+    print $"($bold)── Summary ──($reset)"
+    print $"  ($green)($passed) passed($reset) · ($red)($failed) failed($reset) · ($total) total"
 
-    for r in $suite_results {
-        let icon   = if $r.status == "passed" { $"($green)✓($reset)" } else { $"($red)✗($reset)" }
-        let status = if $r.status == "passed" { $"($green)passed($reset)" } else { $"($red)failed($reset)" }
-        print $"  ($icon) ($r.suite)  ($status)"
-    }
-
-    print ""
-    print $"Suites: ($green)($passed_suites) passed($reset) · ($red)($failed_suites) failed($reset) · ($total_suites) total suites"
-
-    if $failed_suites > 0 {
+    if $failed > 0 {
         print ""
-        print $"($red)($bold)✗ ($failed_suites) suite\(s\) failed.($reset)"
+        print $"($red)($bold)Failed files:($reset)"
+        for f in $failures {
+            print $"  ($red)✗($reset) ($f)"
+        }
         exit 1
     }
 
     print ""
-    print $"($green)($bold)✓ All ($total_suites) suites passed!($reset)"
+    print $"($green)($bold)✓ All ($total) test files passed!($reset)"
 }

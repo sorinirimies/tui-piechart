@@ -21,19 +21,19 @@
 //!
 //! ## Test Utilities
 //!
-//! - [`enum_tests!`] - Generate default, clone, and debug tests for enums
-//! - [`assert_test!`] - Create simple boolean assertion tests
-//! - [`assert_eq_test!`] - Create equality comparison tests
-//! - [`matches_test!`] - Assert an expression matches a pattern (e.g. an enum variant)
-//! - [`debug_format_tests!`] - Test debug formatting for multiple enum variants
-//! - [`conversion_test!`] - Test From/Into trait implementations
-//! - [`instantiate_variants_test!`] - Verify all enum variants are accessible
-//! - [`no_panic_test!`] - Ensure code blocks don't panic
-//! - [`string_transform_test!`] - Test string transformations preserve properties
-//! - [`render_test!`] - Test that widget rendering doesn't panic
-//! - [`render_with_size_test!`] - Test rendering with specific dimensions
-//! - [`render_empty_test!`] - Test rendering to empty area
-//! - [`multi_render_test!`] - Test multiple widget configurations
+//! - `enum_tests!` - Generate default, clone, and debug tests for enums
+//! - `assert_test!` - Create simple boolean assertion tests
+//! - `assert_eq_test!` - Create equality comparison tests
+//! - `matches_test!` - Assert an expression matches a pattern (e.g. an enum variant)
+//! - `debug_format_tests!` - Test debug formatting for multiple enum variants
+//! - `conversion_test!` - Test From/Into trait implementations
+//! - `instantiate_variants_test!` - Verify all enum variants are accessible
+//! - `no_panic_test!` - Ensure code blocks don't panic
+//! - `string_transform_test!` - Test string transformations preserve properties
+//! - `render_test!` - Test that widget rendering doesn't panic
+//! - `render_with_size_test!` - Test rendering with specific dimensions
+//! - `render_empty_test!` - Test rendering to empty area
+//! - `multi_render_test!` - Test multiple widget configurations
 //!
 //! # Examples
 //!

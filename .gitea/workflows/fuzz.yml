@@ -4,14 +4,15 @@ on:
   schedule:
     - cron: "0 4 * * *"
   push:
-    branches: [main, master]
-    paths: ["fuzz/**", "src/**", "Cargo.toml", "Cargo.lock"]
+    branches: [main]
+    paths: ["fuzz/**", "src/**", "Cargo.lock"]
   pull_request:
-    paths: ["fuzz/**", "src/**", "Cargo.toml", "Cargo.lock"]
+    paths: ["fuzz/**", "src/**", "Cargo.lock"]
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTUP_MAX_RETRIES: "10"
 
 jobs:
   fuzz:
@@ -21,15 +22,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Rust nightly
         run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly
+          for i in 1 2 3 4 5; do
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain nightly && break
+            [ $i = 5 ] && exit 1
+            echo "rustup install failed, retrying..."; sleep 15
+          done
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz --locked
-      - name: Fuzz each target for 60s
+      - name: Install Nushell
         run: |
-          for t in $(cargo +nightly fuzz list); do
-            cargo +nightly fuzz run "$t" -- -max_total_time=60
-          done
+          V=0.116.1
+          curl -fsSL --retry 5 https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
+          sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || { mkdir -p $HOME/.cargo/bin; install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu; }
+          nu --version
+      - name: Fuzz each target for 60s
+        run: nu scripts/ci/fuzz_all.nu --secs 60
       - name: Upload crashes
         if: failure()
         uses: actions/upload-artifact@v3

@@ -1334,17 +1334,18 @@ impl PieChart<'_> {
                     let dot_x = base_dot_x + dx;
                     let dot_y = base_dot_y + dy;
 
-                    if dot_y < height_dots && dot_x < width_dots {
-                        if let Some(slice_idx) = dot_slices[dot_y as usize][dot_x as usize] {
-                            pattern |= bit;
-                            // Track which slice and how many dots
-                            if let Some(entry) =
-                                slice_colors.iter_mut().find(|(idx, _)| *idx == slice_idx)
-                            {
-                                entry.1 += 1;
-                            } else {
-                                slice_colors.push((slice_idx, 1));
-                            }
+                    if dot_y < height_dots
+                        && dot_x < width_dots
+                        && let Some(slice_idx) = dot_slices[dot_y as usize][dot_x as usize]
+                    {
+                        pattern |= bit;
+                        // Track which slice and how many dots
+                        if let Some(entry) =
+                            slice_colors.iter_mut().find(|(idx, _)| *idx == slice_idx)
+                        {
+                            entry.1 += 1;
+                        } else {
+                            slice_colors.push((slice_idx, 1));
                         }
                     }
                 }

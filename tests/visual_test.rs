@@ -1,4 +1,5 @@
-use ratatui::{backend::TestBackend, buffer::Buffer, style::Color, Terminal};
+//! Integration tests: visual test.
+use ratatui::{Terminal, backend::TestBackend, buffer::Buffer, style::Color};
 use tui_piechart::{PieChart, PieSlice};
 
 #[test]
@@ -294,7 +295,7 @@ fn print_buffer(buffer: &Buffer) {
     for y in 0..area.height {
         print!("│");
         for x in 0..area.width {
-            let cell = buffer.cell((x, y)).unwrap();
+            let cell = buffer.cell((x, y)).expect("cell inside the area");
             print!("{}", cell.symbol());
         }
         println!("│");
@@ -443,10 +444,10 @@ fn buffer_contains_char(buffer: &Buffer, c: char) -> bool {
     let area = buffer.area();
     for y in 0..area.height {
         for x in 0..area.width {
-            if let Some(cell) = buffer.cell((x, y)) {
-                if cell.symbol().contains(c) {
-                    return true;
-                }
+            if let Some(cell) = buffer.cell((x, y))
+                && cell.symbol().contains(c)
+            {
+                return true;
             }
         }
     }

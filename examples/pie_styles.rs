@@ -9,11 +9,11 @@
 use color_eyre::Result;
 use crossterm::event::{self, Event, KeyCode};
 use ratatui::{
+    DefaultTerminal, Frame,
     layout::{Constraint, Layout},
     style::Color,
     text::Line,
     widgets::{Block, BorderType, Paragraph},
-    DefaultTerminal, Frame,
 };
 use tui_piechart::{PieChart, PieSlice, PieStyle};
 

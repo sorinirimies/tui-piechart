@@ -1,0 +1,51 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Auto-merge — automatically approve and merge Dependabot PRs
+# ──────────────────────────────────────────────────────────────────────────────
+# Dependabot is configured for GitHub Actions only (see .github/dependabot.yml).
+# Cargo dependency upgrades are handled by the Nightly Dependency Upgrade
+# workflow on Gitea.
+#
+# If CI passes, patch and minor Action bumps are approved and merged
+# automatically so they don't pile up.  Major bumps require manual review.
+#
+# Requirements:
+#   • The repo must have "Allow auto-merge" enabled in Settings → General.
+#   • Branch protection rules must require status checks to pass before merging.
+# ──────────────────────────────────────────────────────────────────────────────
+
+name: Auto-merge Dependabot
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Auto-merge
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # Only auto-merge patch and minor updates.
+      # Major version bumps require manual review.
+      - name: Approve PR
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr review --approve "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Enable auto-merge (squash)
+        if: steps.metadata.outputs.update-type != 'version-update:semver-major'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

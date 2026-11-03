@@ -1,3 +1,4 @@
+//! Integration tests: theme test.
 #![cfg(feature = "theme")]
 use ratatui::{
     buffer::Buffer,
@@ -5,7 +6,7 @@ use ratatui::{
     style::{Color, Style},
     widgets::Widget,
 };
-use tui_piechart::{border_style::BorderStyle, PieChart, PieSlice, Theme, Themed};
+use tui_piechart::{PieChart, PieSlice, Theme, Themed, border_style::BorderStyle};
 
 fn render(c: PieChart) -> Buffer {
     let a = Rect::new(0, 0, 40, 15);

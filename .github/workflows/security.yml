@@ -4,10 +4,10 @@ on:
   schedule:
     - cron: "0 3 * * *"
   push:
-    branches: [main, master]
-    paths: ["Cargo.lock", "Cargo.toml", "deny.toml", ".cargo/audit.toml", "fuzz/Cargo.toml", "**/Cargo.toml"]
+    branches: [main]
+    paths: ["Cargo.lock", "Cargo.toml", "**/Cargo.toml", ".cargo/audit.toml", "deny.toml", "fuzz/**"]
   pull_request:
-    paths: ["Cargo.lock", "Cargo.toml", "deny.toml", ".cargo/audit.toml", "fuzz/Cargo.toml", "**/Cargo.toml"]
+    paths: ["Cargo.lock", "Cargo.toml", "**/Cargo.toml", ".cargo/audit.toml", "deny.toml", "fuzz/**"]
   workflow_dispatch:
 
 env:

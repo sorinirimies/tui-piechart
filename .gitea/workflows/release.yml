@@ -1,162 +1,57 @@
 name: Release
 
+# Runs the gate at the tag and publishes a Gitea release with the notes; crates.io
+# gets the crate from the GitHub release workflow.
+
 on:
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Tag to release (e.g. v0.4.0) — must already exist on the repo"
+        description: "Tag to release (e.g. v0.2.0)"
         required: true
-        default: ""
-
-permissions:
-  contents: write
-  packages: write
-
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
+  RUSTUP_MAX_RETRIES: "10"
+  CARGO_NET_RETRY: "10"
 
 jobs:
-  # ── 0. Validate tag ──────────────────────────────────────────────────────────
-  validate:
-    name: Validate tag
-    runs-on: ubuntu-latest
-    outputs:
-      tag: ${{ steps.resolve.outputs.tag }}
-      version: ${{ steps.resolve.outputs.version }}
-    steps:
-      - name: Resolve and validate tag
-        id: resolve
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TAG="${{ github.event.inputs.tag }}"
-          else
-            TAG="${{ github.ref_name }}"
-          fi
-          echo "Resolved tag: ${TAG}"
-          if [[ ! "${TAG}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "❌ Tag '${TAG}' does not match vX.Y.Z — aborting."
-            exit 1
-          fi
-          VERSION="${TAG#v}"
-          echo "tag=${TAG}"         >> "$GITHUB_OUTPUT"
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "✅ Tag ${TAG} (version ${VERSION}) is valid."
-
-  # ── 1. Quality gate ──────────────────────────────────────────────────────────
-  test:
-    name: Test & lint
-    needs: validate
+  release:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
-          ref: ${{ needs.validate.outputs.tag }}
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Run clippy
-        run: cargo clippy -- -D warnings -A deprecated
-
-      - name: Run tests
-        run: cargo test --all-features
-
-  # ── 2. Build and release ─────────────────────────────────────────────────────
-  build:
-    name: Build and release
-    runs-on: ubuntu-latest
-    needs: [validate, test]
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.validate.outputs.tag }}
+          ref: ${{ github.event.inputs.tag || github.ref_name }}
           fetch-depth: 0
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache dependencies
-        uses: Swatinem/rust-cache@v2
-
-      - name: Install git-cliff
-        run: cargo install git-cliff --locked
-
-      - name: Install Nushell (prebuilt binary)
+      - name: Install Rust stable + targets
+        run: |
+          for i in 1 2 3 4 5; do
+            curl --proto '=https' --tlsv1.2 -sSf --retry 5 --retry-all-errors --retry-delay 5 https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && break
+            [ $i = 5 ] && exit 1
+            echo "rustup install failed, retrying..."; sleep 15
+          done
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          . "$HOME/.cargo/env"
+          rustup component add rustfmt clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Nushell, git-cliff
         run: |
           V=0.116.1
-          curl -fsSL "https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /tmp
-          sudo install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" /usr/local/bin/nu || { mkdir -p "$HOME/.cargo/bin" && install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" "$HOME/.cargo/bin/nu"; }
-          nu --version
-
-      - name: Prepare release (RELEASE_NOTES.md + CHANGELOG.md)
-        run: nu scripts/release_prepare.nu ${{ needs.validate.outputs.tag }}
-
-      - name: Build release
-        run: cargo build --release --all-features
-
-      - name: Create Gitea Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ needs.validate.outputs.tag }}
-          body_path: RELEASE_NOTES.md
-          files: |
-            LICENSE
-            README.md
-            CHANGELOG.md
+          curl -fsSL --retry 5 https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
+          sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu
+          cargo install git-cliff --locked
+      - name: Validate tag
+        id: v
+        run: nu scripts/ci/validate_tag.nu "${{ github.event.inputs.tag || github.ref_name }}" >> "$GITHUB_OUTPUT"
+      - name: Versions match the tag
+        run: nu scripts/ci/check_versions.nu "${{ steps.v.outputs.tag }}"
+      - name: Quality gate
+        run: nu scripts/ci/quality_gate.nu
+      - name: Release notes
+        run: nu scripts/ci/release_notes.nu ${{ steps.v.outputs.tag }}
+      - name: Create Gitea release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # ── 3. Publish to crates.io ──────────────────────────────────────────────────
-  publish:
-    name: Publish to crates.io
-    needs: [validate, build]
-    runs-on: ubuntu-latest
-    env:
-      HAS_TOKEN: ${{ secrets.CRATES_IO_TOKEN != '' }}
-    steps:
-      - name: Skip notice (no token)
-        if: env.HAS_TOKEN != 'true'
-        run: echo "⏭️  CRATES_IO_TOKEN is not configured — skipping crates.io publish."
-
-      - uses: actions/checkout@v4
-        if: env.HAS_TOKEN == 'true'
-        with:
-          ref: ${{ needs.validate.outputs.tag }}
-
-      - name: Install Rust stable
-        if: env.HAS_TOKEN == 'true'
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache dependencies
-        if: env.HAS_TOKEN == 'true'
-        uses: Swatinem/rust-cache@v2
-
-      - name: Publish tui-piechart
-        if: env.HAS_TOKEN == 'true'
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
-        run: |
-          VERSION="${{ needs.validate.outputs.version }}"
-          echo "📦 Publishing tui-piechart@${VERSION}..."
-          output=$(cargo publish --allow-dirty 2>&1) && echo "$output" || {
-            echo "$output"
-            echo "$output" | grep -q "already exists" && echo "⏭️  Already published — skipping." || exit 1
-          }
-          echo "✅ Publish step complete."
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: nu scripts/ci/gitea_release.nu ${{ steps.v.outputs.tag }} --api "${{ github.server_url }}/api/v1/repos/${{ github.repository }}" --dir dist

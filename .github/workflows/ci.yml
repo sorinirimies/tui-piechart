@@ -3,111 +3,57 @@ name: CI
 on:
   pull_request:
   push:
-    branches:
-      - main
-      - master
-      - develop
+    branches: [main, master, develop]
 
 env:
   CARGO_TERM_COLOR: always
 
-# ensure that the workflow is only triggered once per PR, subsequent pushes to the PR will cancel
-# and restart the workflow. See https://docs.github.com/en/actions/using-jobs/using-concurrency
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  fmt:
-    name: fmt
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-      - name: check formatting
-        run: cargo fmt -- --check
-
-  clippy:
-    name: clippy
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      checks: write
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-      - name: Run clippy action
-        uses: clechasseur/rs-clippy-check@v5
-
-  doc:
-    # run docs generation on nightly rather than stable. This enables features like
-    # https://doc.rust-lang.org/beta/unstable-book/language-features/doc-cfg.html which allows an
-    # API be documented as only available in some specific platforms.
-    name: doc
+  # fmt + clippy + tests + versions + nu tests —
+  # the same script `just check-all` runs.
+  gate:
+    name: quality gate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Install Rust nightly
-        uses: dtolnay/rust-toolchain@nightly
-      - name: Run cargo doc
-        run: cargo doc --no-deps --all-features
-        env:
-          RUSTDOCFLAGS: --cfg docsrs
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt,clippy
+      - uses: Swatinem/rust-cache@v2
+      - uses: hustcer/setup-nu@v3
+        with:
+          version: "0.116.1"
+      - name: Quality gate
+        run: nu scripts/ci/quality_gate.nu
 
+  # Users build on all three systems: paths and line endings differ there.
   test:
+    name: test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    name: test ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [macos-latest, windows-latest]
     steps:
       - uses: actions/checkout@v7
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-      # enable this ci template to run regardless of whether the lockfile is checked in or not
-      - name: cargo generate-lockfile
-        if: hashFiles('Cargo.lock') == ''
-        run: cargo generate-lockfile
-      - name: cargo test --locked
-        run: cargo test --locked --all-features --all-targets
-      - name: cargo test --locked (default features)
-        run: cargo test --locked
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: cargo test --workspace
+        run: cargo test --workspace --all-features
 
-  # ── Nu script tests ───────────────────────────────────────────────────────
-  test-nu:
-    name: test-nu
+
+  msrv:
+    name: MSRV (1.88)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - name: Install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+      # @master + toolchain, not @1.88: Dependabot would bump a version ref.
+      - uses: dtolnay/rust-toolchain@master
         with:
-          components: rustfmt, clippy
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-      - name: Generate lockfile (if absent)
-        if: hashFiles('Cargo.lock') == ''
-        run: cargo generate-lockfile
-      - name: Install Nushell (prebuilt binary)
-        run: |
-          V=0.116.1
-          curl -fsSL "https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /tmp
-          sudo install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" /usr/local/bin/nu || { mkdir -p "$HOME/.cargo/bin" && install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" "$HOME/.cargo/bin/nu"; }
-          nu --version
-      - name: Run Nu script tests
-        run: nu scripts/tests/run_all.nu
+          toolchain: "1.88"
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --workspace --locked

@@ -17,8 +17,8 @@ use ratatui::layout::Rect;
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::Span;
 
-use crate::braille::{polar, Braille};
 use crate::PieChart;
+use crate::braille::{Braille, polar};
 
 /// How a [`PieChart`] draws its slices.
 ///
@@ -384,17 +384,21 @@ mod tests {
                 .map(ratatui::buffer::Cell::symbol)
                 .collect::<String>()
         };
-        assert!(t(PieChart::new(slices())
-            .hole(0.6)
-            .center("HELLO")
-            .show_legend(false))
-        .contains("HELLO"));
+        assert!(
+            t(PieChart::new(slices())
+                .hole(0.6)
+                .center("HELLO")
+                .show_legend(false))
+            .contains("HELLO")
+        );
         assert!(!t(PieChart::new(slices()).center("HELLO").show_legend(false)).contains("HELLO"));
-        assert!(t(PieChart::new(slices())
-            .pie_style(PieStyle::Hud)
-            .center("HELLO")
-            .show_legend(false))
-        .contains("HELLO"));
+        assert!(
+            t(PieChart::new(slices())
+                .pie_style(PieStyle::Hud)
+                .center("HELLO")
+                .show_legend(false))
+            .contains("HELLO")
+        );
     }
 
     #[test]

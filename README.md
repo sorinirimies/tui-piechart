@@ -198,14 +198,14 @@ cargo run --example custom_symbols
 # High resolution mode demo (animated, toggle with Space)
 cargo run --example high_resolution
 
-# Or use just commands:
-just run-legend-positioning
-just run-legend-alignment
-just run-title-positioning
-just run-title-styles-example
-just run-border-styles
-just run-custom-symbols
-just run-high-resolution
+# Or use just (`just examples` lists them all):
+just example legend_positioning
+just example legend_alignment
+just example title_styles
+just example title_styles_example
+just example border_styles
+just example custom_symbols
+just example high_resolution
 ```
 
 ### Detailed Examples Documentation
@@ -891,7 +891,7 @@ just install-tools
 
 ```bash
 # Run example
-just run
+just example piechart
 
 # Run tests
 just test

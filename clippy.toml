@@ -1,0 +1,3 @@
+# unwrap() and expect() are fine in tests; clippy::unwrap_used (Cargo.toml) guards the shipped code.
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

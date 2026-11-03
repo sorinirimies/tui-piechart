@@ -2,16 +2,18 @@
 name = "tui-piechart"
 version = "1.4.2"
 authors = ["Sorin Albu-Irimies <sorinirimies@gmail.com>"]
-edition = "2021"
-rust-version = "1.88.0"
+edition = "2024"
+rust-version = "1.88"
 license = "MIT"
 description = "A customizable pie chart widget for Ratatui TUI applications"
 repository = "https://github.com/sorinirimies/tui-piechart"
+documentation = "https://docs.rs/tui-piechart"
 homepage = "https://github.com/sorinirimies/tui-piechart"
 keywords = ["tui", "terminal", "ratatui", "piechart", "widget"]
 categories = ["command-line-interface", "visualization", "rendering", "gui", "graphics"]
 readme = "README.md"
 exclude = [
+    ".cargo/**",
     "examples/vhs/output/*.gif",
     ".gitea/",
     ".github/",
@@ -43,3 +45,16 @@ path = "src/lib.rs"
 name = "piechart"
 path = "examples/piechart_basic.rs"
 required-features = ["theme"]
+
+[package.metadata.docs.rs]
+all-features = true
+
+[lints.rust]
+unsafe_code = "forbid"
+missing_debug_implementations = "warn"
+missing_docs = "warn"
+
+[lints.clippy]
+dbg_macro = "warn"
+todo = "warn"
+unwrap_used = "warn"

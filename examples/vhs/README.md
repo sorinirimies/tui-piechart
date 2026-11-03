@@ -42,18 +42,14 @@ This directory contains 12 VHS tape files, one for each example:
 
 ### Generate All Demos
 
-The easiest way to generate all 12 demo GIFs at once:
+The easiest way to generate all the demo GIFs at once:
 
 ```bash
 # From project root
-./examples/vhs/generate_all.sh
+just vhs-all
 ```
 
-This script will:
-- Check if VHS is installed
-- Build all examples in release mode
-- Generate all 12 demo GIFs
-- Show a summary of generated files
+It runs `scripts/generate_all_tapes.nu`, which records every `.tape` in this directory.
 
 ### Generate Individual Demos
 
@@ -81,18 +77,19 @@ If you have [just](https://github.com/casey/just) installed:
 just vhs-all
 
 # Generate individual demos
-just vhs-piechart
-just vhs-border-styles
-just vhs-legend-positioning
-just vhs-legend-alignment
-just vhs-title-positioning
-just vhs-title-styles-example
-just vhs-custom-symbols
-just vhs-high-resolution
-just vhs-symbols-circles-squares
-just vhs-symbols-stars-hearts
-just vhs-symbols-triangles-hexagons
-just vhs-symbols-shades-bars
+just vhs border_styles
+just vhs custom_symbols
+just vhs high_resolution
+just vhs legend_alignment
+just vhs legend_markers
+just vhs legend_positioning
+just vhs pie_styles
+just vhs piechart
+just vhs symbols_circles_squares
+just vhs symbols_shades_bars
+just vhs symbols_stars_hearts
+just vhs symbols_triangles_hexagons
+just vhs title_styles
 ```
 
 ## Output Location
@@ -219,8 +216,8 @@ This will upload the GIF and provide a shareable URL.
 When adding new examples to the project:
 
 1. Create a corresponding `.tape` file in this directory
-2. Add it to the `TAPES` array in `generate_all.sh`
-3. Add a just command in `justfile` (e.g., `vhs-example-name`)
+2. Nothing to register: `just vhs-all` records every `.tape` here
+3. Record it with `just vhs <tape-name>` (no justfile change needed)
 4. Update this README with the new tape description
 5. Generate the GIF and verify it looks good
 6. Update `EXAMPLES.md` to reference the new demo

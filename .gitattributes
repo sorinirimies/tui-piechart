@@ -1,0 +1,27 @@
+# Line endings: LF everywhere, also on Windows checkouts (nu, just and YAML care).
+* text=auto eol=lf
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.ttf binary
+*.otf binary
+
+# Demo recordings (VHS GIFs, screen captures) are big: keep them in Git LFS.
+# Enable with `git lfs install` before the first one is committed.
+*.gif filter=lfs diff=lfs merge=lfs -text
+*.mp4 filter=lfs diff=lfs merge=lfs -text
+*.webm filter=lfs diff=lfs merge=lfs -text
+
+# Generated: collapse in diffs and the GitHub language stats.
+Cargo.lock linguist-generated=true
+fuzz/Cargo.lock linguist-generated=true
+CHANGELOG.md linguist-generated=true
+
+# This repo: demo GIFs are plain git objects.
+*.gif binary
+*.tape text eol=lf

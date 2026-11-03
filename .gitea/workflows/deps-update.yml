@@ -1,77 +1,78 @@
-name: Nightly Dependency Upgrade
+name: Nightly dependency update
+
+# `cargo update` within the semver ranges (and in fuzz/), then the full gate; if
+# it is green, commit the lockfiles straight to main as `chore(deps)`. Nothing changed ⇒ nothing happens.
+# Releases stay manual (`just release X.Y.Z`).
+#
+# This host runs on its own: deliberately NO mirroring to GitHub, which has its own
+# nightly (.github/workflows/deps-update.yml, 02:00). If the two histories diverge,
+# force-push whichever one you want to keep.
 
 on:
   schedule:
-    # Runs at 02:30 UTC every day (03:30 CET)
-    # Offset 30 min from GitHub to avoid simultaneous runs.
-    - cron: "30 2 * * *"
+    - cron: "30 2 * * *" # 02:30 UTC (GitHub runs at 02:00)
   workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
+  # Self-hosted runner behind a flaky network: let rustup and cargo retry.
+  RUSTUP_MAX_RETRIES: "10"
+  CARGO_NET_RETRY: "10"
 
+# Never cancel mid-run: a half-finished push would leave main inconsistent.
 concurrency:
   group: deps-update
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
-  upgrade-deps:
-    name: Upgrade Dependencies
+  update:
+    name: Update Cargo dependencies
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
+          ref: main
+          token: ${{ secrets.GITEA_TOKEN || github.token }}
           fetch-depth: 0
 
-      # ── Rust toolchain ────────────────────────────────────────────────────────
-      - name: Install Rust stable (rustfmt + clippy)
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: rustfmt, clippy
-
-      - name: Cache Cargo dependencies
-        uses: Swatinem/rust-cache@v2
-
-      # ── cargo-edit (provides `cargo upgrade`) ────────────────────────────────
-      - name: Install cargo-edit
-        run: cargo install cargo-edit --locked
-
-      - name: Install git-cliff
-        run: cargo install git-cliff --locked
-
-      # ── Nushell (shared upgrade script runs on both Gitea and GitHub) ────────
-      - name: Install Nushell (prebuilt binary)
+      - name: Install Rust stable (+ rustfmt, clippy)
+        run: |
+          for i in 1 2 3 4 5; do
+            curl --proto '=https' --tlsv1.2 -sSf --retry 5 --retry-all-errors --retry-delay 5 https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && break
+            [ $i = 5 ] && exit 1
+            echo "rustup install failed, retrying..."; sleep 15
+          done
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          . "$HOME/.cargo/env"
+          rustup component add rustfmt clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Nushell
         run: |
           V=0.116.1
-          curl -fsSL "https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz" | tar -xz -C /tmp
-          sudo install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" /usr/local/bin/nu || { mkdir -p "$HOME/.cargo/bin" && install -m 0755 "/tmp/nu-$V-x86_64-unknown-linux-gnu/nu" "$HOME/.cargo/bin/nu"; }
+          curl -fsSL --retry 5 https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
+          sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || { mkdir -p $HOME/.cargo/bin; install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu; }
           nu --version
 
-      # ── Upgrade, quality-gate, downgrade-guard, commit + push ────────────────
-      # See scripts/upgrade_deps.nu for the full logic (shared with GitHub).
-      #
-      # By convention (matching the GitHub mirror and sibling projects),
-      # deps-update commits dependency updates to main — it
-      # only releases (patch bump + tag) when Cargo.toml dependency requirements
-      # really changed. Lock-only updates are committed without a release.
-      - name: Run nightly dependency upgrade
-        id: upgrade
-        run: |
-          nu scripts/upgrade_deps.nu \
-            --bot-name "gitea-actions[bot]" \
-            --bot-email "gitea-actions[bot]@noreply.gitea"
+      # Scheduled runs can start from a stale commit; diff against the real tip.
+      - name: Sync to latest main
+        run: nu scripts/ci/deps_update.nu sync
 
-      # Tag pushes by the built-in token may not trigger workflows, so dispatch
-      # release.yml explicitly when the script cut a release.
-      - name: Trigger release workflow
-        if: steps.upgrade.outputs.release_tag != ''
-        run: |
-          TAG="${{ steps.upgrade.outputs.release_tag }}"
-          echo "🚀 Dispatching release.yml for ${TAG}…"
-          curl -sf -X POST \
-            "${{ github.server_url }}/api/v1/repos/${{ github.repository }}/actions/workflows/release.yml/dispatches" \
-            -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d "{\"ref\": \"main\", \"inputs\": {\"tag\": \"${TAG}\"}}"
+      - name: cargo update
+        run: nu scripts/ci/deps_update.nu update
+
+      - name: Anything to do?
+        id: diff
+        run: nu scripts/ci/deps_update.nu changed >> "$GITHUB_OUTPUT"
+
+      - name: Quality gate
+        if: steps.diff.outputs.changed == 'true'
+        run: nu scripts/ci/quality_gate.nu
+
+      # Fail loudly: a failed push must show as a failed run.
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        run: nu scripts/ci/deps_update.nu commit "gitea-actions[bot]" "gitea-actions[bot]@noreply.gitea"
+
+      - name: Nothing to update
+        if: steps.diff.outputs.changed == 'false'
+        run: echo "✅ All dependencies already up to date — no commit."

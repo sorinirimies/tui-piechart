@@ -1,0 +1,8 @@
+# Keep debug builds small: full debuginfo grows target/ past 10 GB on GUI-sized
+# workspaces. Line tables are enough for backtraces; set
+# CARGO_PROFILE_DEV_DEBUG=2 when you need to step through code in a debugger.
+[profile.dev]
+debug = "line-tables-only"
+
+[profile.dev.package."*"]
+debug = false

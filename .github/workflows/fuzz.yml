@@ -4,10 +4,10 @@ on:
   schedule:
     - cron: "0 4 * * *"
   push:
-    branches: [main, master]
-    paths: ["fuzz/**", "src/**", "Cargo.toml", "Cargo.lock"]
+    branches: [main]
+    paths: ["fuzz/**", "src/**", "Cargo.lock"]
   pull_request:
-    paths: ["fuzz/**", "src/**", "Cargo.toml", "Cargo.lock"]
+    paths: ["fuzz/**", "src/**", "Cargo.lock"]
   workflow_dispatch:
 
 env:
@@ -25,11 +25,11 @@ jobs:
           echo "$HOME/.cargo/bin" >> $GITHUB_PATH
       - name: Install cargo-fuzz
         run: cargo install cargo-fuzz --locked
+      - uses: hustcer/setup-nu@v3
+        with:
+          version: "0.116.1"
       - name: Fuzz each target for 60s
-        run: |
-          for t in $(cargo +nightly fuzz list); do
-            cargo +nightly fuzz run "$t" -- -max_total_time=60
-          done
+        run: nu scripts/ci/fuzz_all.nu --secs 60
       - name: Upload crashes
         if: failure()
         uses: actions/upload-artifact@v7

@@ -10,13 +10,13 @@ use crossterm::event::{self, Event, KeyCode};
 #[allow(unused_imports)]
 use ratatui::style::Stylize;
 use ratatui::{
+    DefaultTerminal, Frame,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
     widgets::{Block, Padding, Paragraph},
-    DefaultTerminal, Frame,
 };
-use tui_piechart::{symbols, PieChart, PieSlice};
+use tui_piechart::{PieChart, PieSlice, symbols};
 
 #[derive(Default)]
 struct App {

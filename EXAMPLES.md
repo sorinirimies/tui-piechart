@@ -488,7 +488,7 @@ vhs examples/vhs/custom_symbols.tape
 vhs examples/vhs/high_resolution.tape
 
 # Or generate all at once
-./examples/vhs/generate_all.sh
+just vhs-all
 ```
 
 All examples now have VHS tapes for generating demo GIFs!

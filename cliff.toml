@@ -1,77 +1,99 @@
+# git-cliff configuration — https://git-cliff.org/docs/configuration
+#
+# Commits must follow Conventional Commits to appear in the changelog:
+#     <type>(<optional scope>)!: <summary>
+# Types: feat fix perf refactor docs test build ci chore, plus project-specific
+# component prefixes (add them to the "Components" parser below, e.g. cli / gui /
+# web). Anything else is dropped silently (see `filter_unconventional` / `filter_commits` below).
+#
+# Preview the next release:  just changelog-preview     Regenerate:  just changelog
+
 [changelog]
-# changelog header
 header = """
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented here. It is generated from
+[Conventional Commits](https://www.conventionalcommits.org) by
+[git-cliff](https://git-cliff.org) — do not edit it by hand.
 
 """
-# template for the changelog body
+# Groups are ordered by the number in the HTML comment that prefixes their name in
+# `commit_parsers`; `striptags` removes it again for display.
 body = """
+{%- macro entry(commit) -%}
+- {% if commit.scope and commit.scope != "deps" %}**{{ commit.scope }}:** {% endif %}{{ commit.message | split(pat="\n") | first | trim | upper_first }} ([`{{ commit.id | truncate(length=7, end="") }}`](https://github.com/sorinirimies/tui-piechart/commit/{{ commit.id }}))
+{%- endmacro -%}
+
 {% if version -%}
-## {{ version | trim_start_matches(pat="v") }} - {{ timestamp | date(format="%Y-%m-%d") }}
+## [{{ version | trim_start_matches(pat="v") }}]({% if previous.version -%}
+https://github.com/sorinirimies/tui-piechart/compare/{{ previous.version }}...{{ version }}
+{%- else -%}
+https://github.com/sorinirimies/tui-piechart/releases/tag/{{ version }}
+{%- endif %}) — {{ timestamp | date(format="%Y-%m-%d") }}
 {% else -%}
 ## [Unreleased]
-{% endif -%}
+{% endif %}
+{% set breaking = commits | filter(attribute="breaking", value=true) -%}
+{% if breaking | length > 0 -%}
+### ⚠️ Breaking changes
 
+{% for commit in breaking -%}
+{{ self::entry(commit=commit) }}
+{% endfor %}
+{% endif -%}
 {% for group, commits in commits | group_by(attribute="group") -%}
-### {{ group }}
-{% for commit in commits -%}
-- {{ commit.message | split(pat="\n") | first | trim }}{% if commit.breaking %} **[BREAKING]**{% endif %}
-{% endfor -%}
+### {{ group | striptags | trim | upper_first }}
 
-{% endfor -%}
-{% if version and previous.version -%}
-**Full Changelog**: https://github.com/sorinirimies/tui-piechart/compare/{{ previous.version }}...{{ version }}
-{% endif -%}
+{% for commit in commits -%}
+{{ self::entry(commit=commit) }}
+{% endfor %}
+{% endfor %}
 """
-# remove the leading and trailing whitespace from the template
+footer = ""
 trim = true
 
 [git]
-# allow all commit types (set to false to include non-conventional commits)
-conventional_commits = false
-# regex for parsing and grouping commits
-commit_parsers = [
-    # Lock-only dependency refreshes never appear in the changelog
-    { message = "^chore: nightly dependency update", skip = true },
-    { message = "^[Ff]eat(?:\\(.*\\))?:?\\s", group = "✨ Features" },
-    { message = "^[Ff]ix(?:\\(.*\\))?:?\\s", group = "🐛 Bug Fixes" },
-    { message = "^[Dd]ocs(?:\\(.*\\))?:?\\s", group = "📚 Documentation" },
-    { message = "^[Pp]erf(?:\\(.*\\))?:?\\s", group = "⚡ Performance" },
-    { message = "^[Rr]efactor(?:\\(.*\\))?:?\\s", group = "♻️ Refactor" },
-    { message = "^[Ss]tyle(?:\\(.*\\))?:?\\s", group = "💄 Styling" },
-    { message = "^[Tt]est(?:\\(.*\\))?:?\\s", group = "🧪 Testing" },
-    { message = "^[Cc]hore(?:\\(.*\\))?:?\\s", group = "🔧 Chores" },
-    { message = "^[Bb]uild(?:\\(.*\\))?:?\\s", group = "📦 Build" },
-    { message = "^[Cc]i(?:\\(.*\\))?:?\\s", group = "🔄 CI" },
-    { message = "^[Aa]dd(?:\\(.*\\))?:?\\s", group = "➕ Added" },
-    { message = "^[Uu]pdate(?:\\(.*\\))?:?\\s", group = "🔄 Updated" },
-    { message = "^[Ee]nhance(?:\\(.*\\))?:?\\s", group = "✅ Enhanced" },
-    { message = "^[Ii]mprove(?:\\(.*\\))?:?\\s", group = "📈 Improvements" },
-    { message = "^[Ii]ntroduce\\s", group = "✨ Features" },
-    { message = ".*", group = "📦 Other Changes" },
-]
-# filter out the commits that are not matched by commit_parsers
-filter_commits = false
-# glob pattern for matching git tags
-tag_pattern = "v[0-9]*"
-# sort the tags chronologically
-sort_tags = true
-# protect breaking changes from being skipped due to matching skip pattern
+# Parse commits as Conventional Commits…
+conventional_commits = true
+# …and drop the ones that aren't, or that match no parser below (keeps the log clean).
+filter_unconventional = true
+filter_commits = true
+# Newest first inside each group.
+sort_commits = "newest"
+# A breaking change is never hidden by a skip rule.
 protect_breaking_commits = true
+# Only vX.Y.Z tags are releases; order them by semver, not by date.
+tag_pattern = "v[0-9]*"
+sort_tags = "semver"
+# Don't let a `git revert` of a hidden commit show up as an entry of its own.
+topo_order_commits = true
 
-[github]
-# add GitHub release URLs to the changelog
-add_links = true
-# owner and repo that's hosting the project
-owner = "sorinirimies"
-repo = "tui-piechart"
+# First match wins, so the skips come first.
+commit_parsers = [
+    # ── noise ────────────────────────────────────────────────────────────────
+    { message = "^chore: bump version",             skip = true },
+    { message = "^chore\\(release\\)",              skip = true },
+    { message = "^chore: release",                  skip = true },
+    { message = "^(docs|chore)\\(changelog\\)",   skip = true },
+    { message = "^(wip|fixup!|squash!|Merge )",     skip = true },
 
-# Generate links for issues and PRs
-issues = true
-pull_requests = true
-# Use GitHub milestone as the version
-use_milestone = false
-# Link to GitHub milestone
-link_milestone = false
+    # ── dependency refreshes (the nightly job): kept, so a release that is only a
+    #    dependency update still says what it is ───────────────────────────────
+    { message = "^(chore|build|fix)\\(deps(-dev)?\\)", group = "<!-- 08 -->📦 Dependencies" },
+
+    # ── what changed for users ───────────────────────────────────────────────
+    { message = "^feat",                            group = "<!-- 01 -->✨ Features" },
+    { message = "^fix",                             group = "<!-- 02 -->🐛 Bug fixes" },
+    { message = "^perf",                            group = "<!-- 03 -->⚡ Performance" },
+    # Commits prefixed with the component they touch ("cli: …", "gui(theme): …")
+    { message = "^(cli|gui|web|tui)(\\(.+\\))?!?:", group = "<!-- 04 -->🧩 Components" },
+    { message = "^refactor",                        group = "<!-- 05 -->♻️ Refactor" },
+
+    # ── how it is built and shipped ──────────────────────────────────────────
+    { message = "^docs?",                           group = "<!-- 06 -->📚 Documentation" },
+    { message = "^test",                            group = "<!-- 07 -->🧪 Tests" },
+    { message = "^build",                           group = "<!-- 09 -->📦 Build" },
+    { message = "^(ci|release)",                    group = "<!-- 10 -->🔄 CI and release" },
+    { message = "^style",                           group = "<!-- 11 -->💄 Style" },
+    { message = "^chore",                           group = "<!-- 12 -->🔧 Chores" },
+]

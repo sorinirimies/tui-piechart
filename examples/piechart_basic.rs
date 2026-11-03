@@ -16,14 +16,14 @@ use crossterm::event::{self, Event, KeyCode};
 #[allow(unused_imports)]
 use ratatui::style::Stylize;
 use ratatui::{
+    DefaultTerminal, Frame,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, Padding, Paragraph},
-    DefaultTerminal, Frame,
 };
 use std::time::{Duration, Instant};
-use tui_piechart::{symbols, PieChart, PieSlice, Theme};
+use tui_piechart::{PieChart, PieSlice, Theme, symbols};
 
 fn recolor<'a>(slices: Vec<PieSlice<'a>>, theme: &Theme) -> Vec<PieSlice<'a>> {
     slices
@@ -71,28 +71,28 @@ fn run(mut terminal: DefaultTerminal, app: &mut App) -> Result<()> {
         terminal.draw(|frame| render(frame, app))?;
 
         // Non-blocking event polling with 16ms timeout (~60 FPS)
-        if event::poll(Duration::from_millis(16))? {
-            if let Event::Key(key) = event::read()? {
-                match key.code {
-                    KeyCode::Char('q') | KeyCode::Esc => break,
-                    KeyCode::Up | KeyCode::Char('k') => {
-                        if app.selected > 0 {
-                            app.selected -= 1;
-                        }
+        if event::poll(Duration::from_millis(16))?
+            && let Event::Key(key) = event::read()?
+        {
+            match key.code {
+                KeyCode::Char('q') | KeyCode::Esc => break,
+                KeyCode::Up | KeyCode::Char('k') => {
+                    if app.selected > 0 {
+                        app.selected -= 1;
                     }
-                    KeyCode::Down | KeyCode::Char('j') => {
-                        if app.selected < 3 {
-                            app.selected += 1;
-                        }
-                    }
-                    KeyCode::Char('t') => {
-                        app.themes.next();
-                    }
-                    KeyCode::Char('T') => {
-                        app.themes.prev();
-                    }
-                    _ => {}
                 }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    if app.selected < 3 {
+                        app.selected += 1;
+                    }
+                }
+                KeyCode::Char('t') => {
+                    app.themes.next();
+                }
+                KeyCode::Char('T') => {
+                    app.themes.prev();
+                }
+                _ => {}
             }
         }
     }

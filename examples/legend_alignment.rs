@@ -16,17 +16,17 @@ use crossterm::event::{self, Event, KeyCode};
 #[allow(unused_imports)]
 use ratatui::style::Stylize;
 use ratatui::{
+    DefaultTerminal, Frame,
     layout::{Alignment, Constraint, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::Padding,
-    DefaultTerminal, Frame,
 };
 use tui_piechart::{
+    PieChart, PieSlice,
     border_style::BorderStyle,
     legend::{LegendAlignment, LegendLayout, LegendPosition},
     title::{BlockExt, TitleAlignment},
-    PieChart, PieSlice,
 };
 
 struct App {
