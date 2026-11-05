@@ -39,7 +39,7 @@ jobs:
       - name: Install Nushell, git-cliff
         run: |
           V=0.116.1
-          curl -fsSL --retry 5 https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz | tar -xz -C /tmp
+          curl -fsSL --retry 5 --retry-all-errors -o /tmp/dl.tgz https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz && tar -xzf /tmp/dl.tgz -C /tmp
           sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu
           cargo install git-cliff --locked
       - name: Validate tag

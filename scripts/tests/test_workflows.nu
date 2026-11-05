@@ -113,6 +113,14 @@ def "test workflows: justfile recipes run in nushell" [] {
     assert not ($just =~ '#!/usr/bin/env (sh|bash)') "no sh/bash shebang recipes"
 }
 
+# A download piped into tar cannot be retried once it started (a dropped HTTP/2
+# stream failed a musl job); curl saves the archive first and retries it whole.
+def "test workflows: no download is piped into tar" [] {
+    let piped = [".github" ".gitea"] | each {|h| workflows $h | each {|f| $"($h)/workflows/($f)" } } | flatten
+        | where {|f| (open --raw (root | path join $f)) =~ '\|\s*tar\s' }
+    assert equal $piped []
+}
+
 def main [] { run-tests }
 
 def "test workflows: the msrv job pins the toolchain from Cargo.toml without a version ref" [] {
