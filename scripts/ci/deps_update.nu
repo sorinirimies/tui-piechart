@@ -16,10 +16,17 @@
 
 export const LOCKFILES = ["Cargo.lock" "fuzz/Cargo.lock"]
 
-# The lockfiles that exist in this checkout (fuzz/ is optional).
-export def present [files: list<string>] {
-    $files | where {|f| $f | path exists }
+# The lockfiles to commit: those in this checkout (fuzz/ is optional) that git does
+# not ignore (`git add` refuses an ignored file).
+export def present [files: list<string>, ignored: list<string> = []] {
+    $files | where {|f| ($f | path exists) and $f not-in $ignored }
 }
+
+# Of `files`, those a .gitignore excludes.
+def ignored [files: list<string>]: nothing -> list<string> {
+    ^git check-ignore ...$files | complete | get stdout | lines
+}
+
 
 export def commit_message [date: string] {
     $"chore\(deps\): nightly cargo update ($date)"
@@ -88,7 +95,7 @@ def "main changed" [] {
 def "main commit" [bot: string, email: string] {
     ^git config user.name $bot
     ^git config user.email $email
-    ^git add ...(present $LOCKFILES)
+    ^git add ...(present $LOCKFILES (ignored $LOCKFILES))
     ^git commit -m (commit_message (date now | date to-timezone UTC | format date "%Y-%m-%d"))
     ^git push origin HEAD:main
 }
@@ -105,7 +112,7 @@ def "main upgrade" [] {
 def "main release" [bot: string, email: string] {
     ^git config user.name $bot
     ^git config user.email $email
-    ^git add Cargo.toml ...(present $LOCKFILES)
+    ^git add Cargo.toml ...(present $LOCKFILES (ignored $LOCKFILES))
     ^git commit -m (upgrade_message (today))
     let next = next_patch (open Cargo.toml | get package.version)
     ^nu scripts/bump_version.nu $next --yes --skip-checks

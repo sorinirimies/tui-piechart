@@ -8,6 +8,7 @@ use ../ci/deps_update.nu [present commit_message]
 use ../ci/deps_update.nu [pins pins_changed next_patch upgrade_message]
 use ../ci/publish_crate.nu [already_published]
 use ../ci/gitea_release.nu [release_payload]
+use ../ci/auto_merge.nu [decide checks_green]
 use ../ci/actions_update.nu [uses major_of bump PINNED]
 
 def "test deps_update: commit message is a dated chore deps" [] {
@@ -18,6 +19,8 @@ def "test deps_update: only existing lockfiles are touched" [] {
     let root = ($env.CURRENT_FILE | path dirname | path join ".." "..")
     cd $root
     assert equal (present ["Cargo.lock" "no/such/Cargo.lock"]) ["Cargo.lock"]
+    # An ignored lockfile (some repos ignore fuzz/Cargo.lock) is not staged.
+    assert equal (present ["Cargo.lock" "scripts/project.nu"] ["scripts/project.nu"]) ["Cargo.lock"]
 }
 
 def "test deps_update: a raised requirement is a release, formatting is not" [] {
@@ -48,6 +51,25 @@ def "test publish_crate: a re-release counts as success" [] {
     assert not (already_published "error: failed to verify package tarball")
 }
 
+
+const PR = {number: 7, author: {login: "app/dependabot"}, headRefOid: "abc", state: "OPEN"}
+
+def "test auto_merge: a green dependabot pr is merged, majors included" [] {
+    assert (decide ($PR | insert title "ci(deps): bump softprops/action-gh-release from 2 to 3") "abc").merge
+}
+
+def "test auto_merge: others, closed prs and moved branches are left" [] {
+    assert not (decide ($PR | update author {login: "sorinirimies"}) "abc").merge
+    assert not (decide ($PR | update state "MERGED") "abc").merge
+    assert not (decide $PR "def").merge
+}
+
+def "test auto_merge: the sweep needs every check passed" [] {
+    assert (checks_green [{conclusion: "SUCCESS"} {conclusion: "SKIPPED"} {state: "SUCCESS"}])
+    assert not (checks_green [{conclusion: "SUCCESS"} {conclusion: "FAILURE"}])
+    assert not (checks_green [{conclusion: "SUCCESS"} {status: "IN_PROGRESS", conclusion: ""}])
+    assert not (checks_green [])
+}
 
 def "test gitea_release: payload carries tag, title and notes" [] {
     assert equal (release_payload "v1.2.3" "KV" "notes") { tag_name: "v1.2.3", name: "KV v1.2.3", body: "notes" }
