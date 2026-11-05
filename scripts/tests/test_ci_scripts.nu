@@ -8,7 +8,7 @@ use ../ci/deps_update.nu [present commit_message]
 use ../ci/deps_update.nu [pins pins_changed next_patch upgrade_message]
 use ../ci/publish_crate.nu [already_published]
 use ../ci/gitea_release.nu [release_payload]
-use ../ci/auto_merge.nu [decide checks_green]
+use ../ci/auto_merge.nu [decide checks_green sweep_action]
 use ../ci/actions_update.nu [uses major_of bump PINNED]
 
 def "test deps_update: commit message is a dated chore deps" [] {
@@ -20,7 +20,7 @@ def "test deps_update: only existing lockfiles are touched" [] {
     cd $root
     assert equal (present ["Cargo.lock" "no/such/Cargo.lock"]) ["Cargo.lock"]
     # An ignored lockfile (some repos ignore fuzz/Cargo.lock) is not staged.
-    assert equal (present ["Cargo.lock" "scripts/project.nu"] ["scripts/project.nu"]) ["Cargo.lock"]
+    assert equal (present ["Cargo.toml" "scripts/project.nu"] ["scripts/project.nu"]) ["Cargo.toml"]
 }
 
 def "test deps_update: a raised requirement is a release, formatting is not" [] {
@@ -69,6 +69,14 @@ def "test auto_merge: the sweep needs every check passed" [] {
     assert not (checks_green [{conclusion: "SUCCESS"} {conclusion: "FAILURE"}])
     assert not (checks_green [{conclusion: "SUCCESS"} {status: "IN_PROGRESS", conclusion: ""}])
     assert not (checks_green [])
+}
+
+def "test auto_merge: the sweep merges green prs, rebases conflicts and waits otherwise" [] {
+    let pr = $PR | insert mergeable "MERGEABLE" | insert statusCheckRollup [{conclusion: "SUCCESS"}]
+    assert equal (sweep_action $pr) "merge"
+    assert equal (sweep_action ($pr | update mergeable "CONFLICTING")) "rebase"
+    assert equal (sweep_action ($pr | update statusCheckRollup [{conclusion: "FAILURE"}])) "wait"
+    assert equal (sweep_action ($pr | update author {login: "someone"})) "wait"
 }
 
 def "test gitea_release: payload carries tag, title and notes" [] {
