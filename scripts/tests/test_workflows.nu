@@ -121,6 +121,17 @@ def "test workflows: no download is piped into tar" [] {
     assert equal $piped []
 }
 
+# Gitea checks the MSRV too, with the same toolchain and commands as GitHub.
+def "test workflows: gitea checks the msrv like github" [] {
+    let gh = open (root | path join .github workflows ci.yml) | get jobs.msrv.steps
+    let gt = open (root | path join .gitea workflows ci.yml) | get jobs.msrv.steps
+    let msrv = $gh | where {|s| ($s.with?.toolchain? | default null) != null } | first | get with.toolchain | into string
+    let install = $gt | where {|s| ($s.name? | default "") starts-with "Install Rust" } | first
+    assert ($install.run | str contains $"--default-toolchain ($msrv) ") "gitea installs the msrv toolchain"
+    let checks = {|steps| $steps | where {|s| ($s.run? | default "") starts-with "cargo " } | get run }
+    assert equal (do $checks $gt) (do $checks $gh)
+}
+
 def main [] { run-tests }
 
 def "test workflows: the msrv job pins the toolchain from Cargo.toml without a version ref" [] {
