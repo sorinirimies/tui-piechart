@@ -434,7 +434,7 @@ dependencies = [
 
 [[package]]
 name = "tui-piechart"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "ratatui",
  "tui-nuances",

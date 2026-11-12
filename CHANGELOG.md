@@ -4,6 +4,12 @@ All notable changes to this project are documented here. It is generated from
 [Conventional Commits](https://www.conventionalcommits.org) by
 [git-cliff](https://git-cliff.org) — do not edit it by hand.
 
+## [1.4.4](https://github.com/sorinirimies/tui-piechart/compare/v1.4.3...v1.4.4) — 2026-11-12
+
+### 🔄 CI and release
+
+- Add Forgejo workflows for Codeberg ([`24f0e6d`](https://github.com/sorinirimies/tui-piechart/commit/24f0e6dfb8992839be90ccdf0fa00f50fffc3d17))
+
 ## [1.4.3](https://github.com/sorinirimies/tui-piechart/compare/v1.4.2...v1.4.3) — 2026-11-12
 
 ### ♻️ Refactor
