@@ -114,4 +114,13 @@ def "test actions_update: v1 does not touch v10" [] {
     assert equal $out "- uses: a/b@v2\n- uses: a/b@v10\n"
 }
 
+def "test gitattributes: gifs are plain git objects, no lfs clean filter" [] {
+    # Regression: `*.gif filter=lfs` + a later `*.gif binary` left the filter set, so on
+    # a runner with git-lfs every committed GIF showed as modified and the nightly
+    # release stopped at "the working tree is dirty".
+    let root = ($env.CURRENT_FILE | path dirname | path join ".." "..")
+    let out = (^git -C $root check-attr filter -- examples/vhs/output/piechart.gif | str trim)
+    assert ($out | str ends-with "unset") $"gif filter must be unset, got: ($out)"
+}
+
 def main [] { run-tests }

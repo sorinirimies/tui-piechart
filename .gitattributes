@@ -23,5 +23,5 @@ fuzz/Cargo.lock linguist-generated=true
 CHANGELOG.md linguist-generated=true
 
 # This repo: demo GIFs are plain git objects.
-*.gif binary
+*.gif binary -filter
 *.tape text eol=lf
