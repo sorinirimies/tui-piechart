@@ -1,0 +1,78 @@
+name: Nightly dependency update
+
+# `cargo update` within the semver ranges (and in fuzz/), then the full gate; if
+# it is green, commit the lockfiles straight to main as `chore(deps)`. Nothing changed ⇒ nothing happens.
+# Releases stay manual (`just release X.Y.Z`).
+#
+# This host runs on its own: deliberately NO mirroring to GitHub, which has its own
+# nightly (.github/workflows/deps-update.yml, 02:00). If the two histories diverge,
+# force-push whichever one you want to keep.
+
+on:
+  schedule:
+    - cron: "30 2 * * *" # 02:30 UTC (GitHub runs at 02:00)
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  # Self-hosted runner behind a flaky network: let rustup and cargo retry.
+  RUSTUP_MAX_RETRIES: "10"
+  CARGO_NET_RETRY: "10"
+
+# Never cancel mid-run: a half-finished push would leave main inconsistent.
+concurrency:
+  group: deps-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update Cargo dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.CODEBERG_TOKEN || github.token }}
+          fetch-depth: 0
+
+      - name: Install Rust stable (+ rustfmt, clippy)
+        run: |
+          for i in 1 2 3 4 5; do
+            curl --proto '=https' --tlsv1.2 -sSf --retry 5 --retry-all-errors --retry-delay 5 https://sh.rustup.rs | sh -s -- -y --default-toolchain stable && break
+            [ $i = 5 ] && exit 1
+            echo "rustup install failed, retrying..."; sleep 15
+          done
+          echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+          . "$HOME/.cargo/env"
+          rustup component add rustfmt clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Nushell
+        run: |
+          V=0.116.1
+          curl -fsSL --retry 5 --retry-all-errors -o /tmp/dl.tgz https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz && tar -xzf /tmp/dl.tgz -C /tmp
+          sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || { mkdir -p $HOME/.cargo/bin; install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu; }
+          nu --version
+
+      # Scheduled runs can start from a stale commit; diff against the real tip.
+      - name: Sync to latest main
+        run: nu scripts/ci/deps_update.nu sync
+
+      - name: cargo update
+        run: nu scripts/ci/deps_update.nu update
+
+      - name: Anything to do?
+        id: diff
+        run: nu scripts/ci/deps_update.nu changed >> "$GITHUB_OUTPUT"
+
+      - name: Quality gate
+        if: steps.diff.outputs.changed == 'true'
+        run: nu scripts/ci/quality_gate.nu
+
+      # Fail loudly: a failed push must show as a failed run.
+      - name: Commit and push
+        if: steps.diff.outputs.changed == 'true'
+        run: nu scripts/ci/deps_update.nu commit "forgejo-actions[bot]" "forgejo-actions[bot]@noreply.codeberg.org"
+
+      - name: Nothing to update
+        if: steps.diff.outputs.changed == 'false'
+        run: echo "✅ All dependencies already up to date — no commit."

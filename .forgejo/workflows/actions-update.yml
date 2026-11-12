@@ -1,0 +1,41 @@
+name: Nightly actions update
+
+# Forgejo has no Dependabot: bump `uses: owner/repo@vN` in .forgejo/workflows to the
+# latest major on GitHub and push straight to main (CI then validates it).
+# actions/checkout and actions/*-artifact stay pinned (act_runner lacks their
+# newer node / artifact backends). Logic: scripts/ci/actions_update.nu.
+
+on:
+  schedule:
+    - cron: "45 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actions-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    name: Update workflow actions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.CODEBERG_TOKEN || github.token }}
+          fetch-depth: 0
+      - name: Install Nushell
+        run: |
+          V=0.116.1
+          curl -fsSL --retry 5 --retry-all-errors -o /tmp/dl.tgz https://github.com/nushell/nushell/releases/download/$V/nu-$V-x86_64-unknown-linux-gnu.tar.gz && tar -xzf /tmp/dl.tgz -C /tmp
+          sudo install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu /usr/local/bin/nu || { mkdir -p $HOME/.cargo/bin; install -m 0755 /tmp/nu-$V-x86_64-unknown-linux-gnu/nu $HOME/.cargo/bin/nu; }
+          nu --version
+      - name: Bump action versions
+        id: bump
+        run: nu scripts/ci/actions_update.nu >> "$GITHUB_OUTPUT"
+      - name: Commit and push
+        if: steps.bump.outputs.changed == 'true'
+        run: nu scripts/ci/actions_update.nu commit "forgejo-actions[bot]" "forgejo-actions[bot]@noreply.codeberg.org"

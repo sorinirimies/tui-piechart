@@ -224,7 +224,7 @@ release-retrigger version:
     gh workflow run release.yml --field tag=v{{ version }}
 
 
-# ── Git remotes (GitHub = origin, Gitea = gitea-starscream; no mirroring) ─────
+# ── Git remotes (GitHub = origin, Gitea = gitea-starscream, Codeberg = codeberg; no mirroring) ─────
 
 # Push the current branch + tags to every configured remote (continues on failure)
 push-all:
