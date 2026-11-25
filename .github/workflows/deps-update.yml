@@ -16,6 +16,7 @@ permissions:
   contents: write
   pull-requests: write # merge green Dependabot PRs
   actions: write # dispatch release.yml after a GITHUB_TOKEN tag push
+  issues: write # open an issue when the nightly fails
 
 env:
   CARGO_TERM_COLOR: always
@@ -76,3 +77,23 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT || github.token }}
           HAS_PAT: ${{ secrets.GH_PAT != '' }}
+
+  # A red nightly (expired token, broken gate) must be seen the same day: open one
+  # issue per failing run history, comment on it while it stays red.
+  notify-failure:
+    needs: [dependabot, update]
+    if: ${{ always() && contains(needs.*.result, 'failure') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Open or update the failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title="Nightly dependency update is failing"
+          url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          n=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$n" ]; then
+            gh issue comment "$n" --repo "$GITHUB_REPOSITORY" --body "Failed again: $url"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "The scheduled run failed: $url"$'\n\nCheck the step log; \`could not read Username\` means the GH_PAT secret is expired or invalid.'
+          fi
