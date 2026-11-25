@@ -85,15 +85,12 @@ jobs:
     if: ${{ always() && contains(needs.*.result, 'failure') }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v7
+      - name: Install nushell
+        uses: hustcer/setup-nu@v3
+        with:
+          version: "0.116.1"
       - name: Open or update the failure issue
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          title="Nightly dependency update is failing"
-          url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          n=$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "$title in:title" --json number --jq '.[0].number // empty')
-          if [ -n "$n" ]; then
-            gh issue comment "$n" --repo "$GITHUB_REPOSITORY" --body "Failed again: $url"
-          else
-            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "The scheduled run failed: $url"$'\n\nCheck the step log; \`could not read Username\` means the GH_PAT secret is expired or invalid.'
-          fi
+        run: nu scripts/ci/notify_failure.nu
