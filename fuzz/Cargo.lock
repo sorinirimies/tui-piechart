@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "allocator-api2"
-version = "0.2.21"
+version = "0.2.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
+checksum = "57b212daf2e827b1ccdd778b7eb48ba433e58cb0e4f27b43cd6b7a608425a014"
 
 [[package]]
 name = "arbitrary"
@@ -425,9 +425,9 @@ dependencies = [
 
 [[package]]
 name = "tui-nuances"
-version = "0.1.11"
+version = "0.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "71a55e1ee7052a2409c91486005043da038bf44f72978a69747986dc64ca6068"
+checksum = "2b69bb01dbeaa6a6674efc4f7c05d6d241453a0cd434cbb2f6512c7a75f13235"
 dependencies = [
  "ratatui",
 ]
